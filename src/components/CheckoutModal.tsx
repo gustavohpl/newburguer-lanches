@@ -21,6 +21,7 @@ interface CheckoutModalProps {
   onOrderCreated?: (orderId: string) => void;
   isStoreOpen: boolean;
   deliveryFee: number;
+  allProducts?: Array<{ id: string; recipe?: any; promoItems?: any[] }>;
 }
 
 type DeliveryType = 'delivery' | 'pickup' | 'dine-in';
@@ -34,7 +35,8 @@ export function CheckoutModal({
   onOrderComplete,
   onOrderCreated,
   isStoreOpen,
-  deliveryFee
+  deliveryFee,
+  allProducts = []
 }: CheckoutModalProps) {
   const { config } = useConfig();
   const [step, setStep] = useState(1);
@@ -183,12 +185,13 @@ export function CheckoutModal({
     }
   };
 
-  // Coletar acompanhamentos disponíveis dos produtos no carrinho
+  // Coletar acompanhamentos disponíveis dos produtos no carrinho (incluindo sub-produtos de promoções)
   const availableAcompanhamentos = React.useMemo(() => {
     const acompMap = new Map<string, { id: string; name: string; defaultQty: number }>();
-    for (const item of items) {
-      if (!item.recipe?.ingredients) continue;
-      for (const ri of item.recipe.ingredients) {
+    
+    const collectFromRecipe = (recipe: any) => {
+      if (!recipe?.ingredients) return;
+      for (const ri of recipe.ingredients) {
         if (ri.category === 'acompanhamento' && !acompMap.has(ri.ingredientId)) {
           acompMap.set(ri.ingredientId, {
             id: ri.ingredientId,
@@ -197,9 +200,24 @@ export function CheckoutModal({
           });
         }
       }
+    };
+    
+    for (const item of items) {
+      // Coletar da receita do próprio item
+      collectFromRecipe(item.recipe);
+      
+      // Se for promoção, coletar dos sub-produtos
+      if (item.promoItems && item.promoItems.length > 0 && allProducts.length > 0) {
+        for (const promoItem of item.promoItems) {
+          const subProduct = allProducts.find(p => p.id === promoItem.productId);
+          if (subProduct) {
+            collectFromRecipe(subProduct.recipe);
+          }
+        }
+      }
     }
     return Array.from(acompMap.values());
-  }, [items]);
+  }, [items, allProducts]);
 
   // Verificar se algum produto tem acompanhamentos e não é dine-in
   const showAcompanhamentos = availableAcompanhamentos.length > 0 && deliveryType !== 'dine-in';

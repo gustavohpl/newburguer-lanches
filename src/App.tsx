@@ -770,6 +770,7 @@ function AppContent() {
                 onOrderCreated={handleOrderCreated}
                 isStoreOpen={isStoreOpen}
                 deliveryFee={deliveryFee}
+                allProducts={products}
               />
 
               <OrderSearchModal
