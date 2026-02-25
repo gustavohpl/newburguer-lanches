@@ -247,9 +247,32 @@ router.put('/orders/:id/status', requireAdminOrDriver, async (c) => {
 
         for (const item of orderItems) {
           const product: any = await kv.get(`product:${item.productId || item.id}`);
-          if (!product?.recipe?.ingredients) continue;
+          if (!product) continue;
 
-          for (const recipeIng of product.recipe.ingredients) {
+          // Coletar todos os produtos cujo estoque deve ser descontado
+          // Se for promoção, desconta dos sub-produtos; senão, do próprio produto
+          const productsToDeduct: any[] = [];
+          
+          if (product.promoItems && product.promoItems.length > 0) {
+            // Promoção: descontar estoque de cada sub-produto
+            for (const promoItem of product.promoItems) {
+              const subProduct: any = await kv.get(`product:${promoItem.productId}`);
+              if (subProduct?.recipe?.ingredients) {
+                productsToDeduct.push(subProduct);
+              }
+            }
+            // Também descontar a receita da promoção em si (se tiver, ex: embalagem)
+            if (product.recipe?.ingredients) {
+              productsToDeduct.push(product);
+            }
+          } else if (product.recipe?.ingredients) {
+            productsToDeduct.push(product);
+          }
+
+          if (productsToDeduct.length === 0) continue;
+
+          for (const prodToDeduct of productsToDeduct) {
+            for (const recipeIng of prodToDeduct.recipe.ingredients) {
             const ingredientKey = `stock_ingredient:${recipeIng.ingredientId}`;
             const ingredient: any = await kv.get(ingredientKey);
             if (!ingredient) continue;
@@ -298,6 +321,7 @@ router.put('/orders/:id/status', requireAdminOrDriver, async (c) => {
               productId: item.productId || item.id, quantity: totalDeduct, orderId: id, date: now,
             });
           }
+          } // end for prodToDeduct
         }
         updated.stockDeducted = true;
         console.log('📦 [STOCK] Estoque descontado para pedido:', id, isDineIn ? '(no local)' : '(entrega/retirada)');
