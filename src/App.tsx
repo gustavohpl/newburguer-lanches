@@ -759,6 +759,7 @@ function AppContent() {
                 totalPrice={getTotalPrice()}
                 onOpenFullCart={() => setIsCartOpen(true)}
                 onRemove={removeFromCart}
+                onUpdateQuantity={updateQuantity}
               />
 
               <CheckoutModal

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ShoppingBag, X, ChevronRight, ChevronLeft } from 'lucide-react';
+import { ShoppingBag, X, ChevronRight, ChevronLeft, Plus, Minus } from 'lucide-react';
 import type { CartItem } from '../App';
 import { getCategoryEmoji } from '../utils/api';
 
@@ -8,9 +8,10 @@ interface MiniCartProps {
   totalPrice: number;
   onOpenFullCart: () => void;
   onRemove: (productId: string) => void;
+  onUpdateQuantity?: (productId: string, quantity: number) => void;
 }
 
-export function MiniCart({ items, totalPrice, onOpenFullCart, onRemove }: MiniCartProps) {
+export function MiniCart({ items, totalPrice, onOpenFullCart, onRemove, onUpdateQuantity }: MiniCartProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
@@ -93,8 +94,26 @@ export function MiniCart({ items, totalPrice, onOpenFullCart, onRemove }: MiniCa
                     </h4>
                     
                     <div className="flex items-center justify-between">
-                      <div className="text-xs text-muted-foreground">
-                        Qtd: <span className="font-semibold">{item.quantity}</span>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => {
+                            if (item.quantity <= 1) {
+                              onRemove(item.id);
+                            } else if (onUpdateQuantity) {
+                              onUpdateQuantity(item.id, item.quantity - 1);
+                            }
+                          }}
+                          className="w-6 h-6 rounded-full bg-zinc-200 dark:bg-zinc-700 hover:bg-red-500 hover:text-white text-zinc-600 dark:text-zinc-300 flex items-center justify-center transition-all text-xs font-bold"
+                        >
+                          <Minus className="w-3 h-3" />
+                        </button>
+                        <span className="text-sm font-bold text-foreground w-5 text-center">{item.quantity}</span>
+                        <button
+                          onClick={() => onUpdateQuantity?.(item.id, item.quantity + 1)}
+                          className="w-6 h-6 rounded-full bg-amber-500 hover:bg-amber-600 text-white flex items-center justify-center transition-all text-xs font-bold"
+                        >
+                          <Plus className="w-3 h-3" />
+                        </button>
                       </div>
                       <div className="text-sm font-bold text-amber-600 dark:text-amber-500">
                         R${(item.price * item.quantity).toFixed(2).replace('.', ',')}
@@ -105,10 +124,10 @@ export function MiniCart({ items, totalPrice, onOpenFullCart, onRemove }: MiniCa
                   {/* Botão remover */}
                   <button
                     onClick={() => onRemove(item.id)}
-                    className="w-7 h-7 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all flex-shrink-0 self-start"
+                    className="w-6 h-6 rounded-full bg-red-500 hover:bg-red-600 text-white flex items-center justify-center transition-all flex-shrink-0 self-start"
                     title="Remover"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
