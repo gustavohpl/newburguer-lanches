@@ -53,7 +53,7 @@ export function AdminDashboard({ onLogout, onProductsChange }: AdminDashboardPro
     { id: 'products' as MenuOption, label: 'Produtos', icon: Package },
     { id: 'orders' as MenuOption, label: 'Pedidos', icon: ShoppingBag },
     ...(config.features?.stockControl ? [{ id: 'stock' as MenuOption, label: 'Estoque', icon: Warehouse }] : []),
-    ...(config.features?.paidTraffic !== false ? [{ id: 'ads' as MenuOption, label: 'Tráfego Pago', icon: Megaphone }] : []),
+    ...(config.features?.paidTraffic !== false ? [{ id: 'ads' as MenuOption, label: 'Meta Ads', icon: Megaphone }] : []),
     ...(config.features?.deliverySystem !== false ? [{ id: 'delivery' as MenuOption, label: 'Área de Entrega', icon: Truck }] : []),
     { id: 'customers' as MenuOption, label: 'Clientes', icon: Users },
     { id: 'settings' as MenuOption, label: 'Configurações', icon: SettingsIcon },

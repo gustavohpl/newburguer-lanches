@@ -10,7 +10,7 @@ export function StatusBar({ isStoreOpen = true }: StatusBarProps) {
   const themeColor = config.themeColor || '#d97706';
 
   return (
-    <div className="bg-gray-50 dark:bg-zinc-950 border-b border-gray-200 dark:border-gray-800 py-4 shadow-sm">
+    <div className="border-b border-white/5 py-4">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-center">
           {/* Status Central com animações */}

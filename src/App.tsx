@@ -92,6 +92,13 @@ function AppContent() {
   
   // 🌓 DETECÇÃO DE MODO ESCURO PARA O CLIENTE
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   useEffect(() => {
     // 1. Se houver configuração explícita no banco, ela ganha de tudo
@@ -710,11 +717,35 @@ function AppContent() {
         <div 
           id="client-app" 
           className={`min-h-screen bg-background text-foreground flex flex-col transition-colors duration-300 ${isDarkMode ? 'dark' : ''}`}
+          style={{ position: 'relative' }}
         >
+          {/* Imagem de fundo fixa com zoom suave (Ken Burns) */}
+          {(config.contentBackgroundUrl || config.contentBackgroundMobileUrl) && (
+            <>
+              <style>{`
+                @keyframes kenBurns {
+                  0% { transform: scale(1); }
+                  50% { transform: scale(1.06); }
+                  100% { transform: scale(1); }
+                }
+              `}</style>
+              <div 
+                className="fixed inset-0 z-0"
+                style={{
+                  backgroundImage: `url(${(isMobile && config.contentBackgroundMobileUrl) ? config.contentBackgroundMobileUrl : config.contentBackgroundUrl})`,
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center center',
+                  backgroundRepeat: 'no-repeat',
+                  pointerEvents: 'none',
+                  animation: 'kenBurns 25s ease-in-out infinite',
+                }}
+              />
+            </>
+          )}
           {showDelivery ? (
             <DeliverymanPage />
           ) : (
-            <>
+            <div className="relative flex flex-col flex-1 z-[1]">
               <Header />
 
               <StatusBar 
@@ -741,6 +772,27 @@ function AppContent() {
                   />
                 )}
               </main>
+
+              {/* Banner Cards antes do Footer */}
+              {config.bannerCards && config.bannerCards.length > 0 && (
+                <section className="w-full py-8 px-4">
+                  <div className="container mx-auto max-w-6xl">
+                    <div className={`grid gap-4 ${config.bannerCards.length === 1 ? 'grid-cols-1' : config.bannerCards.length === 2 ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'}`}>
+                      {config.bannerCards.map((card, i) => (
+                        <div key={i} className="rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all hover:scale-[1.02] cursor-pointer">
+                          {card.link ? (
+                            <a href={card.link} target="_blank" rel="noopener noreferrer">
+                              <img src={card.imageUrl} alt={`Banner ${i + 1}`} className="w-full h-auto object-contain" />
+                            </a>
+                          ) : (
+                            <img src={card.imageUrl} alt={`Banner ${i + 1}`} className="w-full h-auto object-contain" />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              )}
 
               <Footer onTrackOrderClick={() => setIsOrderSearchOpen(true)} />
 
@@ -808,7 +860,7 @@ function AppContent() {
                   }}
                 />
               )}
-            </>
+            </div>
           )}
         </div>
       )}

@@ -56,7 +56,7 @@ export function CategoryNav({ currentCategory, onCategoryChange }: CategoryNavPr
   const isHexColor = (c: string) => c.startsWith('#');
 
   return (
-    <div className="bg-white dark:bg-zinc-900 shadow-md border-b border-gray-200 dark:border-zinc-800">
+    <div className="shadow-none border-b border-white/5">
       <div className="container mx-auto px-4 py-4">
         <div className="flex gap-3 justify-center flex-wrap">
           {allCategories.map((category) => {

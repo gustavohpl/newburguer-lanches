@@ -405,7 +405,7 @@ router.post('/upload', requireAdmin, async (c) => {
     if (!file) return error(c, 'Nenhum arquivo enviado', 400);
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'];
     if (!allowedTypes.includes(file.type)) return error(c, 'Tipo de arquivo não permitido', 400);
-    if (file.size > 5 * 1024 * 1024) return error(c, 'Arquivo muito grande. Máximo 5MB', 400);
+    if (file.size > 15 * 1024 * 1024) return error(c, 'Arquivo muito grande. Máximo 15MB', 400);
     const timestamp = Date.now();
     const randomStr = Math.random().toString(36).substring(2, 9);
     const extension = file.name.split('.').pop() || 'jpg';
@@ -433,7 +433,7 @@ router.post('/master/upload', async (c) => {
     if (!file) return error(c, 'Nenhum arquivo enviado', 400);
     const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/svg+xml'];
     if (!allowedTypes.includes(file.type)) return error(c, 'Tipo de arquivo não permitido', 400);
-    if (file.size > 5 * 1024 * 1024) return error(c, 'Arquivo muito grande. Máximo 5MB', 400);
+    if (file.size > 15 * 1024 * 1024) return error(c, 'Arquivo muito grande. Máximo 15MB', 400);
     const timestamp = Date.now();
     const randomStr = Math.random().toString(36).substring(2, 9);
     const extension = file.name.split('.').pop() || 'jpg';

@@ -109,11 +109,11 @@ function ImageConfig({ label, value, onChange, placeholder, helpText, token }: a
       
       {/* Preview Area */}
       <div className="mb-4 flex items-center gap-4">
-        <div className="relative w-24 h-24 bg-gray-200 rounded-lg overflow-hidden border border-gray-300 flex items-center justify-center shrink-0">
+        <div className="relative w-24 h-24 bg-zinc-800 rounded-lg overflow-hidden border border-gray-600 flex items-center justify-center shrink-0">
           {uploading ? (
             <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
           ) : value ? (
-            <img src={value} alt="Preview" className="w-full h-full object-cover" />
+            <img src={value} alt="Preview" className="w-full h-full object-contain" />
           ) : (
             <ImageIcon className="w-8 h-8 text-gray-400" />
           )}
@@ -743,6 +743,66 @@ export function MasterDashboard() {
                   </div>
                 </div>
               </div>
+
+              {/* REDES SOCIAIS */}
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                  📱 Redes Sociais
+                </h3>
+                <p className="text-xs text-gray-500 mb-4">Cole o link completo do perfil. Aparecerá no header junto ao contato.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">📸 Instagram</label>
+                    <input
+                      type="text"
+                      value={config.socialMedia?.instagram || ''}
+                      onChange={(e) => setConfig({ ...config, socialMedia: { ...config.socialMedia, instagram: e.target.value } })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
+                      placeholder="https://instagram.com/seuperfil"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">📘 Facebook</label>
+                    <input
+                      type="text"
+                      value={config.socialMedia?.facebook || ''}
+                      onChange={(e) => setConfig({ ...config, socialMedia: { ...config.socialMedia, facebook: e.target.value } })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
+                      placeholder="https://facebook.com/suapagina"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">🎵 TikTok</label>
+                    <input
+                      type="text"
+                      value={config.socialMedia?.tiktok || ''}
+                      onChange={(e) => setConfig({ ...config, socialMedia: { ...config.socialMedia, tiktok: e.target.value } })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
+                      placeholder="https://tiktok.com/@seuperfil"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">▶️ YouTube</label>
+                    <input
+                      type="text"
+                      value={config.socialMedia?.youtube || ''}
+                      onChange={(e) => setConfig({ ...config, socialMedia: { ...config.socialMedia, youtube: e.target.value } })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
+                      placeholder="https://youtube.com/@seucanal"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">𝕏 Twitter / X</label>
+                    <input
+                      type="text"
+                      value={config.socialMedia?.twitter || ''}
+                      onChange={(e) => setConfig({ ...config, socialMedia: { ...config.socialMedia, twitter: e.target.value } })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
+                      placeholder="https://x.com/seuperfil"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -986,11 +1046,19 @@ export function MasterDashboard() {
                         />
 
                         <ImageConfig 
-                          label="Imagem de Fundo do Cabeçalho"
+                          label="Imagem de Fundo do Cabeçalho (Desktop)"
                           value={config.headerBackgroundUrl}
                           onChange={(val: string) => setConfig({ ...config, headerBackgroundUrl: val })}
                           placeholder="https://exemplo.com/fundo.jpg"
-                          helpText="Imagem grande que fica atrás do logo no topo do site."
+                          helpText="Imagem para telas grandes (desktop). Recomendado: 1920x600+."
+                          token={token}
+                        />
+                        <ImageConfig 
+                          label="Imagem de Fundo do Cabeçalho (Mobile)"
+                          value={config.headerBackgroundMobileUrl}
+                          onChange={(val: string) => setConfig({ ...config, headerBackgroundMobileUrl: val })}
+                          placeholder="https://exemplo.com/fundo-mobile.jpg"
+                          helpText="Imagem para celulares. Recomendado: 750x900 (vertical). Se vazio, usa a do desktop."
                           token={token}
                         />
                       </div>
@@ -1180,6 +1248,117 @@ export function MasterDashboard() {
                       </div>
                     </div>
                   </div>
+                </div>
+              </div>
+
+              {/* FUNDO DA ÁREA DE CONTEÚDO */}
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                  🖼️ Imagem de Fundo do Site
+                </h3>
+                <p className="text-xs text-gray-500 mb-4">Imagem que aparece como fundo de todo o site. Use imagens separadas para desktop e mobile para melhor resultado.</p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <ImageConfig
+                      label="Fundo Desktop"
+                      value={config.contentBackgroundUrl || ''}
+                      onChange={(url: string) => setConfig({ ...config, contentBackgroundUrl: url })}
+                      placeholder="https://..."
+                      helpText="Recomendado: 1920x1080 (paisagem, escura)."
+                      token={token}
+                    />
+                    {config.contentBackgroundUrl && (
+                      <button
+                        onClick={() => setConfig({ ...config, contentBackgroundUrl: '' })}
+                        className="mt-2 text-xs text-red-500 hover:text-red-700 font-bold"
+                      >✕ Remover</button>
+                    )}
+                  </div>
+                  <div>
+                    <ImageConfig
+                      label="Fundo Mobile"
+                      value={config.contentBackgroundMobileUrl || ''}
+                      onChange={(url: string) => setConfig({ ...config, contentBackgroundMobileUrl: url })}
+                      placeholder="https://..."
+                      helpText="Recomendado: 750x1334 (vertical). Se vazio, usa a do desktop."
+                      token={token}
+                    />
+                    {config.contentBackgroundMobileUrl && (
+                      <button
+                        onClick={() => setConfig({ ...config, contentBackgroundMobileUrl: '' })}
+                        className="mt-2 text-xs text-red-500 hover:text-red-700 font-bold"
+                      >✕ Remover</button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* BANNER CARDS ANTES DO FOOTER */}
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                  🎯 Banners antes do Footer
+                </h3>
+                <p className="text-xs text-gray-500 mb-4">Cards com imagens que aparecem entre os produtos e o rodapé. Usam o mesmo fundo da área de produtos. Use PNG para transparência.</p>
+
+                {/* Lista de banners */}
+                <div>
+                  <label className="block text-sm font-bold text-gray-800 mb-3">Banners ({(config.bannerCards || []).length})</label>
+                  <div className="space-y-4">
+                    {(config.bannerCards || []).map((card: any, i: number) => (
+                      <div key={i} className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm font-bold text-gray-700">Banner {i + 1}</span>
+                          <button
+                            onClick={() => {
+                              const cards = [...(config.bannerCards || [])];
+                              cards.splice(i, 1);
+                              setConfig({ ...config, bannerCards: cards });
+                            }}
+                            className="text-red-500 hover:text-red-700 text-sm font-bold"
+                          >✕ Remover</button>
+                        </div>
+                        <ImageConfig
+                          label="Imagem do Banner"
+                          value={card.imageUrl || ''}
+                          onChange={(url: string) => {
+                            const cards = [...(config.bannerCards || [])];
+                            cards[i] = { ...cards[i], imageUrl: url };
+                            setConfig({ ...config, bannerCards: cards });
+                          }}
+                          placeholder="https://..."
+                          helpText="PNG com fundo transparente recomendado."
+                          token={token}
+                        />
+                        <div className="mt-3">
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Link (opcional)</label>
+                          <input
+                            type="text"
+                            value={card.link || ''}
+                            onChange={(e) => {
+                              const cards = [...(config.bannerCards || [])];
+                              cards[i] = { ...cards[i], link: e.target.value };
+                              setConfig({ ...config, bannerCards: cards });
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            placeholder="https://... (clique no banner abre este link)"
+                          />
+                        </div>
+                        {card.imageUrl && (
+                          <div className="mt-3 bg-zinc-900 rounded-lg p-3 flex justify-center">
+                            <img src={card.imageUrl} alt={`Preview ${i+1}`} className="max-h-32 object-contain" />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => {
+                      const cards = [...(config.bannerCards || [])];
+                      cards.push({ imageUrl: '', link: '' });
+                      setConfig({ ...config, bannerCards: cards });
+                    }}
+                    className="mt-4 text-sm text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1"
+                  >+ Adicionar Banner</button>
                 </div>
               </div>
             </div>
@@ -1697,7 +1876,7 @@ export function MasterDashboard() {
                         <Megaphone className="w-6 h-6" />
                       </div>
                       <div>
-                        <h4 className="font-bold text-lg text-gray-800">Tráfego Pago</h4>
+                        <h4 className="font-bold text-lg text-gray-800">Meta Ads</h4>
                         <p className="text-xs text-gray-500">Gestão de Campanhas e Ads</p>
                       </div>
                     </div>
@@ -1720,7 +1899,7 @@ export function MasterDashboard() {
                     Painel completo para gestão de campanhas de Facebook e Instagram Ads.
                     <br />
                     <span className="text-xs font-semibold text-red-500 mt-2 block">
-                      {config.features?.paidTraffic === false ? '⛔ Desativado: Menu de Tráfego Pago desaparece.' : '✅ Ativado: Acesso ao dashboard de campanhas.'}
+                      {config.features?.paidTraffic === false ? '⛔ Desativado: Menu de Meta Ads desaparece.' : '✅ Ativado: Acesso ao dashboard de campanhas.'}
                     </span>
                   </p>
                 </div>

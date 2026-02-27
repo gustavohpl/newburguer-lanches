@@ -66,11 +66,11 @@ export function CategoryPage({ category, products, onAddToCart }: CategoryPagePr
   return (
     <div>
       <div className="text-center mb-8">
-        <div className="inline-block bg-white dark:bg-zinc-900 px-6 py-3 rounded-lg shadow-md border border-gray-200 dark:border-zinc-800">
-          <h1 className="text-3xl text-gray-800 dark:text-gray-100 mb-1 font-bold">{categoryInfo.label}</h1>
+        <div className="inline-block bg-white/80 dark:bg-black/50 backdrop-blur-sm px-6 py-3 rounded-lg shadow-md border border-gray-200/30 dark:border-white/10">
+          <h1 className="text-3xl text-gray-800 dark:text-white mb-1 font-bold">{categoryInfo.label}</h1>
         </div>
-        <div className="inline-block bg-orange-100 dark:bg-orange-900/30 px-4 py-2 rounded-lg mt-3 mx-auto">
-          <p className="text-black dark:text-gray-200 font-medium">{categoryInfo.description}</p>
+        <div className="inline-block bg-orange-100/70 dark:bg-black/40 backdrop-blur-sm px-4 py-2 rounded-lg mt-3 mx-auto">
+          <p className="text-black dark:text-white font-medium">{categoryInfo.description}</p>
         </div>
       </div>
       
@@ -83,7 +83,7 @@ export function CategoryPage({ category, products, onAddToCart }: CategoryPagePr
           />
         ))}
         {products.length === 0 && (
-          <div className="col-span-full text-center py-12 bg-white dark:bg-zinc-900 rounded-lg border border-gray-200 dark:border-zinc-800">
+          <div className="col-span-full text-center py-12 bg-white/80 dark:bg-zinc-900/60 backdrop-blur-sm rounded-lg border border-gray-200/30 dark:border-zinc-800/30">
             <p className="text-gray-500 text-lg">Nenhum produto encontrado nesta categoria.</p>
           </div>
         )}

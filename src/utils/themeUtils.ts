@@ -171,6 +171,10 @@ export function applyTheme(
     if (modeConfig.cardColor && modeConfig.cardColor !== '#ffffff') {
       css += `
         :not(.dark) ${scope} .bg-white { background-color: ${modeConfig.cardColor} !important; }
+        .dark ${scope} .bg-card,
+        .dark ${scope} [class*="dark:bg-zinc-900"],
+        ${scope}.dark .bg-card,
+        ${scope}.dark [class*="dark:bg-zinc-900"] { background-color: ${modeConfig.cardColor} !important; }
       `;
     }
 

@@ -9,6 +9,7 @@ export interface SystemConfig {
   address: string;
   logoUrl?: string;
   headerBackgroundUrl?: string;
+  headerBackgroundMobileUrl?: string; // Imagem do header para mobile
   headerEffectShape?: string; // Formato do efeito no header
   headerEffectCount?: number; // Quantidade de efeitos pulsantes (1-15)
   headerEffectRandomPosition?: boolean; // Se true, posiciona aleatoriamente
@@ -48,6 +49,19 @@ export interface SystemConfig {
   cardColor?: string;
   textColor?: string;
   forceDarkMode?: boolean; // 🌓 NOVO: Forçar modo claro ou escuro
+  // Fundo da área de conteúdo (produtos)
+  contentBackgroundUrl?: string;
+  contentBackgroundMobileUrl?: string; // Imagem de fundo para mobile
+  // Banner cards antes do footer
+  bannerCards?: Array<{ imageUrl: string; link?: string }>;
+  // Redes sociais
+  socialMedia?: {
+    instagram?: string;
+    facebook?: string;
+    tiktok?: string;
+    youtube?: string;
+    twitter?: string;
+  };
 }
 
 interface ConfigContextType {
