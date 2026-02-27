@@ -132,6 +132,45 @@ router.get('/customers/:phone', async (c) => {
   }
 });
 
+// ==========================================
+// 🔥 PRODUTOS MAIS PEDIDOS (Público) — DEVE ficar ANTES de /orders/:id
+// ==========================================
+
+router.get('/orders/popular', async (c) => {
+  try {
+    const [activeOrders, archivedOrders] = await Promise.all([
+      kv.getByPrefix('order:'),
+      kv.getByPrefix('archive:'),
+    ]);
+    const allOrders = [...activeOrders, ...archivedOrders];
+
+    if (allOrders.length === 0) {
+      return success(c, { popular: [], totalOrders: 0 });
+    }
+
+    const productCounts: Record<string, number> = {};
+    allOrders.forEach((order: any) => {
+      if (order.items && Array.isArray(order.items)) {
+        order.items.forEach((item: any) => {
+          const productId = item.productId || item.id;
+          if (productId) {
+            productCounts[productId] = (productCounts[productId] || 0) + (item.quantity || 1);
+          }
+        });
+      }
+    });
+
+    const popular = Object.entries(productCounts)
+      .sort(([, a], [, b]) => (b as number) - (a as number))
+      .slice(0, 15)
+      .map(([productId, count]) => ({ productId, count }));
+
+    return success(c, { popular, totalOrders: allOrders.length });
+  } catch (e) {
+    return error(c, `Erro ao buscar populares: ${e}`);
+  }
+});
+
 // Buscar pedido por ID
 router.get('/orders/:id', async (c) => {
   const id = c.req.param('id');
@@ -491,48 +530,6 @@ router.post('/orders/:id/review', async (c) => {
   } catch (e) {
     console.error('❌ [BACKEND] Erro ao salvar avaliação:', e);
     return error(c, `Erro ao salvar avaliação: ${e}`);
-  }
-});
-
-// ==========================================
-// 🔥 PRODUTOS MAIS PEDIDOS (Público)
-// ==========================================
-
-router.get('/orders/popular', async (c) => {
-  try {
-    // Buscar pedidos ativos + arquivados
-    const [activeOrders, archivedOrders] = await Promise.all([
-      kv.getByPrefix('order:'),
-      kv.getByPrefix('archive:'),
-    ]);
-    const allOrders = [...activeOrders, ...archivedOrders];
-
-    if (allOrders.length === 0) {
-      return success(c, { popular: [], totalOrders: 0 });
-    }
-
-    // Contar pedidos por produto
-    const productCounts: Record<string, number> = {};
-    allOrders.forEach((order: any) => {
-      if (order.items && Array.isArray(order.items)) {
-        order.items.forEach((item: any) => {
-          const productId = item.productId || item.id;
-          if (productId) {
-            productCounts[productId] = (productCounts[productId] || 0) + (item.quantity || 1);
-          }
-        });
-      }
-    });
-
-    // Top 15 mais pedidos (só IDs e contagem)
-    const popular = Object.entries(productCounts)
-      .sort(([, a], [, b]) => (b as number) - (a as number))
-      .slice(0, 15)
-      .map(([productId, count]) => ({ productId, count }));
-
-    return success(c, { popular, totalOrders: allOrders.length });
-  } catch (e) {
-    return error(c, `Erro ao buscar populares: ${e}`);
   }
 });
 
