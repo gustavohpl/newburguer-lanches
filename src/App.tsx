@@ -722,13 +722,15 @@ function AppContent() {
           {/* Imagem de fundo fixa com zoom suave (Ken Burns) */}
           {(config.contentBackgroundUrl || config.contentBackgroundMobileUrl) && (
             <>
-              <style>{`
-                @keyframes kenBurns {
-                  0% { transform: scale(1); }
-                  50% { transform: scale(1.06); }
-                  100% { transform: scale(1); }
-                }
-              `}</style>
+              {config.bgAnimationEnabled !== false && (
+                <style>{`
+                  @keyframes kenBurns {
+                    0% { transform: scale(1); }
+                    50% { transform: scale(1.06); }
+                    100% { transform: scale(1); }
+                  }
+                `}</style>
+              )}
               <div 
                 className="fixed inset-0 z-0"
                 style={{
@@ -737,7 +739,7 @@ function AppContent() {
                   backgroundPosition: 'center center',
                   backgroundRepeat: 'no-repeat',
                   pointerEvents: 'none',
-                  animation: 'kenBurns 25s ease-in-out infinite',
+                  ...(config.bgAnimationEnabled !== false ? { animation: 'kenBurns 25s ease-in-out infinite' } : {}),
                 }}
               />
             </>

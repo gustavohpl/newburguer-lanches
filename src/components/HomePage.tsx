@@ -79,6 +79,19 @@ export function HomePage({ products, onAddToCart, orderHistory }: HomePageProps)
         <p className="text-lg">{config.siteSubtitle || 'Os melhores lanches da região!'}</p>
       </div>
 
+      {/* Banner promocional entre boas-vindas e promoções */}
+      {config.homeBannerUrl && (
+        <div className="rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all hover:scale-[1.01] cursor-pointer">
+          {config.homeBannerLink ? (
+            <a href={config.homeBannerLink} target="_blank" rel="noopener noreferrer">
+              <img src={config.homeBannerUrl} alt="Banner" className="w-full h-auto object-contain" />
+            </a>
+          ) : (
+            <img src={config.homeBannerUrl} alt="Banner" className="w-full h-auto object-contain" />
+          )}
+        </div>
+      )}
+
       {/* Promoções - SEMPRE MOSTRAR */}
       <section>
         <div className="flex items-center gap-3 mb-6">

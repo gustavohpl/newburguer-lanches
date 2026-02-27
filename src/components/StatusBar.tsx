@@ -18,15 +18,13 @@ export function StatusBar({ isStoreOpen = true }: StatusBarProps) {
             {/* Status Aberto/Fechado */}
             {isStoreOpen ? (
               <div className="relative">
-                {/* Badge de status - Sem blur externo exagerado */}
-                <div className="relative px-8 py-3 bg-green-600 rounded-full shadow-lg">
-                  <div className="flex items-center gap-3">
-                    {/* Bolinha pulsante branca interna mais discreta */}
-                    <span className="relative flex h-3 w-3">
+                <div className="relative px-4 py-1.5 bg-green-600 rounded-full shadow-md">
+                  <div className="flex items-center gap-2">
+                    <span className="relative flex h-2.5 w-2.5">
                       <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-                      <span className="relative inline-flex rounded-full h-3 w-3 bg-white"></span>
+                      <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
                     </span>
-                    <span className="text-white font-bold text-base tracking-wide">
+                    <span className="text-white font-bold text-xs tracking-wide">
                       ABERTO AGORA
                     </span>
                   </div>
@@ -34,9 +32,8 @@ export function StatusBar({ isStoreOpen = true }: StatusBarProps) {
               </div>
             ) : (
               <div className="relative">
-                {/* Badge fechado */}
-                <div className="relative px-8 py-3 bg-red-600 rounded-full shadow-lg">
-                  <span className="text-white font-bold text-base tracking-wide">
+                <div className="relative px-4 py-1.5 bg-red-600 rounded-full shadow-md">
+                  <span className="text-white font-bold text-xs tracking-wide">
                     FECHADO
                   </span>
                 </div>

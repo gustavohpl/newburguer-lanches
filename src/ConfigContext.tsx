@@ -52,6 +52,10 @@ export interface SystemConfig {
   // Fundo da área de conteúdo (produtos)
   contentBackgroundUrl?: string;
   contentBackgroundMobileUrl?: string; // Imagem de fundo para mobile
+  bgAnimationEnabled?: boolean; // Ken Burns animation on/off
+  // Banner entre boas-vindas e promoções
+  homeBannerUrl?: string;
+  homeBannerLink?: string;
   // Banner cards antes do footer
   bannerCards?: Array<{ imageUrl: string; link?: string }>;
   // Redes sociais

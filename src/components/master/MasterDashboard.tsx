@@ -1291,6 +1291,55 @@ export function MasterDashboard() {
                     )}
                   </div>
                 </div>
+                {/* Toggle animação */}
+                {(config.contentBackgroundUrl || config.contentBackgroundMobileUrl) && (
+                  <div className="mt-4 flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <div>
+                      <span className="text-sm font-bold text-gray-800">🎬 Animação de Zoom (Ken Burns)</span>
+                      <p className="text-xs text-gray-500">A imagem de fundo amplia e retorna suavemente.</p>
+                    </div>
+                    <button
+                      onClick={() => setConfig({ ...config, bgAnimationEnabled: !(config.bgAnimationEnabled !== false) })}
+                      className={`relative w-12 h-6 rounded-full transition-colors ${config.bgAnimationEnabled !== false ? 'bg-green-500' : 'bg-gray-300'}`}
+                    >
+                      <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${config.bgAnimationEnabled !== false ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* BANNER ENTRE BOAS-VINDAS E PROMOÇÕES */}
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                  🏷️ Banner Principal (entre Boas-vindas e Promoções)
+                </h3>
+                <p className="text-xs text-gray-500 mb-4">Imagem que aparece na home entre o cartão de boas-vindas e a seção de promoções.</p>
+                <ImageConfig
+                  label="Imagem do Banner"
+                  value={config.homeBannerUrl || ''}
+                  onChange={(url: string) => setConfig({ ...config, homeBannerUrl: url })}
+                  placeholder="https://..."
+                  helpText="Recomendado: 1200x400 (paisagem). Aceita JPG e PNG."
+                  token={token}
+                />
+                {config.homeBannerUrl && (
+                  <>
+                    <div className="mt-3">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Link do Banner (opcional)</label>
+                      <input
+                        type="text"
+                        value={config.homeBannerLink || ''}
+                        onChange={(e) => setConfig({ ...config, homeBannerLink: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
+                        placeholder="https://instagram.com/seuperfil"
+                      />
+                    </div>
+                    <button
+                      onClick={() => setConfig({ ...config, homeBannerUrl: '', homeBannerLink: '' })}
+                      className="mt-2 text-xs text-red-500 hover:text-red-700 font-bold"
+                    >✕ Remover banner</button>
+                  </>
+                )}
               </div>
 
               {/* BANNER CARDS ANTES DO FOOTER */}

@@ -15,7 +15,11 @@ export function Footer({ onTrackOrderClick }: FooterProps) {
   const uiOpacity = (config.uiOpacity ?? 35) / 100; // Converter 0-100 para 0.0-1.0
 
   return (
-    <footer className="text-white py-8 mt-16 relative overflow-hidden">
+    <footer className="text-white pt-24 pb-8 mt-0 relative overflow-hidden">
+      {/* Degradê: transparente → escuro (inverso do header) */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        background: 'linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.4) 30%, rgba(0,0,0,0.7) 60%, rgba(0,0,0,0.85) 100%)'
+      }} />
       <div className="container mx-auto px-4 relative z-10">
         {/* ============================================ */}
         {/* ORDEM ATUALIZADA: Taxa de Entrega PRIMEIRO */}
