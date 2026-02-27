@@ -1901,4 +1901,14 @@ export async function saveRestockSchedule(schedule: RestockSchedule): Promise<{ 
 }
 
 // Re-export do tipo Product para uso nos componentes
+// Buscar produtos mais pedidos (endpoint público)
+export async function getPopularProducts() {
+  try {
+    const response = await fetchWithRetry(`${API_BASE_URL}/orders/popular`, { headers });
+    return await response.json();
+  } catch (error) {
+    console.error('❌ [API] Erro ao buscar populares:', error);
+    return { success: false, popular: [], totalOrders: 0 };
+  }
+}
 export type { Product, CartItem } from '../App';

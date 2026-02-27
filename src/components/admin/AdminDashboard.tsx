@@ -10,8 +10,7 @@ import {
   Settings as SettingsIcon,
   Megaphone,
   Truck,
-  Warehouse,
-  TrendingUp
+  Warehouse
 } from 'lucide-react';
 import { useConfig } from '../../ConfigContext';
 import defaultLogo from 'figma:asset/2217307d23df7779a3757aa35c01d81549336b8b.png';
@@ -23,14 +22,13 @@ import { Settings } from './Settings';
 import { Dashboard as TrafegoPagoDashboard } from './TrafegoPago/Dashboard';
 import { DeliveryArea } from './DeliveryArea';
 import { StockManager } from './StockManager';
-import { BestSellersManager } from './BestSellersManager';
 
 interface AdminDashboardProps {
   onLogout: () => void;
   onProductsChange?: () => void;
 }
 
-type MenuOption = 'dashboard' | 'products' | 'orders' | 'delivery' | 'customers' | 'settings' | 'ads' | 'stock' | 'bestsellers';
+type MenuOption = 'dashboard' | 'products' | 'orders' | 'delivery' | 'customers' | 'settings' | 'ads' | 'stock';
 
 export function AdminDashboard({ onLogout, onProductsChange }: AdminDashboardProps) {
   const { config } = useConfig();
@@ -53,7 +51,6 @@ export function AdminDashboard({ onLogout, onProductsChange }: AdminDashboardPro
   const menuItems = [
     { id: 'dashboard' as MenuOption, label: 'Dashboard', icon: LayoutDashboard },
     { id: 'products' as MenuOption, label: 'Produtos', icon: Package },
-    { id: 'bestsellers' as MenuOption, label: 'Mais Pedidos', icon: TrendingUp },
     { id: 'orders' as MenuOption, label: 'Pedidos', icon: ShoppingBag },
     ...(config.features?.stockControl ? [{ id: 'stock' as MenuOption, label: 'Estoque', icon: Warehouse }] : []),
     ...(config.features?.paidTraffic !== false ? [{ id: 'ads' as MenuOption, label: 'Meta Ads', icon: Megaphone }] : []),
@@ -191,7 +188,6 @@ export function AdminDashboard({ onLogout, onProductsChange }: AdminDashboardPro
         <div className="p-6">
           {currentMenu === 'dashboard' && <DashboardHome />}
           {currentMenu === 'products' && <ProductsManagement onProductsChange={handleProductsChange} />}
-          {currentMenu === 'bestsellers' && <BestSellersManager />}
           {currentMenu === 'orders' && <OrderManager />}
           {currentMenu === 'ads' && config.features?.paidTraffic !== false && <TrafegoPagoDashboard />}
           {currentMenu === 'delivery' && config.features?.deliverySystem !== false && <DeliveryArea />}

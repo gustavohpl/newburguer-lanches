@@ -25,36 +25,16 @@ export function HomePage({ products, onAddToCart, orderHistory }: HomePageProps)
   useEffect(() => {
     const fetchBestSellers = async () => {
       try {
-        const response = await api.getAllOrders();
-        if (response.success && response.orders && response.orders.length > 0) {
+        const response = await api.getPopularProducts();
+        if (response.success && response.totalOrders > 0) {
           setHasOrders(true);
 
-          // Contar quantas vezes cada produto foi pedido
-          const productCounts: Record<string, number> = {};
-          response.orders.forEach((order: any) => {
-            if (order.items && Array.isArray(order.items)) {
-              order.items.forEach((item: any) => {
-                const productId = item.productId || item.id;
-                if (productId) {
-                  productCounts[productId] = (productCounts[productId] || 0) + (item.quantity || 1);
-                }
-              });
-            }
-          });
-
-          // Lista de IDs ocultos pelo admin
           const hiddenIds = config.hiddenBestSellers || [];
 
-          // Ordenar por quantidade e pegar top 10
-          const topProductIds = Object.entries(productCounts)
-            .sort(([, a], [, b]) => b - a)
-            .slice(0, 15)
-            .map(([id]) => id);
-
-          // Buscar os produtos correspondentes (só disponíveis e não ocultos)
-          const topProducts = topProductIds
-            .map(id => products.find(p => p.id === id))
-            .filter((p): p is Product => 
+          // Mapear IDs populares para produtos disponíveis
+          const topProducts = (response.popular || [])
+            .map((item: { productId: string; count: number }) => products.find(p => p.id === item.productId))
+            .filter((p: Product | undefined): p is Product => 
               p !== undefined && 
               p.available !== false && 
               !hiddenIds.includes(p.id)

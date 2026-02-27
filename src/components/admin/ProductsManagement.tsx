@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Image as ImageIcon, X, Save, Loader, Settings, Trophy, AlertTriangle, Package, BoxSelect, Utensils, Search, ChevronDown, ChevronUp, Percent } from 'lucide-react';
+import { BestSellersManager } from './BestSellersManager';
+import { Plus, Edit, Trash2, Image as ImageIcon, X, Save, Loader, Settings, Trophy, AlertTriangle, Package, BoxSelect, Utensils, Search, ChevronDown, ChevronUp, Percent, TrendingUp } from 'lucide-react';
 import * as api from '../../utils/api';
 import type { Product } from '../../App';
 import { CategoryManager } from './CategoryManager';
@@ -20,6 +21,7 @@ export function ProductsManagement({ onProductsChange }: ProductsManagementProps
   const [showCategoryManager, setShowCategoryManager] = useState(false);
   const [showTopRatedManager, setShowTopRatedManager] = useState(false);
   const [showPromotionsManager, setShowPromotionsManager] = useState(false);
+  const [showBestSellersManager, setShowBestSellersManager] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
@@ -319,17 +321,12 @@ export function ProductsManagement({ onProductsChange }: ProductsManagementProps
           let label = '';
           if (qty > 1) label += `${qty}x `;
           label += name;
-          // Só mostra porção se NÃO estiver marcado hidePortionFromClient
-          if (ri.selectedPortionLabel && !ri.hidePortionFromClient) {
+          // Só mostra porção se o nome do ingrediente NÃO estiver contido no label da porção (e vice-versa)
+          if (ri.selectedPortionLabel) {
             const nameNorm = name.trim().toLowerCase();
             const portionNorm = ri.selectedPortionLabel.trim().toLowerCase();
             if (!portionNorm.includes(nameNorm) && !nameNorm.includes(portionNorm)) {
               label += ` (${ri.selectedPortionLabel})`;
-            } else {
-              const gramsMatch = ri.selectedPortionLabel.match(/(\d+)\s*g/i);
-              if (gramsMatch) {
-                label += ` (${gramsMatch[1]}g)`;
-              }
             }
           }
           return label;
@@ -473,16 +470,20 @@ export function ProductsManagement({ onProductsChange }: ProductsManagementProps
             onClick={() => {
               setSelectedCategory(cat.id);
               setShowPromotionsManager(cat.id === 'promocoes');
+              setShowBestSellersManager(cat.id === 'mais-pedidos');
             }}
             className={`px-4 py-2 rounded-lg transition-colors whitespace-nowrap border flex items-center gap-1.5 ${
               selectedCategory === cat.id
                 ? cat.id === 'promocoes'
                   ? 'bg-red-600 text-white border-red-600'
-                  : 'bg-green-600 text-white border-green-600'
+                  : cat.id === 'mais-pedidos'
+                    ? 'bg-amber-600 text-white border-amber-600'
+                    : 'bg-green-600 text-white border-green-600'
                 : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'
             }`}
           >
             {cat.id === 'promocoes' && <Percent className="w-3.5 h-3.5" />}
+            {cat.id === 'mais-pedidos' && <TrendingUp className="w-3.5 h-3.5" />}
             {cat.label}
           </button>
         ))}
@@ -496,8 +497,13 @@ export function ProductsManagement({ onProductsChange }: ProductsManagementProps
         }} />
       )}
 
-      {/* Lista de Produtos — oculta quando PromotionsManager está ativo */}
-      {!showPromotionsManager && (filteredProducts.length === 0 ? (
+      {/* Best Sellers Manager — quando filtro Mais Pedidos está ativo */}
+      {showBestSellersManager && selectedCategory === 'mais-pedidos' && (
+        <BestSellersManager />
+      )}
+
+      {/* Lista de Produtos — oculta quando PromotionsManager ou BestSellersManager está ativo */}
+      {!showPromotionsManager && !showBestSellersManager && (filteredProducts.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
           <p className="text-gray-600 mb-4">Nenhum produto encontrado no servidor.</p>
           
@@ -808,22 +814,6 @@ export function ProductsManagement({ onProductsChange }: ProductsManagementProps
                                       className="w-3 h-3"
                                     />
                                     Ocultar
-                                  </label>
-                                )}
-                                {/* Ocultar gramas — esconde a gramatura do cliente mas mostra o ingrediente */}
-                                {cat === 'ingredient' && !ri.hideFromClient && (
-                                  <label className="flex items-center gap-1 text-[10px] text-gray-500 cursor-pointer" title="Ocultar gramatura/porção para o cliente">
-                                    <input
-                                      type="checkbox"
-                                      checked={ri.hidePortionFromClient || false}
-                                      onChange={e => {
-                                        const updated = [...recipeIngredients];
-                                        updated[idx] = { ...updated[idx], hidePortionFromClient: e.target.checked };
-                                        setRecipeIngredients(updated);
-                                      }}
-                                      className="w-3 h-3"
-                                    />
-                                    Ocultar g
                                   </label>
                                 )}
                                 {(cat === 'embalagem' || cat === 'acompanhamento') && (
