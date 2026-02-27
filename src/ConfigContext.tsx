@@ -56,6 +56,7 @@ export interface SystemConfig {
   // Banner entre boas-vindas e promoções
   homeBannerUrl?: string;
   homeBannerLink?: string;
+  hiddenBestSellers?: string[]; // IDs de produtos ocultos dos "Mais Pedidos"
   // Banner cards antes do footer
   bannerCards?: Array<{ imageUrl: string; link?: string }>;
   // Redes sociais

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Percent, Clock, TrendingUp } from 'lucide-react';
 import type { Product } from '../App';
 import { ProductCard } from './ProductCard';
@@ -6,6 +6,7 @@ import { TopRatedProducts } from './TopRatedProducts';
 import { HorizontalScroll } from './HorizontalScroll';
 import { useConfig } from '../ConfigContext';
 import { useI18n } from '../hooks/useI18n';
+import * as api from '../utils/api';
 
 interface HomePageProps {
   products: Product[];
@@ -17,14 +18,66 @@ export function HomePage({ products, onAddToCart, orderHistory }: HomePageProps)
   const { config } = useConfig();
   const { t } = useI18n();
   const themeColor = config.themeColor || '#d97706';
+  const [bestSellers, setBestSellers] = useState<Product[]>([]);
+  const [hasOrders, setHasOrders] = useState(false);
+
+  // Buscar pedidos reais para calcular "Mais Pedidos"
+  useEffect(() => {
+    const fetchBestSellers = async () => {
+      try {
+        const response = await api.getAllOrders();
+        if (response.success && response.orders && response.orders.length > 0) {
+          setHasOrders(true);
+
+          // Contar quantas vezes cada produto foi pedido
+          const productCounts: Record<string, number> = {};
+          response.orders.forEach((order: any) => {
+            if (order.items && Array.isArray(order.items)) {
+              order.items.forEach((item: any) => {
+                const productId = item.productId || item.id;
+                if (productId) {
+                  productCounts[productId] = (productCounts[productId] || 0) + (item.quantity || 1);
+                }
+              });
+            }
+          });
+
+          // Lista de IDs ocultos pelo admin
+          const hiddenIds = config.hiddenBestSellers || [];
+
+          // Ordenar por quantidade e pegar top 10
+          const topProductIds = Object.entries(productCounts)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 15)
+            .map(([id]) => id);
+
+          // Buscar os produtos correspondentes (só disponíveis e não ocultos)
+          const topProducts = topProductIds
+            .map(id => products.find(p => p.id === id))
+            .filter((p): p is Product => 
+              p !== undefined && 
+              p.available !== false && 
+              !hiddenIds.includes(p.id)
+            )
+            .slice(0, 10);
+
+          setBestSellers(topProducts);
+        }
+      } catch (error) {
+        console.error('Erro ao buscar mais pedidos:', error);
+      }
+    };
+
+    fetchBestSellers();
+  }, [products, config.hiddenBestSellers]);
 
   const promotions = products.filter(p => p.category === 'promocoes');
-  const bestSellers = products.filter(p => p.category === 'mais-pedidos');
 
+  // Pedir Novamente: só disponíveis
   const availableOrderHistory = orderHistory
     .map(historyProduct => {
       const currentProduct = products.find(p => p.id === historyProduct.id);
-      return currentProduct && currentProduct.available ? currentProduct : null;
+      return currentProduct && currentProduct.available !== false ? currentProduct : null;
     })
     .filter((product): product is Product => product !== null);
 
@@ -58,7 +111,6 @@ export function HomePage({ products, onAddToCart, orderHistory }: HomePageProps)
     );
   };
 
-  // Card com largura fixa para scroll horizontal
   const renderScrollCard = (product: Product, badge?: { text: string; color: string; icon: React.ReactNode }) => {
     return (
       <div key={product.id} className="flex-shrink-0 w-[280px] sm:w-[320px]">
@@ -81,7 +133,7 @@ export function HomePage({ products, onAddToCart, orderHistory }: HomePageProps)
         <p className="text-lg">{config.siteSubtitle || 'Os melhores lanches da região!'}</p>
       </div>
 
-      {/* Banner promocional entre boas-vindas e promoções */}
+      {/* Banner promocional */}
       {config.homeBannerUrl && (
         <div className="rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all hover:scale-[1.01] cursor-pointer">
           {config.homeBannerLink ? (
@@ -119,38 +171,34 @@ export function HomePage({ products, onAddToCart, orderHistory }: HomePageProps)
         )}
       </section>
 
-      {/* Mais Vendidos - SCROLL HORIZONTAL */}
-      <section>
-        <div className="flex items-center gap-3 mb-6">
-          <div 
-            className="text-white p-3 rounded-lg shadow-md"
-            style={{ backgroundColor: themeColor }}
-          >
-            <TrendingUp className="w-6 h-6" />
+      {/* Mais Pedidos - SÓ APARECE se tem pedidos reais E produtos disponíveis */}
+      {hasOrders && bestSellers.length > 0 && (
+        <section>
+          <div className="flex items-center gap-3 mb-6">
+            <div 
+              className="text-white p-3 rounded-lg shadow-md"
+              style={{ backgroundColor: themeColor }}
+            >
+              <TrendingUp className="w-6 h-6" />
+            </div>
+            <h2 className="text-2xl font-bold text-foreground">Mais Pedidos</h2>
           </div>
-          <h2 className="text-2xl font-bold text-foreground">Mais Vendidos</h2>
-        </div>
-        {bestSellers.length > 0 ? (
           <HorizontalScroll>
             {bestSellers.map(product => 
               renderScrollCard(product, {
-                text: 'BEST SELLER',
+                text: 'MAIS PEDIDO',
                 color: '',
                 icon: <TrendingUp className="w-4 h-4" />
               })
             )}
           </HorizontalScroll>
-        ) : (
-          <div className="bg-muted/30 dark:bg-zinc-900 border-2 border-dashed border-border dark:border-zinc-700 rounded-lg p-8 text-center">
-            <p className="text-muted-foreground">Nenhum produto em destaque no momento</p>
-          </div>
-        )}
-      </section>
+        </section>
+      )}
 
       {/* Top 3 Avaliados - SCROLL HORIZONTAL */}
       <TopRatedProducts products={products} onAddToCart={onAddToCart} />
 
-      {/* Comprar Novamente - SCROLL HORIZONTAL */}
+      {/* Comprar Novamente - SÓ disponíveis */}
       {availableOrderHistory.length > 0 && (
         <section>
           <div className="flex items-center gap-3 mb-6">
