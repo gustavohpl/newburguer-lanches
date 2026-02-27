@@ -3,6 +3,7 @@ import { Percent, Clock, TrendingUp } from 'lucide-react';
 import type { Product } from '../App';
 import { ProductCard } from './ProductCard';
 import { TopRatedProducts } from './TopRatedProducts';
+import { HorizontalScroll } from './HorizontalScroll';
 import { useConfig } from '../ConfigContext';
 import { useI18n } from '../hooks/useI18n';
 
@@ -17,17 +18,9 @@ export function HomePage({ products, onAddToCart, orderHistory }: HomePageProps)
   const { t } = useI18n();
   const themeColor = config.themeColor || '#d97706';
 
-  // ✅ HOME PAGE: Exibe apenas seções especiais (Promoções, Mais Vendidos, Mais Avaliados, Comprar Novamente)
-  // ❌ Categorias normais (Sanduíches, Bebidas, etc.) NÃO aparecem aqui
-  // 📋 Para ver produtos de categorias normais, o usuário deve clicar no menu de navegação
-  
-  // Promoções (produtos da categoria 'promocoes')
   const promotions = products.filter(p => p.category === 'promocoes');
-
-  // Mais vendidos (produtos da categoria 'mais-pedidos')
   const bestSellers = products.filter(p => p.category === 'mais-pedidos');
 
-  // Filtrar orderHistory para mostrar apenas produtos que ainda estão disponíveis
   const availableOrderHistory = orderHistory
     .map(historyProduct => {
       const currentProduct = products.find(p => p.id === historyProduct.id);
@@ -65,6 +58,15 @@ export function HomePage({ products, onAddToCart, orderHistory }: HomePageProps)
     );
   };
 
+  // Card com largura fixa para scroll horizontal
+  const renderScrollCard = (product: Product, badge?: { text: string; color: string; icon: React.ReactNode }) => {
+    return (
+      <div key={product.id} className="flex-shrink-0 w-[280px] sm:w-[320px]">
+        {renderProductCard(product, badge)}
+      </div>
+    );
+  };
+
   return (
     <div className="space-y-10">
       {/* Banner de Boas-vindas */}
@@ -92,7 +94,7 @@ export function HomePage({ products, onAddToCart, orderHistory }: HomePageProps)
         </div>
       )}
 
-      {/* Promoções - SEMPRE MOSTRAR */}
+      {/* Promoções - Grid normal */}
       <section>
         <div className="flex items-center gap-3 mb-6">
           <div className="bg-red-500 text-white p-3 rounded-lg shadow-md">
@@ -117,7 +119,7 @@ export function HomePage({ products, onAddToCart, orderHistory }: HomePageProps)
         )}
       </section>
 
-      {/* Mais Vendidos - SEMPRE MOSTRAR (Reposicionado antes de Comprar Novamente) */}
+      {/* Mais Vendidos - SCROLL HORIZONTAL */}
       <section>
         <div className="flex items-center gap-3 mb-6">
           <div 
@@ -129,15 +131,15 @@ export function HomePage({ products, onAddToCart, orderHistory }: HomePageProps)
           <h2 className="text-2xl font-bold text-foreground">Mais Vendidos</h2>
         </div>
         {bestSellers.length > 0 ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+          <HorizontalScroll>
             {bestSellers.map(product => 
-              renderProductCard(product, {
+              renderScrollCard(product, {
                 text: 'BEST SELLER',
-                color: '', // Override via style abaixo
+                color: '',
                 icon: <TrendingUp className="w-4 h-4" />
               })
             )}
-          </div>
+          </HorizontalScroll>
         ) : (
           <div className="bg-muted/30 dark:bg-zinc-900 border-2 border-dashed border-border dark:border-zinc-700 rounded-lg p-8 text-center">
             <p className="text-muted-foreground">Nenhum produto em destaque no momento</p>
@@ -145,12 +147,10 @@ export function HomePage({ products, onAddToCart, orderHistory }: HomePageProps)
         )}
       </section>
 
-      {/* Top 3 Avaliados */}
+      {/* Top 3 Avaliados - SCROLL HORIZONTAL */}
       <TopRatedProducts products={products} onAddToCart={onAddToCart} />
 
-
-
-      {/* Comprar Novamente - Mostrar apenas se houver histórico de produtos DISPONÍVEIS */}
+      {/* Comprar Novamente - SCROLL HORIZONTAL */}
       {availableOrderHistory.length > 0 && (
         <section>
           <div className="flex items-center gap-3 mb-6">
@@ -159,15 +159,15 @@ export function HomePage({ products, onAddToCart, orderHistory }: HomePageProps)
             </div>
             <h2 className="text-2xl font-bold text-foreground">Comprar Novamente</h2>
           </div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-            {availableOrderHistory.slice(0, 6).map(product => 
-              renderProductCard(product, {
+          <HorizontalScroll>
+            {availableOrderHistory.slice(0, 10).map(product => 
+              renderScrollCard(product, {
                 text: 'VOCÊ JÁ COMPROU',
                 color: 'bg-blue-500',
                 icon: <Clock className="w-4 h-4" />
               })
             )}
-          </div>
+          </HorizontalScroll>
         </section>
       )}
     </div>

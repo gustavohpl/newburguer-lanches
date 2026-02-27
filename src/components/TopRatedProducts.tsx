@@ -3,6 +3,7 @@ import { Star, Trophy } from 'lucide-react';
 import { useConfig } from '../ConfigContext';
 import * as api from '../utils/api';
 import { ProductCard } from './ProductCard';
+import { HorizontalScroll } from './HorizontalScroll';
 import type { Product } from '../App';
 
 interface TopRatedProductsProps {
@@ -16,7 +17,6 @@ export function TopRatedProducts({ products, onAddToCart }: TopRatedProductsProp
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Se a feature estiver desativada, não faz nada
     if (config.features?.reviews === false) {
       setLoading(false);
       return;
@@ -28,11 +28,9 @@ export function TopRatedProducts({ products, onAddToCart }: TopRatedProductsProp
         if (response.success && response.orders) {
           const productRatings: Record<string, { total: number; count: number }> = {};
 
-          // Calcular médias baseadas nos reviews dos pedidos
           response.orders.forEach((order: any) => {
             if (order.reviews && Array.isArray(order.reviews)) {
               order.reviews.forEach((review: any) => {
-                // Normalizar nome do produto para chave (simples)
                 const productName = review.productName;
                 if (!productRatings[productName]) {
                   productRatings[productName] = { total: 0, count: 0 };
@@ -43,35 +41,26 @@ export function TopRatedProducts({ products, onAddToCart }: TopRatedProductsProp
             }
           });
 
-          // Processar TODOS os produtos disponíveis para identificar destaques e notas
           const allRankedProducts = products.map(product => {
             const stats = productRatings[product.name] || { total: 0, count: 0 };
             const averageRating = stats.count > 0 ? stats.total / stats.count : 0;
-            
             return {
               ...product,
               calculatedRating: averageRating,
               reviewCount: stats.count,
-              // featuredRating já existe no produto
             };
           });
 
-          // Filtrar e Ordenar
           const topProducts = allRankedProducts
-            .filter(p => p.featuredRating || p.reviewCount > 0) // Mantém se for destaque OU tiver avaliações
+            .filter(p => p.featuredRating || p.reviewCount > 0)
             .sort((a, b) => {
-              // 1. Destaques primeiro
               if (a.featuredRating && !b.featuredRating) return -1;
               if (!a.featuredRating && b.featuredRating) return 1;
-              
-              // 2. Maior nota
               const ratingDiff = b.calculatedRating - a.calculatedRating;
               if (ratingDiff !== 0) return ratingDiff;
-              
-              // 3. Mais avaliações
               return b.reviewCount - a.reviewCount;
             })
-            .slice(0, 3); // Top 3
+            .slice(0, 3);
 
           setTopRated(topProducts);
         }
@@ -85,8 +74,6 @@ export function TopRatedProducts({ products, onAddToCart }: TopRatedProductsProp
     fetchTopRated();
   }, [config.features?.reviews, products]);
 
-  // 🔧 CORREÇÃO: Só retorna null se a feature estiver DESATIVADA
-  // Se estiver ativada mas sem avaliações, mostra a seção vazia
   if (config.features?.reviews === false) {
     return null;
   }
@@ -98,7 +85,7 @@ export function TopRatedProducts({ products, onAddToCart }: TopRatedProductsProp
       <div className="flex items-center gap-3 mb-6">
         <div 
           className="text-white p-3 rounded-lg shadow-md"
-          style={{ backgroundColor: '#fbbf24' }} // Amber-400 para estrelas
+          style={{ backgroundColor: '#fbbf24' }}
         >
           <Trophy className="w-6 h-6" />
         </div>
@@ -116,22 +103,21 @@ export function TopRatedProducts({ products, onAddToCart }: TopRatedProductsProp
           <p className="text-sm text-gray-400 dark:text-gray-500 mt-1">Os produtos mais bem avaliados aparecerão aqui</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+        <HorizontalScroll>
           {topRated.map((product, index) => (
-            <div key={product.id} className="relative">
+            <div key={product.id} className="flex-shrink-0 w-[280px] sm:w-[320px] relative">
               {/* Badge de Ranking */}
-              <div className="absolute -top-2 -left-2 z-10 w-8 h-8 rounded-full flex items-center justify-center font-bold text-white text-sm shadow-lg border-2 border-white dark:border-zinc-800"
+              <div className="absolute -top-2 -left-1 z-10 w-8 h-8 rounded-full flex items-center justify-center font-bold text-white text-sm shadow-lg border-2 border-white dark:border-zinc-800"
                    style={{ backgroundColor: index === 0 ? '#fbbf24' : index === 1 ? '#94a3b8' : '#b45309' }}>
                 #{index + 1}
               </div>
-              
               <ProductCard
                 product={product}
                 onAddToCart={onAddToCart}
               />
             </div>
           ))}
-        </div>
+        </HorizontalScroll>
       )}
     </section>
   );
