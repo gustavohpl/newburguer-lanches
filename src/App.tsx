@@ -722,6 +722,12 @@ function AppContent() {
           {/* Imagem de fundo fixa com zoom suave (Ken Burns) */}
           {(config.contentBackgroundUrl || config.contentBackgroundMobileUrl) && (
             <>
+              {/* Preload da imagem em alta qualidade */}
+              <link 
+                rel="preload" 
+                as="image" 
+                href={(isMobile && config.contentBackgroundMobileUrl) ? config.contentBackgroundMobileUrl : config.contentBackgroundUrl} 
+              />
               {config.bgAnimationEnabled !== false && (
                 <style>{`
                   @keyframes kenBurns {
@@ -736,10 +742,15 @@ function AppContent() {
                 style={{
                   backgroundImage: `url(${(isMobile && config.contentBackgroundMobileUrl) ? config.contentBackgroundMobileUrl : config.contentBackgroundUrl})`,
                   backgroundSize: 'cover',
-                  backgroundPosition: 'center center',
+                  backgroundPosition: 'center top',
                   backgroundRepeat: 'no-repeat',
                   pointerEvents: 'none',
-                  ...(config.bgAnimationEnabled !== false ? { animation: 'kenBurns 25s ease-in-out infinite' } : {}),
+                  imageRendering: 'auto',
+                  WebkitBackfaceVisibility: 'hidden',
+                  backfaceVisibility: 'hidden',
+                  ...(config.bgAnimationEnabled !== false 
+                    ? { animation: 'kenBurns 25s ease-in-out infinite', willChange: 'transform' } 
+                    : {}),
                 }}
               />
             </>
