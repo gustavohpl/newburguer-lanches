@@ -6,7 +6,6 @@ import { TopRatedProducts } from './TopRatedProducts';
 import { HorizontalScroll } from './HorizontalScroll';
 import { useConfig } from '../ConfigContext';
 import { useI18n } from '../hooks/useI18n';
-import * as api from '../utils/api';
 
 interface HomePageProps {
   products: Product[];
@@ -19,56 +18,25 @@ export function HomePage({ products, onAddToCart, orderHistory }: HomePageProps)
   const { t } = useI18n();
   const themeColor = config.themeColor || '#d97706';
   const [bestSellers, setBestSellers] = useState<Product[]>([]);
-  const [hasOrders, setHasOrders] = useState(false);
 
-  // Buscar pedidos reais para calcular "Mais Pedidos"
+  // Ler "Mais Pedidos" direto do config (salvo pelo admin)
   useEffect(() => {
-    const fetchBestSellers = async () => {
-      try {
-        // Usar getAllOrders que já funciona (mesmo endpoint do Dashboard)
-        const response = await api.getAllOrders();
-        
-        if (response.success && response.orders && response.orders.length > 0) {
-          setHasOrders(true);
+    const popularData = config.popularProducts as Array<{ productId: string; count: number }> | undefined;
+    if (!popularData || popularData.length === 0 || products.length === 0) return;
 
-          // Contar quantas vezes cada produto foi pedido
-          const productCounts: Record<string, number> = {};
-          response.orders.forEach((order: any) => {
-            if (order.items && Array.isArray(order.items)) {
-              order.items.forEach((item: any) => {
-                const productId = item.productId || item.id;
-                if (productId) {
-                  productCounts[productId] = (productCounts[productId] || 0) + (item.quantity || 1);
-                }
-              });
-            }
-          });
+    const hiddenIds = config.hiddenBestSellers || [];
 
-          const hiddenIds = config.hiddenBestSellers || [];
+    const topProducts = popularData
+      .map(item => products.find(p => p.id === item.productId))
+      .filter((p): p is Product => 
+        p !== undefined && 
+        p.available !== false && 
+        !hiddenIds.includes(p.id)
+      )
+      .slice(0, 10);
 
-          // Ordenar por quantidade e pegar os disponíveis
-          const topProducts = Object.entries(productCounts)
-            .sort(([, a], [, b]) => b - a)
-            .slice(0, 15)
-            .map(([id]) => products.find(p => p.id === id))
-            .filter((p): p is Product => 
-              p !== undefined && 
-              p.available !== false && 
-              !hiddenIds.includes(p.id)
-            )
-            .slice(0, 10);
-
-          setBestSellers(topProducts);
-        }
-      } catch (error) {
-        console.error('Erro ao buscar mais pedidos:', error);
-      }
-    };
-
-    if (products.length > 0) {
-      fetchBestSellers();
-    }
-  }, [products, config.hiddenBestSellers]);
+    setBestSellers(topProducts);
+  }, [products, config.popularProducts, config.hiddenBestSellers]);
 
   const promotions = products.filter(p => p.category === 'promocoes');
 
@@ -170,8 +138,8 @@ export function HomePage({ products, onAddToCart, orderHistory }: HomePageProps)
         )}
       </section>
 
-      {/* Mais Pedidos - SÓ APARECE se tem pedidos reais E produtos disponíveis */}
-      {hasOrders && bestSellers.length > 0 && (
+      {/* Mais Pedidos - SÓ APARECE se admin salvou dados e tem produtos disponíveis */}
+      {bestSellers.length > 0 && (
         <section>
           <div className="flex items-center gap-3 mb-6">
             <div 

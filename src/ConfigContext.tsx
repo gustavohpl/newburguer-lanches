@@ -57,6 +57,8 @@ export interface SystemConfig {
   homeBannerUrl?: string;
   homeBannerLink?: string;
   hiddenBestSellers?: string[]; // IDs de produtos ocultos dos "Mais Pedidos"
+  popularProducts?: Array<{ productId: string; count: number }>; // Lista de populares (salva pelo admin)
+  popularUpdatedAt?: string;
   // Banner cards antes do footer
   bannerCards?: Array<{ imageUrl: string; link?: string }>;
   // Redes sociais

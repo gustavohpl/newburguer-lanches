@@ -23,7 +23,6 @@ export function BestSellersManager() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Buscar pedidos ATIVOS + HISTÓRICO (arquivados) via admin
       const [activeRes, historyRes, productsRes] = await Promise.all([
         adminFetch('/orders', { method: 'GET' }).then(r => r.json()).catch(() => ({ success: false })),
         adminFetch('/orders/history?limit=-1', { method: 'GET' }).then(r => r.json()).catch(() => ({ success: false })),
@@ -38,7 +37,6 @@ export function BestSellersManager() {
       setTotalOrders(allOrders.length);
 
       if (allOrders.length > 0) {
-        // Contar quantas vezes cada produto foi pedido
         const productCounts: Record<string, number> = {};
         allOrders.forEach((order: any) => {
           if (order.items && Array.isArray(order.items)) {
@@ -53,7 +51,6 @@ export function BestSellersManager() {
 
         const hiddenIds = config.hiddenBestSellers || [];
 
-        // Criar lista ordenada
         const items: BestSellerItem[] = Object.entries(productCounts)
           .sort(([, a], [, b]) => b - a)
           .slice(0, 20)
@@ -70,6 +67,21 @@ export function BestSellersManager() {
           });
 
         setBestSellers(items);
+
+        // ✅ Salvar lista de populares no config para o site do cliente ler
+        const popularData = Object.entries(productCounts)
+          .sort(([, a], [, b]) => b - a)
+          .slice(0, 15)
+          .map(([productId, count]) => ({ productId, count }));
+
+        await adminFetch('/admin/config', {
+          method: 'POST',
+          body: JSON.stringify({ 
+            popularProducts: popularData,
+            popularUpdatedAt: new Date().toISOString()
+          }),
+        });
+        await refreshConfig();
       }
     } catch (error) {
       console.error('Erro ao buscar dados:', error);
@@ -134,6 +146,7 @@ export function BestSellersManager() {
         <p className="text-xs text-blue-700">
           <strong>ℹ️ Como funciona:</strong> Lista calculada automaticamente dos pedidos reais. 
           Produtos indisponíveis não aparecem no site. Use o 👁️ para ocultar da seção "Mais Pedidos".
+          A lista é atualizada no site do cliente cada vez que você abre esta aba.
         </p>
       </div>
 
