@@ -7,6 +7,7 @@ export interface SystemConfig {
   themeColor: string;
   phone: string;
   address: string;
+  googleMapsUrl?: string;
   logoUrl?: string;
   headerBackgroundUrl?: string;
   headerBackgroundMobileUrl?: string; // Imagem do header para mobile

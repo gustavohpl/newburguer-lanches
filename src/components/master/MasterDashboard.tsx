@@ -741,6 +741,17 @@ export function MasterDashboard() {
                       placeholder="Rua, Número, Bairro, Cidade"
                     />
                   </div>
+                  <div className="md:col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">📍 Link do Google Maps</label>
+                    <input
+                      type="text"
+                      value={config.googleMapsUrl || ''}
+                      onChange={(e) => setConfig({ ...config, googleMapsUrl: e.target.value })}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
+                      placeholder="https://maps.google.com/... (cole o link do Google Maps)"
+                    />
+                    <p className="text-xs text-gray-400 mt-1">Quando o cliente clica no endereço no site, abre este link. Se vazio, busca automática pelo endereço.</p>
+                  </div>
                 </div>
               </div>
 
