@@ -44,6 +44,29 @@ export function OrderSearchModal({ isOpen, onClose, onOrderFound }: OrderSearchM
     }
   }, [isOpen]);
 
+  // Polling: re-sincronizar a cada 10s enquanto o modal estiver aberto
+  useEffect(() => {
+    if (!isOpen) return;
+    const interval = setInterval(() => {
+      const stored = localStorage.getItem('faroeste_my_orders');
+      if (stored) {
+        try {
+          const orders = JSON.parse(stored).sort((a: LocalOrder, b: LocalOrder) => 
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+          // Sincronizar apenas pedidos não-finais
+          const activeOrders = orders.filter((o: LocalOrder) => 
+            o.status !== 'completed' && o.status !== 'cancelled'
+          ).slice(0, 10);
+          if (activeOrders.length > 0) {
+            syncOrdersStatus(orders, activeOrders);
+          }
+        } catch {}
+      }
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [isOpen]);
+
   const loadLocalOrders = async () => {
     try {
       const stored = localStorage.getItem('faroeste_my_orders');
@@ -57,11 +80,9 @@ export function OrderSearchModal({ isOpen, onClose, onOrderFound }: OrderSearchM
         
         setLocalOrders(orders);
         
-        // Se tiver pedidos, o modo padrão NÃO é busca, e sim a lista
         if (orders.length > 0) {
           setSearchMode(false);
-          // 🆕 Sincronizar status dos últimos 10 pedidos (não apenas 5)
-          syncOrdersStatus(orders.slice(0, 10));
+          syncOrdersStatus(orders, orders.slice(0, 10));
         } else {
           setSearchMode(true);
         }
@@ -75,14 +96,14 @@ export function OrderSearchModal({ isOpen, onClose, onOrderFound }: OrderSearchM
   };
 
   // Função para sincronizar status com o servidor
-  const syncOrdersStatus = async (ordersToCheck: LocalOrder[]) => {
+  // Recebe a lista completa (allOrders) e os pedidos a verificar (ordersToCheck)
+  const syncOrdersStatus = async (allOrders: LocalOrder[], ordersToCheck: LocalOrder[]) => {
     console.log('🔄 [SYNC] Sincronizando status dos pedidos...', ordersToCheck.length);
     let hasUpdates = false;
-    const updatedOrdersList = [...localOrders];
+    const updatedOrdersList = [...allOrders];
 
     for (const localOrder of ordersToCheck) {
       try {
-        console.log(`🔍 [SYNC] Verificando pedido ${localOrder.orderId}...`);
         const response = await api.getOrder(localOrder.orderId);
         
         if (response.success && response.order) {
@@ -90,11 +111,9 @@ export function OrderSearchModal({ isOpen, onClose, onOrderFound }: OrderSearchM
            const serverReviews = response.order.reviews;
            const serverReviewedAt = response.order.reviewedAt;
            
-           // Atualizar se o status mudou OU se o status de avaliação mudou
            if (serverStatus !== localOrder.status || 
                (serverReviews && serverReviews.length > 0 && !localOrder.reviews)) {
-             console.log(`📝 [SYNC] Update found for ${localOrder.orderId}: status=${serverStatus}, reviewed=${!!serverReviews}`);
-             // Atualizar na lista
+             console.log(`📝 [SYNC] ${localOrder.orderId}: ${localOrder.status} → ${serverStatus}`);
              const index = updatedOrdersList.findIndex(o => o.orderId === localOrder.orderId);
              if (index !== -1) {
                updatedOrdersList[index] = { 
@@ -105,25 +124,17 @@ export function OrderSearchModal({ isOpen, onClose, onOrderFound }: OrderSearchM
                };
                hasUpdates = true;
              }
-           } else {
-             console.log(`✅ [SYNC] Pedido ${localOrder.orderId} está sincronizado`);
            }
-        } else {
-          // Pedido não encontrado no servidor (404) - foi deletado ou nunca existiu
-          console.warn(`⚠️ [SYNC] Pedido ${localOrder.orderId} não existe mais no servidor (ignorado)`);
         }
       } catch (err) {
-        // Erro de rede ou outro problema - apenas log de debug
-        console.debug(`🔇 [SYNC] Erro ao sincronizar pedido ${localOrder.orderId}:`, err);
+        console.debug(`🔇 [SYNC] Erro ao sincronizar ${localOrder.orderId}:`, err);
       }
     }
 
     if (hasUpdates) {
       setLocalOrders(updatedOrdersList);
       localStorage.setItem('faroeste_my_orders', JSON.stringify(updatedOrdersList));
-      console.log('✅ [SYNC] Lista de pedidos locais atualizada com status do servidor');
-    } else {
-      console.log('📋 [SYNC] Nenhuma atualização necessária');
+      console.log('✅ [SYNC] Status atualizado!');
     }
   };
 
