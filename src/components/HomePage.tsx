@@ -25,16 +25,33 @@ export function HomePage({ products, onAddToCart, orderHistory }: HomePageProps)
   useEffect(() => {
     const fetchBestSellers = async () => {
       try {
-        const response = await api.getPopularProducts();
-        if (response.success && response.totalOrders > 0) {
+        // Usar getAllOrders que já funciona (mesmo endpoint do Dashboard)
+        const response = await api.getAllOrders();
+        
+        if (response.success && response.orders && response.orders.length > 0) {
           setHasOrders(true);
+
+          // Contar quantas vezes cada produto foi pedido
+          const productCounts: Record<string, number> = {};
+          response.orders.forEach((order: any) => {
+            if (order.items && Array.isArray(order.items)) {
+              order.items.forEach((item: any) => {
+                const productId = item.productId || item.id;
+                if (productId) {
+                  productCounts[productId] = (productCounts[productId] || 0) + (item.quantity || 1);
+                }
+              });
+            }
+          });
 
           const hiddenIds = config.hiddenBestSellers || [];
 
-          // Mapear IDs populares para produtos disponíveis
-          const topProducts = (response.popular || [])
-            .map((item: { productId: string; count: number }) => products.find(p => p.id === item.productId))
-            .filter((p: Product | undefined): p is Product => 
+          // Ordenar por quantidade e pegar os disponíveis
+          const topProducts = Object.entries(productCounts)
+            .sort(([, a], [, b]) => b - a)
+            .slice(0, 15)
+            .map(([id]) => products.find(p => p.id === id))
+            .filter((p): p is Product => 
               p !== undefined && 
               p.available !== false && 
               !hiddenIds.includes(p.id)
@@ -48,7 +65,9 @@ export function HomePage({ products, onAddToCart, orderHistory }: HomePageProps)
       }
     };
 
-    fetchBestSellers();
+    if (products.length > 0) {
+      fetchBestSellers();
+    }
   }, [products, config.hiddenBestSellers]);
 
   const promotions = products.filter(p => p.category === 'promocoes');
