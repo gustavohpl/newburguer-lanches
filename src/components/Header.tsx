@@ -152,10 +152,10 @@ export function Header() {
         </div>
 
         {/* Contato esquerda | Redes sociais direita */}
-        <div className="flex flex-col sm:flex-row items-center sm:items-start justify-center sm:justify-between gap-4 max-w-3xl mx-auto">
+        <div className="flex flex-col sm:flex-row items-start justify-between gap-4 max-w-3xl mx-auto">
           
           {/* Contato e Endereço — esquerda */}
-          <div className="flex flex-col items-center sm:items-start gap-2.5">
+          <div className="flex flex-col items-start gap-2.5">
             {/* Telefone → abre WhatsApp */}
             <a
               href={`https://wa.me/55${(config.phone || '').replace(/\D/g, '')}`}
@@ -181,7 +181,7 @@ export function Header() {
               <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 self-start mt-0.5 shadow-lg" style={{ backgroundColor: themeColor }}>
                 <MapPin className="w-4 h-4 text-white" />
               </div>
-              <div className="flex flex-col items-center sm:items-start">
+              <div className="flex flex-col items-start">
                 {(config.address || 'Praça Lucio Prado - Goiatuba/GO').split(/,| - |\\n/).filter((line: string) => line.trim()).map((line: string, i: number) => (
                   <span key={i} className="text-sm font-extrabold text-white tracking-wide leading-snug" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
                     {line.trim()}
@@ -193,7 +193,7 @@ export function Header() {
 
           {/* Redes Sociais — direita */}
           {activeSocials.length > 0 && (
-            <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2 mt-1">
+            <div className="flex flex-wrap items-start justify-start sm:justify-end gap-2">
               {activeSocials.map(([network, url]) => {
                 const Icon = SocialIcons[network];
                 if (!Icon) return null;
