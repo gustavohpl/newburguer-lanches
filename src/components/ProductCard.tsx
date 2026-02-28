@@ -111,12 +111,12 @@ export function ProductCard({ product, onAddToCart, noBorder }: ProductCardProps
         onClick={handleAddClick}
         className={`bg-card dark:bg-zinc-900 rounded-xl overflow-hidden transition-all hover:shadow-md cursor-pointer ${
           isAvailable ? 'shadow-sm' : 'shadow-sm opacity-60'
-        } ${noBorder ? '' : 'border border-border dark:border-zinc-800'}`}
+        }`}
       >
         <div className="flex">
           {/* Imagem - Thumbnail à esquerda */}
           <div
-            className="relative w-28 min-w-[7rem] sm:w-32 sm:min-w-[8rem] h-auto min-h-[7rem] flex-shrink-0 overflow-hidden"
+            className="relative w-28 min-w-[7rem] sm:w-32 sm:min-w-[8rem] h-28 sm:h-32 flex-shrink-0 overflow-hidden"
             onMouseEnter={() => setImgZoomed(true)}
             onMouseLeave={() => setImgZoomed(false)}
             onTouchStart={() => setImgZoomed(true)}
@@ -147,7 +147,7 @@ export function ProductCard({ product, onAddToCart, noBorder }: ProductCardProps
           <div className="flex-1 p-3 sm:p-4 flex flex-col justify-between min-w-0">
             {/* Nome */}
             <div>
-              <h3 className="text-sm sm:text-base font-bold text-foreground leading-tight line-clamp-2">
+              <h3 className="text-sm sm:text-base font-bold text-foreground uppercase leading-tight line-clamp-2">
                 {product.name}
               </h3>
 
@@ -174,7 +174,7 @@ export function ProductCard({ product, onAddToCart, noBorder }: ProductCardProps
 
               {/* Ingredientes visíveis para o cliente */}
               {visibleIngredients.length > 0 && (
-                <p className="text-gray-400 text-xs sm:text-sm mt-1 line-clamp-2 leading-snug">
+                <p className="text-gray-400 text-xs sm:text-sm mt-1 line-clamp-2 leading-snug uppercase">
                   {visibleIngredients.join(', ')}
                 </p>
               )}

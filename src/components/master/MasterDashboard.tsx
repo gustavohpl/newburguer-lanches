@@ -1301,7 +1301,7 @@ export function MasterDashboard() {
                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                   🖼️ Imagem de Fundo do Site
                 </h3>
-                <p className="text-xs text-gray-500 mb-4">Imagem que aparece como fundo de todo o site. Use imagens separadas para desktop e mobile para melhor resultado.</p>
+                <p className="text-xs text-gray-500 mb-4">Imagem que aparece como fundo de todo o site. Até 15MB. Para máxima qualidade, use PNG ou JPEG de alta resolução sem compressão.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <ImageConfig
@@ -1309,7 +1309,7 @@ export function MasterDashboard() {
                       value={config.contentBackgroundUrl || ''}
                       onChange={(url: string) => setConfig({ ...config, contentBackgroundUrl: url })}
                       placeholder="https://..."
-                      helpText="Recomendado: 1920x1080 (paisagem, escura)."
+                      helpText="Recomendado: 1920x1080+ (PNG ou JPEG máx. qualidade, até 15MB)."
                       token={token}
                     />
                     {config.contentBackgroundUrl && (
@@ -1325,7 +1325,7 @@ export function MasterDashboard() {
                       value={config.contentBackgroundMobileUrl || ''}
                       onChange={(url: string) => setConfig({ ...config, contentBackgroundMobileUrl: url })}
                       placeholder="https://..."
-                      helpText="Recomendado: 750x1334 (vertical). Se vazio, usa a do desktop."
+                      helpText="Recomendado: 1080x1920+ (vertical, até 15MB). Se vazio, usa a do desktop."
                       token={token}
                     />
                     {config.contentBackgroundMobileUrl && (
@@ -1353,38 +1353,87 @@ export function MasterDashboard() {
                 )}
               </div>
 
-              {/* BANNER ENTRE BOAS-VINDAS E PROMOÇÕES */}
+              {/* BANNERS ENTRE BOAS-VINDAS E PROMOÇÕES */}
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                  🏷️ Banner Principal (entre Boas-vindas e Promoções)
+                  🏷️ Banners Principais (entre Boas-vindas e Promoções)
                 </h3>
-                <p className="text-xs text-gray-500 mb-4">Imagem que aparece na home entre o cartão de boas-vindas e a seção de promoções.</p>
-                <ImageConfig
-                  label="Imagem do Banner"
-                  value={config.homeBannerUrl || ''}
-                  onChange={(url: string) => setConfig({ ...config, homeBannerUrl: url })}
-                  placeholder="https://..."
-                  helpText="Recomendado: 1200x400 (paisagem). Aceita JPG e PNG."
-                  token={token}
-                />
-                {config.homeBannerUrl && (
-                  <>
-                    <div className="mt-3">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Link do Banner (opcional)</label>
-                      <input
-                        type="text"
-                        value={config.homeBannerLink || ''}
-                        onChange={(e) => setConfig({ ...config, homeBannerLink: e.target.value })}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
-                        placeholder="https://instagram.com/seuperfil"
-                      />
-                    </div>
+                <p className="text-xs text-gray-500 mb-4">Imagens que aparecem na home entre o cartão de boas-vindas e a seção de promoções. Recomendado: 1200x400 (paisagem).</p>
+
+                {/* Compatibilidade: migrar banner antigo para array */}
+                {config.homeBannerUrl && !(config.homeBanners && config.homeBanners.length > 0) && (
+                  <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <p className="text-xs text-yellow-700 mb-2">⚠️ Você tem um banner antigo. Clique para migrar para o novo sistema multi-banner:</p>
                     <button
-                      onClick={() => setConfig({ ...config, homeBannerUrl: '', homeBannerLink: '' })}
-                      className="mt-2 text-xs text-red-500 hover:text-red-700 font-bold"
-                    >✕ Remover banner</button>
-                  </>
+                      onClick={() => {
+                        const migrated = [{ imageUrl: config.homeBannerUrl || '', link: config.homeBannerLink || '' }];
+                        setConfig({ ...config, homeBanners: migrated, homeBannerUrl: '', homeBannerLink: '' });
+                      }}
+                      className="text-xs bg-yellow-500 text-white px-3 py-1 rounded font-bold hover:bg-yellow-600"
+                    >Migrar Banner</button>
+                  </div>
                 )}
+
+                {/* Lista de banners */}
+                <div>
+                  <label className="block text-sm font-bold text-gray-800 mb-3">Banners ({(config.homeBanners || []).length})</label>
+                  <div className="space-y-4">
+                    {(config.homeBanners || []).map((banner: any, i: number) => (
+                      <div key={i} className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm font-bold text-gray-700">Banner {i + 1}</span>
+                          <button
+                            onClick={() => {
+                              const banners = [...(config.homeBanners || [])];
+                              banners.splice(i, 1);
+                              setConfig({ ...config, homeBanners: banners });
+                            }}
+                            className="text-red-500 hover:text-red-700 text-sm font-bold"
+                          >✕ Remover</button>
+                        </div>
+                        <ImageConfig
+                          label="Imagem do Banner"
+                          value={banner.imageUrl || ''}
+                          onChange={(url: string) => {
+                            const banners = [...(config.homeBanners || [])];
+                            banners[i] = { ...banners[i], imageUrl: url };
+                            setConfig({ ...config, homeBanners: banners });
+                          }}
+                          placeholder="https://..."
+                          helpText="Recomendado: 1200x400 (paisagem). Aceita JPG e PNG."
+                          token={token}
+                        />
+                        <div className="mt-3">
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Link (opcional)</label>
+                          <input
+                            type="text"
+                            value={banner.link || ''}
+                            onChange={(e) => {
+                              const banners = [...(config.homeBanners || [])];
+                              banners[i] = { ...banners[i], link: e.target.value };
+                              setConfig({ ...config, homeBanners: banners });
+                            }}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            placeholder="https://... (clique no banner abre este link)"
+                          />
+                        </div>
+                        {banner.imageUrl && (
+                          <div className="mt-3 bg-zinc-900 rounded-lg p-3 flex justify-center">
+                            <img src={banner.imageUrl} alt={`Preview ${i+1}`} className="max-h-32 object-contain" />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    onClick={() => {
+                      const banners = [...(config.homeBanners || [])];
+                      banners.push({ imageUrl: '', link: '' });
+                      setConfig({ ...config, homeBanners: banners });
+                    }}
+                    className="mt-4 text-sm text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1"
+                  >+ Adicionar Banner</button>
+                </div>
               </div>
 
               {/* BANNER CARDS ANTES DO FOOTER */}

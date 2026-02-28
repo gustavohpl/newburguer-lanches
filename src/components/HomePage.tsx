@@ -66,7 +66,7 @@ export function HomePage({ products, onAddToCart, orderHistory }: HomePageProps)
     }
     
     return (
-      <div key={product.id} className="bg-card dark:bg-zinc-900 rounded-lg shadow-lg overflow-hidden transition-all hover:shadow-xl border-2 border-border dark:border-zinc-700">
+      <div key={product.id} className="bg-card dark:bg-zinc-900 rounded-lg shadow-lg overflow-hidden transition-all hover:shadow-xl">
         <div 
           className={`${badge.color} text-white px-3 py-2 flex items-center justify-center gap-2`}
           style={{ backgroundColor: !badge.color ? themeColor : undefined }}
@@ -106,18 +106,33 @@ export function HomePage({ products, onAddToCart, orderHistory }: HomePageProps)
         <p className="text-lg">{config.siteSubtitle || 'Os melhores lanches da região!'}</p>
       </div>
 
-      {/* Banner promocional */}
-      {config.homeBannerUrl && (
-        <div className="rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all hover:scale-[1.01] cursor-pointer">
-          {config.homeBannerLink ? (
-            <a href={config.homeBannerLink} target="_blank" rel="noopener noreferrer">
-              <img src={config.homeBannerUrl} alt="Banner" className="w-full h-auto object-contain" />
-            </a>
-          ) : (
-            <img src={config.homeBannerUrl} alt="Banner" className="w-full h-auto object-contain" />
-          )}
-        </div>
-      )}
+      {/* Banners promocionais */}
+      {(() => {
+        // Suporte ao novo array de banners + compatibilidade com banner antigo
+        const banners = (config.homeBanners && config.homeBanners.length > 0) 
+          ? config.homeBanners 
+          : config.homeBannerUrl 
+            ? [{ imageUrl: config.homeBannerUrl, link: config.homeBannerLink || '' }]
+            : [];
+        if (banners.length === 0) return null;
+        return (
+          <div className="space-y-4">
+            {banners.map((banner: any, i: number) => (
+              banner.imageUrl && (
+                <div key={i} className="rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all hover:scale-[1.01] cursor-pointer">
+                  {banner.link ? (
+                    <a href={banner.link} target="_blank" rel="noopener noreferrer">
+                      <img src={banner.imageUrl} alt={`Banner ${i + 1}`} className="w-full h-auto object-contain" />
+                    </a>
+                  ) : (
+                    <img src={banner.imageUrl} alt={`Banner ${i + 1}`} className="w-full h-auto object-contain" />
+                  )}
+                </div>
+              )
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Novidades - SÓ aparece se admin adicionou produtos */}
       {novidades.length > 0 && (

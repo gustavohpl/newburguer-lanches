@@ -732,7 +732,7 @@ export function ProductsManagement({ onProductsChange }: ProductsManagementProps
                   {uploadingImage && (
                     <p className="text-sm text-gray-600 mt-1">Enviando imagem...</p>
                   )}
-                  <p className="text-xs text-gray-500 mt-1">Máximo 5MB</p>
+                  <p className="text-xs text-gray-500 mt-1">Recomendado: 400x400px (quadrada). Máximo 5MB. JPG ou PNG.</p>
                 </div>
 
                 {/* Disponibilidade */}
