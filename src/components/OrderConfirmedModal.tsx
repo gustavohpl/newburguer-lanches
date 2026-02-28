@@ -63,13 +63,21 @@ export function OrderConfirmedModal({
       onClick={handleClose}
     >
       <div 
-        className={`bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-md w-full transform transition-all duration-300 ${
+        className={`bg-white dark:bg-zinc-900 rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto relative transform transition-all duration-300 ${
           show ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
         }`}
         onClick={(e) => e.stopPropagation()}
       >
+        {/* Botão X no canto — fixo dentro do modal */}
+        <button
+          onClick={handleClose}
+          className="absolute top-3 right-3 z-20 text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-full transition-colors"
+        >
+          <X className="w-6 h-6" />
+        </button>
+
         {/* Header com animação de sucesso */}
-        <div className="bg-gradient-to-br from-green-500 to-green-600 p-8 rounded-t-2xl text-white text-center relative overflow-hidden">
+        <div className="bg-gradient-to-br from-green-500 to-green-600 p-6 sm:p-8 rounded-t-2xl text-white text-center relative overflow-hidden">
           {/* Efeito de confete animado */}
           <div className="absolute inset-0 opacity-20">
             {[...Array(20)].map((_, i) => (
@@ -87,21 +95,21 @@ export function OrderConfirmedModal({
           </div>
 
           <div className="relative z-10">
-            <div className="mx-auto w-20 h-20 bg-white dark:bg-zinc-800 rounded-full flex items-center justify-center mb-4 animate-bounce">
-              <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-500" />
+            <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 bg-white dark:bg-zinc-800 rounded-full flex items-center justify-center mb-3 animate-bounce">
+              <CheckCircle className="w-10 h-10 sm:w-12 sm:h-12 text-green-600 dark:text-green-500" />
             </div>
-            <h2 className="text-3xl font-bold mb-2">🎉 Pedido Confirmado!</h2>
-            <p className="text-green-100 dark:text-green-200 text-lg">Pagamento aceito com sucesso</p>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-1">🎉 Pedido Confirmado!</h2>
+            <p className="text-green-100 dark:text-green-200 text-base sm:text-lg">Pagamento aceito com sucesso</p>
           </div>
         </div>
 
         {/* Corpo do modal */}
-        <div className="p-6 space-y-6">
+        <div className="p-5 sm:p-6 space-y-5">
           {/* Informações do pedido */}
           <div className="bg-gray-50 dark:bg-zinc-800 rounded-xl p-4 space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-gray-600 dark:text-gray-400 font-medium">Pedido</span>
-              <span className="text-xl font-bold text-gray-900 dark:text-white">#{orderId}</span>
+              <span className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white">#{orderId}</span>
             </div>
 
             <div className="flex justify-between items-center">
@@ -123,7 +131,7 @@ export function OrderConfirmedModal({
 
             <div className="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-zinc-700">
               <span className="text-gray-700 dark:text-gray-300 font-medium">Total</span>
-              <span className="text-2xl font-bold text-green-600 dark:text-green-500">
+              <span className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-500">
                 R$ {total.toFixed(2)}
               </span>
             </div>
@@ -131,8 +139,8 @@ export function OrderConfirmedModal({
 
           {/* Status atual */}
           <div className="bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 rounded-xl p-4">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="bg-green-500 rounded-full p-2">
+            <div className="flex items-center gap-3">
+              <div className="bg-green-500 rounded-full p-2 flex-shrink-0">
                 <Clock className="w-5 h-5 text-white" />
               </div>
               <div className="flex-1">
@@ -151,11 +159,11 @@ export function OrderConfirmedModal({
           {/* Mensagem */}
           {enableTracking && (
             <div className="text-center">
-              <p className="text-gray-600 dark:text-gray-400 mb-1">
+              <p className="text-gray-600 dark:text-gray-400 mb-1 text-sm">
                 Você pode acompanhar o status do seu pedido em
               </p>
               <p className="text-amber-600 dark:text-amber-500 font-bold text-lg uppercase tracking-tight">
-                "Meus Pedidos"
+                "Pedidos"
               </p>
             </div>
           )}
@@ -163,24 +171,16 @@ export function OrderConfirmedModal({
           {/* Botão de fechar */}
           <button
             onClick={handleClose}
-            className="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-bold py-4 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="w-full bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-700 hover:to-amber-800 text-white font-bold py-3.5 px-6 rounded-xl transition-all duration-200 shadow-lg hover:shadow-xl"
           >
             Entendido
           </button>
 
           {/* Link de suporte */}
-          <div className="text-center text-sm text-gray-500 dark:text-gray-400">
+          <div className="text-center text-sm text-gray-500 dark:text-gray-400 pb-1">
             Dúvidas? Entre em contato conosco
           </div>
         </div>
-
-        {/* Botão X no canto */}
-        <button
-          onClick={handleClose}
-          className="absolute top-4 right-4 text-white hover:bg-white hover:bg-opacity-20 p-2 rounded-full transition-colors"
-        >
-          <X className="w-6 h-6" />
-        </button>
       </div>
     </div>
   );
