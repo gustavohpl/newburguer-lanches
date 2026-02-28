@@ -749,57 +749,102 @@ export function MasterDashboard() {
                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                   📱 Redes Sociais
                 </h3>
-                <p className="text-xs text-gray-500 mb-4">Cole o link completo do perfil. Aparecerá no header junto ao contato.</p>
+                <p className="text-xs text-gray-500 mb-4">Cole o link do perfil e escolha a cor do ícone que aparece no site.</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">📸 Instagram</label>
-                    <input
-                      type="text"
-                      value={config.socialMedia?.instagram || ''}
-                      onChange={(e) => setConfig({ ...config, socialMedia: { ...config.socialMedia, instagram: e.target.value } })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
-                      placeholder="https://instagram.com/seuperfil"
-                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={config.socialMedia?.instagram || ''}
+                        onChange={(e) => setConfig({ ...config, socialMedia: { ...config.socialMedia, instagram: e.target.value } })}
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
+                        placeholder="https://instagram.com/seuperfil"
+                      />
+                      <input
+                        type="color"
+                        value={config.socialMediaColors?.instagram || '#E1306C'}
+                        onChange={(e) => setConfig({ ...config, socialMediaColors: { ...config.socialMediaColors, instagram: e.target.value } })}
+                        className="w-10 h-10 rounded-lg border border-gray-300 cursor-pointer p-0.5"
+                        title="Cor do ícone"
+                      />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">📘 Facebook</label>
-                    <input
-                      type="text"
-                      value={config.socialMedia?.facebook || ''}
-                      onChange={(e) => setConfig({ ...config, socialMedia: { ...config.socialMedia, facebook: e.target.value } })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
-                      placeholder="https://facebook.com/suapagina"
-                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={config.socialMedia?.facebook || ''}
+                        onChange={(e) => setConfig({ ...config, socialMedia: { ...config.socialMedia, facebook: e.target.value } })}
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
+                        placeholder="https://facebook.com/suapagina"
+                      />
+                      <input
+                        type="color"
+                        value={config.socialMediaColors?.facebook || '#1877F2'}
+                        onChange={(e) => setConfig({ ...config, socialMediaColors: { ...config.socialMediaColors, facebook: e.target.value } })}
+                        className="w-10 h-10 rounded-lg border border-gray-300 cursor-pointer p-0.5"
+                        title="Cor do ícone"
+                      />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">🎵 TikTok</label>
-                    <input
-                      type="text"
-                      value={config.socialMedia?.tiktok || ''}
-                      onChange={(e) => setConfig({ ...config, socialMedia: { ...config.socialMedia, tiktok: e.target.value } })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
-                      placeholder="https://tiktok.com/@seuperfil"
-                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={config.socialMedia?.tiktok || ''}
+                        onChange={(e) => setConfig({ ...config, socialMedia: { ...config.socialMedia, tiktok: e.target.value } })}
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
+                        placeholder="https://tiktok.com/@seuperfil"
+                      />
+                      <input
+                        type="color"
+                        value={config.socialMediaColors?.tiktok || '#000000'}
+                        onChange={(e) => setConfig({ ...config, socialMediaColors: { ...config.socialMediaColors, tiktok: e.target.value } })}
+                        className="w-10 h-10 rounded-lg border border-gray-300 cursor-pointer p-0.5"
+                        title="Cor do ícone"
+                      />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">▶️ YouTube</label>
-                    <input
-                      type="text"
-                      value={config.socialMedia?.youtube || ''}
-                      onChange={(e) => setConfig({ ...config, socialMedia: { ...config.socialMedia, youtube: e.target.value } })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
-                      placeholder="https://youtube.com/@seucanal"
-                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={config.socialMedia?.youtube || ''}
+                        onChange={(e) => setConfig({ ...config, socialMedia: { ...config.socialMedia, youtube: e.target.value } })}
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
+                        placeholder="https://youtube.com/@seucanal"
+                      />
+                      <input
+                        type="color"
+                        value={config.socialMediaColors?.youtube || '#FF0000'}
+                        onChange={(e) => setConfig({ ...config, socialMediaColors: { ...config.socialMediaColors, youtube: e.target.value } })}
+                        className="w-10 h-10 rounded-lg border border-gray-300 cursor-pointer p-0.5"
+                        title="Cor do ícone"
+                      />
+                    </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">𝕏 Twitter / X</label>
-                    <input
-                      type="text"
-                      value={config.socialMedia?.twitter || ''}
-                      onChange={(e) => setConfig({ ...config, socialMedia: { ...config.socialMedia, twitter: e.target.value } })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
-                      placeholder="https://x.com/seuperfil"
-                    />
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={config.socialMedia?.twitter || ''}
+                        onChange={(e) => setConfig({ ...config, socialMedia: { ...config.socialMedia, twitter: e.target.value } })}
+                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
+                        placeholder="https://x.com/seuperfil"
+                      />
+                      <input
+                        type="color"
+                        value={config.socialMediaColors?.twitter || '#000000'}
+                        onChange={(e) => setConfig({ ...config, socialMediaColors: { ...config.socialMediaColors, twitter: e.target.value } })}
+                        className="w-10 h-10 rounded-lg border border-gray-300 cursor-pointer p-0.5"
+                        title="Cor do ícone"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
