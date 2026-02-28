@@ -38,7 +38,12 @@ export function HomePage({ products, onAddToCart, orderHistory }: HomePageProps)
     setBestSellers(topProducts);
   }, [products, config.popularProducts, config.hiddenBestSellers]);
 
-  const novidades = products.filter(p => p.category === 'novidades' && p.available !== false);
+  // Novidades: lê IDs do config (selecionados pelo admin)
+  const noveltyIds: string[] = (config as any).noveltyProductIds || [];
+  const novidades = noveltyIds
+    .map(id => products.find(p => p.id === id))
+    .filter((p): p is Product => p !== undefined && p.available !== false);
+
   const promotions = products.filter(p => p.category === 'promocoes');
 
   // Pedir Novamente: só disponíveis

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { BestSellersManager } from './BestSellersManager';
+import { NovitiesManager } from './NovitiesManager';
 import { Plus, Edit, Trash2, Image as ImageIcon, X, Save, Loader, Settings, Trophy, AlertTriangle, Package, BoxSelect, Utensils, Search, ChevronDown, ChevronUp, Percent, TrendingUp, Sparkles } from 'lucide-react';
 import * as api from '../../utils/api';
 import type { Product } from '../../App';
@@ -22,6 +23,7 @@ export function ProductsManagement({ onProductsChange }: ProductsManagementProps
   const [showTopRatedManager, setShowTopRatedManager] = useState(false);
   const [showPromotionsManager, setShowPromotionsManager] = useState(false);
   const [showBestSellersManager, setShowBestSellersManager] = useState(false);
+  const [showNovitiesManager, setShowNovitiesManager] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   
@@ -472,6 +474,7 @@ export function ProductsManagement({ onProductsChange }: ProductsManagementProps
               setSelectedCategory(cat.id);
               setShowPromotionsManager(cat.id === 'promocoes');
               setShowBestSellersManager(cat.id === 'mais-pedidos');
+              setShowNovitiesManager(cat.id === 'novidades');
             }}
             className={`px-4 py-2 rounded-lg transition-colors whitespace-nowrap border flex items-center gap-1.5 ${
               selectedCategory === cat.id
@@ -506,8 +509,13 @@ export function ProductsManagement({ onProductsChange }: ProductsManagementProps
         <BestSellersManager />
       )}
 
-      {/* Lista de Produtos — oculta quando PromotionsManager ou BestSellersManager está ativo */}
-      {!showPromotionsManager && !showBestSellersManager && (filteredProducts.length === 0 ? (
+      {/* Novities Manager — quando filtro Novidades está ativo */}
+      {showNovitiesManager && selectedCategory === 'novidades' && (
+        <NovitiesManager />
+      )}
+
+      {/* Lista de Produtos — oculta quando um manager especial está ativo */}
+      {!showPromotionsManager && !showBestSellersManager && !showNovitiesManager && (filteredProducts.length === 0 ? (
         <div className="text-center py-12 bg-gray-50 rounded-lg">
           <p className="text-gray-600 mb-4">Nenhum produto encontrado no servidor.</p>
           
@@ -679,7 +687,6 @@ export function ProductsManagement({ onProductsChange }: ProductsManagementProps
                       
                       <optgroup label="Sistema">
                         <option value="promocoes">Promoções</option>
-                        <option value="novidades">Novidades</option>
                         <option value="mais-pedidos">Mais Pedidos</option>
                       </optgroup>
                       
