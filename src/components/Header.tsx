@@ -193,7 +193,7 @@ export function Header() {
 
           {/* Redes Sociais — direita */}
           {activeSocials.length > 0 && (
-            <div className="flex flex-wrap items-start justify-start sm:justify-end gap-2">
+            <div className="flex flex-wrap items-start justify-end gap-2 self-end sm:self-auto">
               {activeSocials.map(([network, url]) => {
                 const Icon = SocialIcons[network];
                 if (!Icon) return null;
