@@ -152,7 +152,7 @@ export function Header() {
         </div>
 
         {/* Contato esquerda | Redes sociais direita */}
-        <div className="flex flex-col sm:flex-row items-start justify-between gap-4 max-w-3xl mx-auto">
+        <div className="flex flex-row items-start justify-between gap-4 max-w-3xl mx-auto">
           
           {/* Contato e Endereço — esquerda */}
           <div className="flex flex-col items-start gap-2.5">
