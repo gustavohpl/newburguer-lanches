@@ -821,7 +821,7 @@ function AppContent() {
                 </section>
               )}
 
-              <Footer onTrackOrderClick={() => setIsOrderSearchOpen(true)} />
+              <Footer />
 
               <Cart
                 isOpen={isCartOpen}

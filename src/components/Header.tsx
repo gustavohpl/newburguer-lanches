@@ -118,9 +118,9 @@ export function Header() {
         style={{ backgroundImage: `url(${currentBg})`, backgroundPosition: 'center center', backgroundSize: 'cover' }}
       />
       
-      {/* Overlay: mais escuro e estende mais para baixo */}
+      {/* Overlay: escurece acima, mantém escuro até as redes sociais */}
       <div className="absolute inset-0" style={{ 
-        background: 'linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0.25) 90%, transparent 100%)' 
+        background: 'linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.45) 80%, rgba(0,0,0,0.2) 95%, transparent 100%)' 
       }} />
 
       {/* Efeitos animados (configuráveis no admin) */}
@@ -138,16 +138,16 @@ export function Header() {
       ))}
 
       {/* Conteúdo principal */}
-      <div className="container mx-auto px-4 pt-5 pb-12 relative z-10">
+      <div className="container mx-auto px-4 pt-5 pb-14 relative z-10">
         
-        {/* TOPO: Endereço + Contato */}
-        <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 mb-6">
+        {/* TOPO: Endereço + Contato — centralizado */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-5 mb-6">
           {/* Endereço */}
           <div className="inline-flex items-center gap-2">
             <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 shadow-md" style={{ backgroundColor: themeColor }}>
               <MapPin className="w-3 h-3 text-white" />
             </div>
-            <span className="text-xs sm:text-sm font-extrabold text-white tracking-wide leading-snug text-center sm:text-left" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
+            <span className="text-xs sm:text-sm font-extrabold text-white tracking-wide leading-snug" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
               {effectiveAddress}
             </span>
           </div>
