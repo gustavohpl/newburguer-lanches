@@ -1,5 +1,6 @@
 import React from 'react';
 import { useConfig } from '../ConfigContext';
+import { useFranchise } from '../FranchiseContext';
 
 interface StatusBarProps {
   isStoreOpen?: boolean;
@@ -7,7 +8,9 @@ interface StatusBarProps {
 
 export function StatusBar({ isStoreOpen = true }: StatusBarProps) {
   const { config } = useConfig();
+  const { unitOverrides } = useFranchise();
   const themeColor = config.themeColor || '#d97706';
+  const effectiveHours = unitOverrides.openingHours || config.openingHours || 'Todos os dias a partir das 18h30';
 
   return (
     <div className="border-b border-white/5 py-4">
@@ -52,7 +55,7 @@ export function StatusBar({ isStoreOpen = true }: StatusBarProps) {
                 <span className="text-lg text-white">🕐</span>
               </div>
               <span className="text-sm font-bold text-white drop-shadow-md relative z-10 whitespace-pre-line text-center">
-                {config.openingHours || 'Todos os dias a partir das 18h30'}
+                {effectiveHours}
               </span>
             </div>
           </div>

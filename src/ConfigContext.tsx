@@ -73,6 +73,36 @@ export interface SystemConfig {
     youtube?: string;
     twitter?: string;
   };
+  // Sistema de Franquias (SaaS)
+  franchise?: {
+    enabled: boolean;
+    cities: FranchiseCity[];
+    switchPassword?: string; // Senha para admin trocar de franquia
+  };
+}
+
+// Tipo de cidade no sistema de franquias
+export interface FranchiseCity {
+  id: string;        // slug: "goiatuba", "jatai"
+  name: string;      // "Goiatuba"
+  units: FranchiseUnit[]; // Franquias/unidades da cidade
+}
+
+// Tipo de unidade/franquia dentro de uma cidade
+export interface FranchiseUnit {
+  id: string;         // slug: "centro-goiatuba"
+  name: string;       // "NewBurguer Centro"
+  phone: string;
+  address: string;
+  googleMapsUrl?: string;
+  openingHours?: string;
+  deliveryFee?: number;
+  isOpen?: boolean;
+  sectors?: Array<{
+    id: string;
+    name: string;
+    color: string;
+  }>;
 }
 
 interface ConfigContextType {

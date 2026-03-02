@@ -11,6 +11,7 @@ import { usePrinter } from './PrinterManager';
 import type { OrderPrintData } from '../utils/thermalPrinter';
 import { useCustomer } from '../hooks/useCustomer';
 import { useConfig } from '../ConfigContext';
+import { useFranchise } from '../FranchiseContext';
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -39,6 +40,7 @@ export function CheckoutModal({
   allProducts = []
 }: CheckoutModalProps) {
   const { config } = useConfig();
+  const { unitOverrides } = useFranchise();
   const [step, setStep] = useState(1);
   const [deliveryType, setDeliveryType] = useState<DeliveryType>('delivery');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
@@ -228,7 +230,7 @@ export function CheckoutModal({
     );
   };
 
-  const PICKUP_ADDRESS = config.address || 'Praça Lucio Prado - Goiatuba/GO';
+  const PICKUP_ADDRESS = unitOverrides.address || config.address || 'Praça Lucio Prado - Goiatuba/GO';
   const WHATSAPP_NUMBER = config.whatsappNumber || '5564993392970';
   // const DELIVERY_FEE = 5.00; // Removed hardcoded fee
 

@@ -86,17 +86,12 @@ export const getByPrefix = async (prefix: string): Promise<any[]> => {
   return data?.map((d) => d.value) ?? [];
 };
 
-// Atomic stock decrement — decrementa currentStock sem race condition
-// Usa UPDATE direto no JSONB em vez de read-then-write
-export const atomicStockDecrement = async (key: string, amount: number, updatedAt: string): Promise<any> => {
-  const supabase = client();
-  const { data, error } = await supabase.rpc('atomic_stock_decrement', {
-    p_key: key,
-    p_amount: amount,
-    p_updated_at: updatedAt,
-  });
+// Search for key-value pairs by prefix, returning both key and value.
+export const getByPrefixWithKeys = async (prefix: string): Promise<Array<{key: string, value: any}>> => {
+  const supabase = client()
+  const { data, error } = await supabase.from("kv_store_dfe23da2").select("key, value").like("key", prefix + "%");
   if (error) {
-    throw new Error(`atomicStockDecrement(${key}): ${error.message}`);
+    throw new Error(error.message);
   }
-  return data;
+  return data ?? [];
 };

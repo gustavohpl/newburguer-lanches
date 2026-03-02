@@ -4,7 +4,8 @@
 // ==========================================
 
 import { Hono } from "npm:hono";
-import * as kv from "./kv_retry.tsx";
+import { scopedKv } from "./kv_scoped.tsx";
+import * as kvRaw from "./kv_retry.tsx";
 import { success, error, getBrasiliaISOString, getBusinessDayStart } from "./server_utils.tsx";
 import { requireAdmin, requireMaster, cleanupExpiredSessions, resetCleanupThrottle } from "./middleware.tsx";
 import { supabase } from "./supabase_client.tsx";
@@ -18,7 +19,8 @@ const router = new Hono();
 
 router.get('/coupons', requireAdmin, async (c) => {
   try {
-    const coupons = await kv.getByPrefix('coupon:');
+    const skv = scopedKv(c);
+    const coupons = await skv.getByPrefix('coupon:');
     return success(c, { coupons });
   } catch (e) {
     return error(c, `Erro ao buscar cupons: ${e}`);
@@ -27,6 +29,7 @@ router.get('/coupons', requireAdmin, async (c) => {
 
 router.post('/coupons', requireAdmin, async (c) => {
   try {
+    const skv = scopedKv(c);
     const body = await c.req.json();
     const id = body.id || `coupon_${Date.now()}`;
     const coupon: Coupon = {
@@ -34,7 +37,7 @@ router.post('/coupons', requireAdmin, async (c) => {
       currentUses: body.currentUses || 0,
       createdAt: body.createdAt || new Date().toISOString()
     };
-    await kv.set(`coupon:${id}`, coupon);
+    await skv.set(`coupon:${id}`, coupon);
     return success(c, { coupon });
   } catch (e) {
     return error(c, `Erro ao criar cupom: ${e}`);
@@ -42,13 +45,14 @@ router.post('/coupons', requireAdmin, async (c) => {
 });
 
 router.put('/coupons/:id', requireAdmin, async (c) => {
+  const skv = scopedKv(c);
   const id = c.req.param('id');
   try {
     const body = await c.req.json();
-    const existing = await kv.get(`coupon:${id}`);
+    const existing = await skv.get(`coupon:${id}`);
     if (!existing) return error(c, 'Cupom não encontrado', 404);
     const updated: Coupon = { ...existing, ...body, updatedAt: new Date().toISOString() };
-    await kv.set(`coupon:${id}`, updated);
+    await skv.set(`coupon:${id}`, updated);
     return success(c, { coupon: updated });
   } catch (e) {
     return error(c, `Erro ao atualizar cupom: ${e}`);
@@ -56,22 +60,25 @@ router.put('/coupons/:id', requireAdmin, async (c) => {
 });
 
 router.delete('/coupons/:id', requireAdmin, async (c) => {
+  const skv = scopedKv(c);
   const id = c.req.param('id');
-  await kv.del(`coupon:${id}`);
+  await skv.del(`coupon:${id}`);
   return success(c, { message: 'Cupom deletado' });
 });
 
 router.delete('/coupons/all', requireAdmin, async (c) => {
-  const coupons = await kv.getByPrefix('coupon:');
-  for (const coupon of coupons) await kv.del(`coupon:${(coupon as any).id}`);
+  const skv = scopedKv(c);
+  const coupons = await skv.getByPrefix('coupon:');
+  for (const coupon of coupons) await skv.del(`coupon:${(coupon as any).id}`);
   return success(c, { message: `${coupons.length} cupons deletados` });
 });
 
 router.post('/coupons/validate', async (c) => {
   try {
+    const skv = scopedKv(c);
     const { code, orderTotal } = await c.req.json();
     if (!code || !code.trim()) return c.json({ success: false, valid: false, error: 'Código do cupom não fornecido' });
-    const allCoupons = await kv.getByPrefix('coupon:');
+    const allCoupons = await skv.getByPrefix('coupon:');
     const coupon = allCoupons.find((cp: any) => cp.code?.toUpperCase() === code.toUpperCase());
     if (!coupon) return c.json({ success: true, valid: false, error: 'Cupom não encontrado' });
     if (!coupon.isActive) return c.json({ success: true, valid: false, error: 'Cupom inativo' });
@@ -94,13 +101,14 @@ router.post('/coupons/validate', async (c) => {
 
 router.post('/coupons/increment-usage', async (c) => {
   try {
+    const skv = scopedKv(c);
     const { code } = await c.req.json();
     if (!code || !code.trim()) return error(c, 'Código do cupom não fornecido', 400);
-    const allCoupons = await kv.getByPrefix('coupon:');
+    const allCoupons = await skv.getByPrefix('coupon:');
     const coupon = allCoupons.find((cp: any) => cp.code?.toUpperCase() === code.toUpperCase());
     if (!coupon) return error(c, 'Cupom não encontrado', 404);
     const updatedCoupon: Coupon = { ...coupon, currentUses: (coupon.currentUses || 0) + 1, lastUsedAt: new Date().toISOString() };
-    await kv.set(`coupon:${coupon.id}`, updatedCoupon);
+    await skv.set(`coupon:${coupon.id}`, updatedCoupon);
     return success(c, { message: 'Uso do cupom incrementado', coupon: updatedCoupon });
   } catch (e) {
     return error(c, `Erro ao incrementar uso: ${e}`, 500);
@@ -112,19 +120,22 @@ router.post('/coupons/increment-usage', async (c) => {
 // ==========================================
 
 router.get('/store/status', async (c) => {
-  const status: any = await kv.get('store_status');
+  const skv = scopedKv(c);
+  const status: any = await skv.get('store_status');
   return success(c, { isOpen: status?.isOpen ?? true });
 });
 
 router.post('/store/status', requireAdmin, async (c) => {
+  const skv = scopedKv(c);
   const { isOpen } = await c.req.json();
-  await kv.set('store_status', { isOpen });
+  await skv.set('store_status', { isOpen });
   return success(c, { isOpen });
 });
 
 router.get('/config/public', async (c) => {
-  const config: any = await kv.get('system_config') || {};
-  const categories = await kv.get('categories') || [];
+  const skv = scopedKv(c);
+  const config: any = await skv.get('system_config') || {};
+  const categories = await skv.get('categories') || [];
   const publicConfig = {
     ...config, categories,
     pagSeguroToken: undefined, pagSeguroEmail: undefined,
@@ -136,7 +147,8 @@ router.get('/config/public', async (c) => {
 
 router.get('/master/config', async (c) => {
   try {
-    const systemConfig: any = await kv.get('system_config') || {};
+    const skv = scopedKv(c);
+    const systemConfig: any = await skv.get('system_config') || {};
     const hasAdminPassword = !!Deno.env.get('ADMIN_PASSWORD');
     const masterConfig = {
       ...systemConfig, hasAdminPassword,
@@ -151,6 +163,7 @@ router.get('/master/config', async (c) => {
 
 router.post('/master/config', async (c) => {
   try {
+    const skv = scopedKv(c);
     const body = await c.req.json();
     const { config, adminPassword } = body;
     if (!config || typeof config !== 'object') return error(c, 'Configuração inválida.', 400);
@@ -163,9 +176,9 @@ router.post('/master/config', async (c) => {
     };
     if (adminPassword) {
       console.log('🔐 [MASTER CONFIG] Atualizando senha do admin via painel');
-      await kv.set('admin_password', adminPassword);
+      await skv.set('admin_password', adminPassword);
     }
-    await kv.set('system_config', systemConfigToSave);
+    await skv.set('system_config', systemConfigToSave);
     return success(c, { config: systemConfigToSave });
   } catch (e) {
     return error(c, `Erro ao salvar configuração master: ${e}`, 500);
@@ -174,10 +187,11 @@ router.post('/master/config', async (c) => {
 
 router.post('/admin/config', async (c) => {
   try {
+    const skv = scopedKv(c);
     const updates = await c.req.json();
-    const currentConfig: any = await kv.get('system_config') || {};
+    const currentConfig: any = await skv.get('system_config') || {};
     const updatedConfig = { ...currentConfig, ...updates };
-    await kv.set('system_config', updatedConfig);
+    await skv.set('system_config', updatedConfig);
     return success(c, { config: updatedConfig });
   } catch (e) {
     return error(c, `Erro ao atualizar configuração: ${e}`, 500);
@@ -185,6 +199,7 @@ router.post('/admin/config', async (c) => {
 });
 
 router.post('/master/cleanup-sessions', async (c) => {
+  const skv = scopedKv(c);
   console.log('🧹 [CLEANUP] Limpeza manual de sessões solicitada');
   try {
     resetCleanupThrottle();
@@ -201,7 +216,8 @@ router.post('/master/cleanup-sessions', async (c) => {
 
 router.get('/settings/estimates', async (c) => {
   try {
-    const estimates = await kv.get('time_estimates') || {
+    const skv = scopedKv(c);
+    const estimates = await skv.get('time_estimates') || {
       delivery: { min: 30, max: 50 },
       pickup: { min: 15, max: 25 },
       dineIn: { min: 20, max: 30 }
@@ -214,8 +230,9 @@ router.get('/settings/estimates', async (c) => {
 
 router.post('/settings/estimates', requireAdmin, async (c) => {
   try {
+    const skv = scopedKv(c);
     const { estimates } = await c.req.json();
-    await kv.set('time_estimates', estimates);
+    await skv.set('time_estimates', estimates);
     return success(c, { estimates });
   } catch (e) {
     return error(c, `Erro ao salvar estimativas: ${e}`);
@@ -228,9 +245,10 @@ router.post('/settings/estimates', requireAdmin, async (c) => {
 
 router.post('/payment/pix', async (c) => {
   try {
+    const skv = scopedKv(c);
     const body = await c.req.json();
     const { amount, customerName, customerPhone, customerEmail, items, orderId } = body;
-    const config: any = await kv.get('system_config') || {};
+    const config: any = await skv.get('system_config') || {};
     const PAGSEGURO_TOKEN = config.pagSeguroToken || Deno.env.get('PAGSEGURO_TOKEN');
     const PAGSEGURO_ENVIRONMENT = Deno.env.get('PAGSEGURO_ENVIRONMENT') || 'sandbox';
     const automaticPayment = config.automaticPayment !== false;
@@ -293,10 +311,11 @@ router.post('/payment/pix', async (c) => {
 
 router.post('/payment/card', async (c) => {
   try {
+    const skv = scopedKv(c);
     const body = await c.req.json();
     const { amount, customerName, customerPhone, customerEmail, items, card } = body;
     if (!card || !card.number || !card.expiry || !card.cvv || !card.name) return error(c, 'Dados do cartão incompletos');
-    const config: any = await kv.get('system_config') || {};
+    const config: any = await skv.get('system_config') || {};
     const PAGSEGURO_TOKEN = config.pagSeguroToken || Deno.env.get('PAGSEGURO_TOKEN');
     const PAGSEGURO_ENVIRONMENT = Deno.env.get('PAGSEGURO_ENVIRONMENT') || 'sandbox';
     if (!PAGSEGURO_TOKEN) return error(c, 'Token do PagSeguro não configurado.', 500);
@@ -344,7 +363,7 @@ router.post('/payment/card', async (c) => {
     if (chargeStatus === 'PAID') {
       const orderIdNew = `FH-${Date.now().toString().slice(-6)}`;
       const orderData = { orderId: orderIdNew, referenceId, customerName, customerPhone, items, total: amount, status: 'pending', paymentStatus: 'paid', createdAt: new Date().toISOString() };
-      await kv.set(`order:${orderIdNew}`, orderData);
+      await skv.set(`order:${orderIdNew}`, orderData);
       return success(c, { status: 'PAID', orderId: orderIdNew, message: 'Pagamento Aprovado' });
     } else {
       return error(c, `Pagamento não aprovado. Status: ${chargeStatus}`);
@@ -356,8 +375,9 @@ router.post('/payment/card', async (c) => {
 
 router.get('/payment/status/:referenceId', async (c) => {
   try {
+    const skv = scopedKv(c);
     const referenceId = c.req.param('referenceId');
-    const config: any = await kv.get('system_config') || {};
+    const config: any = await skv.get('system_config') || {};
     const PAGSEGURO_TOKEN = config.pagSeguroToken || Deno.env.get('PAGSEGURO_TOKEN');
     const PAGSEGURO_ENVIRONMENT = Deno.env.get('PAGSEGURO_ENVIRONMENT') || 'sandbox';
     if (!PAGSEGURO_TOKEN) return error(c, 'Token PagSeguro não configurado', 400);
@@ -369,17 +389,17 @@ router.get('/payment/status/:referenceId', async (c) => {
     const charges = pagseguroData.charges || [];
     const paidCharge = charges.find((ch: any) => ch.status === 'PAID');
     if (paidCharge || qrCode?.status === 'PAID') {
-      const existingOrder: any = await kv.get(`order:${referenceId}`);
+      const existingOrder: any = await skv.get(`order:${referenceId}`);
       if (existingOrder) {
         const updatedOrder = { ...existingOrder, paymentStatus: 'paid', updatedAt: new Date().toISOString() };
-        await kv.set(`order:${referenceId}`, updatedOrder);
+        await skv.set(`order:${referenceId}`, updatedOrder);
         return success(c, { success: true, status: 'paid', orderId: referenceId });
       }
-      const pixPayment: any = await kv.get(`pix_payment:${referenceId}`);
+      const pixPayment: any = await skv.get(`pix_payment:${referenceId}`);
       if (!pixPayment) {
         const orderIdNew = `FH-${Date.now().toString().slice(-6)}`;
         const orderData = { orderId: orderIdNew, referenceId, paymentStatus: 'paid', createdAt: new Date().toISOString() };
-        await kv.set(`pix_payment:${referenceId}`, orderData);
+        await skv.set(`pix_payment:${referenceId}`, orderData);
         return success(c, { success: true, status: 'paid', orderId: orderIdNew });
       }
       return success(c, { success: true, status: 'paid', orderId: pixPayment.orderId });
@@ -391,6 +411,7 @@ router.get('/payment/status/:referenceId', async (c) => {
 });
 
 router.post('/payment/notification', async (c) => {
+  const skv = scopedKv(c);
   return success(c, { received: true });
 });
 
@@ -400,6 +421,7 @@ router.post('/payment/notification', async (c) => {
 
 router.post('/upload', requireAdmin, async (c) => {
   try {
+    const skv = scopedKv(c);
     const formData = await c.req.formData();
     const file = formData.get('file') as File;
     if (!file) return error(c, 'Nenhum arquivo enviado', 400);
@@ -428,6 +450,7 @@ router.post('/upload', requireAdmin, async (c) => {
 
 router.post('/master/upload', async (c) => {
   try {
+    const skv = scopedKv(c);
     const formData = await c.req.formData();
     const file = formData.get('file') as File;
     if (!file) return error(c, 'Nenhum arquivo enviado', 400);
@@ -459,9 +482,10 @@ router.post('/master/upload', async (c) => {
 // ==========================================
 
 router.get('/stock/ingredients', requireAdmin, async (c) => {
+  const skv = scopedKv(c);
   console.log('📦 [STOCK] GET /stock/ingredients');
   try {
-    const allIngredients = await kv.getByPrefix('stock_ingredient:');
+    const allIngredients = await skv.getByPrefix('stock_ingredient:');
     const ingredients = (allIngredients || []).sort((a: any, b: any) => a.name?.localeCompare(b.name || '') || 0);
     return success(c, { ingredients });
   } catch (e) {
@@ -471,19 +495,20 @@ router.get('/stock/ingredients', requireAdmin, async (c) => {
 });
 
 router.post('/stock/ingredients', requireAdmin, async (c) => {
+  const skv = scopedKv(c);
   console.log('📦 [STOCK] POST /stock/ingredients');
   try {
     const body = await c.req.json();
     const now = getBrasiliaISOString();
     const id = body.id || `ing_${Date.now()}_${Math.random().toString(36).substr(2, 6)}`;
     let existing: any = null;
-    if (body.id) existing = await kv.get(`stock_ingredient:${body.id}`);
+    if (body.id) existing = await skv.get(`stock_ingredient:${body.id}`);
     const ingredient: StockIngredient = {
       ...(existing || {}), ...body, id,
       purchaseHistory: body.purchaseHistory || existing?.purchaseHistory || [],
       createdAt: existing?.createdAt || now, updatedAt: now,
     };
-    await kv.set(`stock_ingredient:${id}`, ingredient);
+    await skv.set(`stock_ingredient:${id}`, ingredient);
     console.log('✅ [STOCK] Ingrediente salvo:', id, ingredient.name);
     return success(c, { ingredient });
   } catch (e) {
@@ -493,10 +518,11 @@ router.post('/stock/ingredients', requireAdmin, async (c) => {
 });
 
 router.delete('/stock/ingredients/:id', requireAdmin, async (c) => {
+  const skv = scopedKv(c);
   const id = c.req.param('id');
   console.log('📦 [STOCK] DELETE /stock/ingredients/', id);
   try {
-    await kv.del(`stock_ingredient:${id}`);
+    await skv.del(`stock_ingredient:${id}`);
     return success(c, { message: 'Ingrediente deletado' });
   } catch (e) {
     console.error('❌ [STOCK] Erro ao deletar ingrediente:', e);
@@ -505,12 +531,13 @@ router.delete('/stock/ingredients/:id', requireAdmin, async (c) => {
 });
 
 router.post('/stock/ingredients/:id/restock', requireAdmin, async (c) => {
+  const skv = scopedKv(c);
   const id = c.req.param('id');
   console.log('📦 [STOCK] POST /stock/ingredients/:id/restock', id);
   try {
     const body = await c.req.json();
     const { quantity, price } = body;
-    const ingredient: any = await kv.get(`stock_ingredient:${id}`);
+    const ingredient: any = await skv.get(`stock_ingredient:${id}`);
     if (!ingredient) return error(c, 'Ingrediente não encontrado', 404);
     const now = getBrasiliaISOString();
     const historyEntry = {
@@ -522,7 +549,7 @@ router.post('/stock/ingredients/:id/restock', requireAdmin, async (c) => {
     ingredient.updatedAt = now;
     if (ingredient.type === 'kg') { ingredient.pricePerKg = price / quantity; }
     else { ingredient.pricePerUnit = price / quantity; }
-    await kv.set(`stock_ingredient:${id}`, ingredient);
+    await skv.set(`stock_ingredient:${id}`, ingredient);
     console.log('✅ [STOCK] Estoque reposto:', id, '+', quantity);
     return success(c, { ingredient });
   } catch (e) {
@@ -532,12 +559,13 @@ router.post('/stock/ingredients/:id/restock', requireAdmin, async (c) => {
 });
 
 router.get('/stock/report/daily', requireAdmin, async (c) => {
+  const skv = scopedKv(c);
   console.log('📊 [STOCK] GET /stock/report/daily');
   try {
-    const allIngredients = await kv.getByPrefix('stock_ingredient:');
+    const allIngredients = await skv.getByPrefix('stock_ingredient:');
     const dayStart = getBusinessDayStart();
     const dayStartTime = dayStart.getTime();
-    const allDeductions = await kv.getByPrefix('stock_deduction:');
+    const allDeductions = await skv.getByPrefix('stock_deduction:');
     const todayDeductions = (allDeductions || []).filter((d: any) => new Date(d.date).getTime() >= dayStartTime);
     const report = (allIngredients || []).map((ing: any) => {
       const deductions = todayDeductions.filter((d: any) => d.ingredientId === ing.id);
@@ -555,9 +583,10 @@ router.get('/stock/report/daily', requireAdmin, async (c) => {
 });
 
 router.get('/stock/restock-schedule', requireAdmin, async (c) => {
+  const skv = scopedKv(c);
   console.log('📅 [STOCK] GET /stock/restock-schedule');
   try {
-    const schedule = await kv.get('stock_restock_schedule') || {};
+    const schedule = await skv.get('stock_restock_schedule') || {};
     return success(c, { schedule });
   } catch (e) {
     console.error('❌ [STOCK] Erro ao buscar agenda de reposição:', e);
@@ -566,12 +595,13 @@ router.get('/stock/restock-schedule', requireAdmin, async (c) => {
 });
 
 router.post('/stock/restock-schedule', requireAdmin, async (c) => {
+  const skv = scopedKv(c);
   console.log('📅 [STOCK] POST /stock/restock-schedule');
   try {
     const body = await c.req.json();
     const { schedule } = body;
     if (!schedule || typeof schedule !== 'object') return error(c, 'Agenda inválida', 400);
-    await kv.set('stock_restock_schedule', schedule);
+    await skv.set('stock_restock_schedule', schedule);
     return success(c, { message: 'Agenda salva com sucesso' });
   } catch (e) {
     console.error('❌ [STOCK] Erro ao salvar agenda de reposição:', e);
@@ -580,6 +610,7 @@ router.post('/stock/restock-schedule', requireAdmin, async (c) => {
 });
 
 router.post('/stock/deduct', requireAdmin, async (c) => {
+  const skv = scopedKv(c);
   console.log('📦 [STOCK] POST /stock/deduct');
   try {
     const body = await c.req.json();
@@ -594,7 +625,7 @@ router.post('/stock/deduct', requireAdmin, async (c) => {
     for (const item of items) {
       if (!item.recipe?.ingredients) continue;
       for (const recipeIng of item.recipe.ingredients) {
-        const ingredient: any = await kv.get(`stock_ingredient:${recipeIng.ingredientId}`);
+        const ingredient: any = await skv.get(`stock_ingredient:${recipeIng.ingredientId}`);
         if (!ingredient) { errors.push(`Ingrediente ${recipeIng.ingredientId} não encontrado`); continue; }
         const ingCategory = recipeIng.category || ingredient.category || 'ingredient';
         if (isDineIn && (ingCategory === 'embalagem' || ingCategory === 'acompanhamento')) continue;
@@ -611,14 +642,14 @@ router.post('/stock/deduct', requireAdmin, async (c) => {
         }
         ingredient.currentStock = Math.max(0, (ingredient.currentStock || 0) - totalDeduct);
         ingredient.updatedAt = now;
-        await kv.set(`stock_ingredient:${ingredient.id}`, ingredient);
+        await skv.set(`stock_ingredient:${ingredient.id}`, ingredient);
         const deductionId = `deduct_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
         const deduction = {
           id: deductionId, ingredientId: ingredient.id, ingredientName: ingredient.name, category: ingCategory,
           portionLabel: recipeIng.selectedPortionLabel || null, portionG: recipeIng.selectedPortionG || null,
           productId: item.productId, quantity: totalDeduct, date: now,
         };
-        await kv.set(`stock_deduction:${deductionId}`, deduction);
+        await skv.set(`stock_deduction:${deductionId}`, deduction);
         deductions.push(deduction);
       }
     }
@@ -631,10 +662,11 @@ router.post('/stock/deduct', requireAdmin, async (c) => {
 });
 
 router.get('/stock/availability', async (c) => {
+  const skv = scopedKv(c);
   console.log('📦 [STOCK] GET /stock/availability');
   try {
-    const allIngredients = await kv.getByPrefix('stock_ingredient:');
-    const allProducts = await kv.getByPrefix('product:');
+    const allIngredients = await skv.getByPrefix('stock_ingredient:');
+    const allProducts = await skv.getByPrefix('product:');
     const emptyIngredients = (allIngredients || []).filter((ing: any) => (ing.currentStock || 0) <= 0).map((ing: any) => ing.id);
     const lowStockIngredients = (allIngredients || [])
       .filter((ing: any) => (ing.currentStock || 0) > 0 && (ing.currentStock || 0) <= (ing.minAlert || 0))
@@ -651,6 +683,82 @@ router.get('/stock/availability', async (c) => {
   } catch (e) {
     console.error('❌ [STOCK] Erro ao verificar disponibilidade:', e);
     return error(c, `Erro: ${e}`, 500);
+  }
+});
+
+// ==========================================
+// 🏙️ FRANCHISE: Migração de dados para unidade
+// Copia dados globais (sem prefixo) para unit:{id}:
+// ==========================================
+router.post('/franchise/migrate', requireMaster, async (c) => {
+  try {
+    const body = await c.req.json();
+    const { targetUnitId } = body;
+    
+    if (!targetUnitId || !/^[a-z0-9-]+$/.test(targetUnitId)) {
+      return error(c, 'targetUnitId inválido', 400);
+    }
+
+    // Prefixos de dados que serão migrados
+    const MIGRATE_PREFIXES = [
+      'product:',
+      'order:',
+      'archive:',
+      'coupon:',
+      'sector:',
+      'stock_ingredient:',
+      'driver:',
+    ];
+    
+    // Chaves individuais (sem prefixo de busca)
+    const MIGRATE_SINGLE_KEYS = [
+      'delivery_config',
+    ];
+
+    let totalMigrated = 0;
+    const details: Record<string, number> = {};
+
+    // Migrar dados por prefixo
+    for (const prefix of MIGRATE_PREFIXES) {
+      const items = await kvRaw.getByPrefixWithKeys(prefix);
+      // Filtrar apenas chaves sem prefixo unit: (dados globais)
+      const globalItems = items.filter(item => !item.key.startsWith('unit:'));
+      
+      if (globalItems.length > 0) {
+        const newKeys = globalItems.map(item => `unit:${targetUnitId}:${item.key}`);
+        const values = globalItems.map(item => item.value);
+        await kvRaw.mset(newKeys, values);
+        details[prefix] = globalItems.length;
+        totalMigrated += globalItems.length;
+        console.log(`🏙️ [MIGRATE] ${prefix} → ${globalItems.length} itens copiados para unit:${targetUnitId}`);
+      }
+    }
+
+    // Migrar chaves individuais
+    for (const key of MIGRATE_SINGLE_KEYS) {
+      try {
+        const value = await kvRaw.get(key);
+        if (value) {
+          await kvRaw.set(`unit:${targetUnitId}:${key}`, value);
+          details[key] = 1;
+          totalMigrated += 1;
+          console.log(`🏙️ [MIGRATE] ${key} → copiado para unit:${targetUnitId}`);
+        }
+      } catch (e) {
+        // Chave não existe, ignorar
+      }
+    }
+
+    console.log(`✅ [MIGRATE] Total: ${totalMigrated} itens migrados para unit:${targetUnitId}`);
+    return success(c, { 
+      migrated: totalMigrated, 
+      targetUnitId,
+      details,
+      message: `${totalMigrated} itens migrados para a unidade "${targetUnitId}". Os dados originais foram mantidos.`
+    });
+  } catch (e) {
+    console.error('❌ [MIGRATE] Erro na migração:', e);
+    return error(c, `Erro na migração: ${e}`, 500);
   }
 });
 

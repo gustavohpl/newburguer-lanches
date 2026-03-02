@@ -20,6 +20,8 @@ import * as api from './utils/api';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { MetaPixel } from './components/MetaPixel';
 import { ConfigProvider, useConfig } from './ConfigContext';
+import { FranchiseProvider, useFranchise } from './FranchiseContext';
+import { FranchiseSelectionModal } from './components/FranchiseSelectionModal';
 import { MasterDashboard } from './components/master/MasterDashboard';
 import { DeliverymanPage } from './components/delivery/DeliverymanPage';
 
@@ -66,6 +68,7 @@ import { useCustomer } from './hooks/useCustomer';
 
 function AppContent() {
   const { config, updateConfigLocal } = useConfig();
+  const { unitOverrides, franchiseEnabled, selectedUnit, needsSelection } = useFranchise();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   
   // Hook de cliente
@@ -89,6 +92,10 @@ function AppContent() {
   const [isOfflineMode, setIsOfflineMode] = useState(false);
   const [isStoreOpen, setIsStoreOpen] = useState(true);
   const [deliveryFee, setDeliveryFee] = useState(5.00);
+  
+  // 🏙️ Valores efetivos: quando franquia ativa, unidade override config global
+  const effectiveIsOpen = unitOverrides.isOpen !== undefined ? unitOverrides.isOpen : isStoreOpen;
+  const effectiveDeliveryFee = unitOverrides.deliveryFee !== undefined ? unitOverrides.deliveryFee : deliveryFee;
   
   // 🌓 DETECÇÃO DE MODO ESCURO PARA O CLIENTE
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -445,7 +452,13 @@ function AppContent() {
   }, [isAdminAuthenticated, showAdmin]);
 
   // Carregar produtos do banco de dados
+  // 🏙️ Quando franchise ativo, só carrega quando unidade estiver selecionada
   useEffect(() => {
+    if (franchiseEnabled && !selectedUnit) {
+      // Franchise ativo mas sem unidade: não carregar dados
+      return;
+    }
+
     loadProducts();
     loadStoreStatus();
     loadDeliveryFee();
@@ -473,7 +486,7 @@ function AppContent() {
     
     // Cleanup: limpar interval quando componente desmontar ou showAdmin mudar
     return () => clearInterval(productRefreshInterval);
-  }, [customer, showAdmin]); // Adicionado dependências customer e showAdmin
+  }, [customer, showAdmin, selectedUnit]); // 🏙️ Recarrega ao trocar unidade
 
   // Carregar status da loja
   const loadStoreStatus = async () => {
@@ -705,6 +718,7 @@ function AppContent() {
     <PrinterProvider>
       <Toaster richColors position="bottom-center" />
       <MetaPixel />
+      {!showAdmin && <FranchiseSelectionModal />}
       {showAdmin ? (
         <div className="min-h-screen bg-gray-100">
           {!isAdminAuthenticated ? (
@@ -762,7 +776,7 @@ function AppContent() {
               <Header />
 
               <StatusBar 
-                isStoreOpen={isStoreOpen}
+                isStoreOpen={effectiveIsOpen}
               />
 
               <CategoryNav
@@ -834,8 +848,8 @@ function AppContent() {
                 totalPrice={getTotalPrice()}
                 onOrderComplete={handleOrderComplete}
                 onOrderCreated={handleOrderCreated}
-                isStoreOpen={isStoreOpen}
-                deliveryFee={deliveryFee}
+                isStoreOpen={effectiveIsOpen}
+                deliveryFee={effectiveDeliveryFee}
                 allProducts={products}
               />
 
@@ -884,7 +898,9 @@ function AppContent() {
 export default function App() {
   return (
     <ConfigProvider>
-      <AppContent />
+      <FranchiseProvider>
+        <AppContent />
+      </FranchiseProvider>
     </ConfigProvider>
   );
 }

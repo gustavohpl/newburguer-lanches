@@ -35,7 +35,9 @@ import {
   Edit2,
   FlaskConical,
   ShieldAlert,
-  BarChart3
+  BarChart3,
+  Building2,
+  MapPin as MapPinIcon
 } from 'lucide-react';
 import * as api from '../../utils/api';
 import { masterFetch } from '../../utils/api';
@@ -192,6 +194,13 @@ export function MasterDashboard() {
   const [isLoadingSectors, setIsLoadingSectors] = useState(false);
   const [newSectorName, setNewSectorName] = useState('');
   const [editingSector, setEditingSector] = useState<DeliverySector | null>(null);
+  
+  // Franchise city management
+  const [editingCityId, setEditingCityId] = useState<string | null>(null);
+  const [editingUnitId, setEditingUnitId] = useState<string | null>(null);
+  const [newCityName, setNewCityName] = useState('');
+  const [isMigrating, setIsMigrating] = useState(false);
+  const [migrationResult, setMigrationResult] = useState<{ success: boolean; message: string } | null>(null);
   
   // Estado para descobrir IP do servidor
   const [isDiscoveringIP, setIsDiscoveringIP] = useState(false);
@@ -508,8 +517,8 @@ export function MasterDashboard() {
           <SidebarItem 
             active={activeTab === 'delivery'} 
             onClick={() => setActiveTab('delivery')}
-            icon={Truck} 
-            label="Setores de Entrega" 
+            icon={config.franchise?.enabled ? Building2 : Truck} 
+            label={config.franchise?.enabled ? "Franquias / Cidades" : "Setores de Entrega"} 
           />
           <SidebarItem 
             active={activeTab === 'admin'} 
@@ -560,7 +569,7 @@ export function MasterDashboard() {
             {activeTab === 'appearance' && 'Identidade Visual'}
             {activeTab === 'integrations' && 'Integrações Externas'}
             {activeTab === 'features' && 'Gerenciar Funcionalidades'}
-            {activeTab === 'delivery' && 'Gerenciar Setores de Entrega'}
+            {activeTab === 'delivery' && (config.franchise?.enabled ? 'Gestão de Franquias' : 'Gerenciar Setores de Entrega')}
             {activeTab === 'admin' && 'Gerenciar Admin'}
             {activeTab === 'tests' && 'Testes Automatizados'}
             {activeTab === 'audit' && 'Logs de Auditoria'}
@@ -2097,131 +2106,659 @@ export function MasterDashboard() {
                     </span>
                   </p>
                 </div>
+
+                {/* 🏙️ FEATURE: SISTEMA DE FRANQUIAS */}
+                <div className={`p-6 rounded-xl border-2 transition-all ${
+                  config.franchise?.enabled ? 'bg-white border-indigo-500 shadow-md' : 'bg-gray-50 border-gray-200 opacity-75'
+                }`}>
+                  <div className="flex justify-between items-start mb-4">
+                    <div className="flex items-center gap-3">
+                      <div className={`p-3 rounded-lg ${config.franchise?.enabled ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-200 text-gray-500'}`}>
+                        <Building2 className="w-6 h-6" />
+                      </div>
+                      <div>
+                        <h4 className="font-bold text-lg text-gray-800">Sistema de Franquias</h4>
+                        <p className="text-xs text-gray-500">Multi-cidade — Cada cidade com seus produtos, pedidos e setores</p>
+                      </div>
+                    </div>
+                    <label htmlFor="feature-franchise" className="relative inline-flex items-center cursor-pointer">
+                      <input 
+                        id="feature-franchise"
+                        type="checkbox" 
+                        className="sr-only peer"
+                        checked={config.franchise?.enabled || false}
+                        onChange={(e) => setConfig({
+                          ...config,
+                          franchise: { 
+                            ...config.franchise, 
+                            enabled: e.target.checked, 
+                            cities: config.franchise?.cities || [] 
+                          }
+                        })}
+                      />
+                      <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                    </label>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    Permite gerenciar múltiplas cidades/unidades no mesmo site. Cada cidade terá seus próprios produtos, pedidos, cupons, setores e configurações.
+                    <br />
+                    <span className="text-xs font-semibold mt-2 block" style={{ color: config.franchise?.enabled ? '#059669' : '#DC2626' }}>
+                      {config.franchise?.enabled
+                        ? `✅ Ativado: ${(config.franchise?.cities || []).length} cidade(s) configurada(s). Gerencie na aba "Franquias / Cidades".`
+                        : '⛔ Desativado: Site funciona como unidade única (modo padrão).'}
+                    </span>
+                  </p>
+                </div>
               </div>
             </div>
           )}
 
-          {/* TAB: DELIVERY SECTORS */}
+          {/* TAB: DELIVERY SECTORS / FRANQUIAS */}
           {activeTab === 'delivery' && (
             <div className="space-y-6 animate-in fade-in">
-              <div className="bg-gradient-to-r from-orange-900 to-amber-900 p-8 rounded-xl shadow-lg text-white mb-8">
-                <div className="flex items-center gap-3 mb-2">
-                  <Truck className="w-8 h-8 text-orange-400" />
-                  <h3 className="text-2xl font-bold">Gestão de Setores de Entrega</h3>
-                </div>
-                <p className="text-orange-200">
-                  Crie os setores que aparecerão para o cliente escolher no checkout.
-                  Isso ajuda a organizar as entregas e calcular rotas (futuramente).
-                </p>
-              </div>
 
-              <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-                {isLoadingSectors ? (
-                  <div className="flex justify-center p-8">
-                    <RefreshCw className="w-8 h-8 animate-spin text-orange-600" />
+              {/* === MODO FRANQUIA === */}
+              {config.franchise?.enabled ? (
+                <>
+                  <div className="bg-gradient-to-r from-indigo-900 to-purple-900 p-8 rounded-xl shadow-lg text-white mb-8">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Building2 className="w-8 h-8 text-indigo-400" />
+                      <h3 className="text-2xl font-bold">Gestão de Franquias</h3>
+                    </div>
+                    <p className="text-indigo-200">
+                      Gerencie cidades e unidades. Cada unidade terá seus próprios produtos, pedidos, cupons, setores e configurações.
+                    </p>
                   </div>
-                ) : (
-                  <div className="space-y-6">
-                    {/* Add New */}
-                    <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
-                      <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
-                        <Plus className="w-5 h-5 text-green-600" />
-                        Adicionar Novo Setor
+
+                  {/* Senha para trocar de franquia no Admin */}
+                  <div className="bg-white rounded-lg shadow-md p-5 border border-gray-200">
+                    <h4 className="font-bold text-gray-800 mb-2 flex items-center gap-2">
+                      <Key className="w-4 h-4 text-amber-600" />
+                      Senha para Trocar de Franquia (Admin)
+                    </h4>
+                    <p className="text-xs text-gray-500 mb-3">O admin precisará digitar esta senha para alternar entre franquias no dashboard.</p>
+                    <input
+                      type="text"
+                      value={config.franchise?.switchPassword || ''}
+                      onChange={(e) => setConfig({
+                        ...config,
+                        franchise: { ...config.franchise!, switchPassword: e.target.value }
+                      })}
+                      className="w-full max-w-sm p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                      placeholder="Senha para alternar franquias"
+                    />
+                  </div>
+
+                  {/* Adicionar Cidade */}
+                  <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                    <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                      <Plus className="w-5 h-5 text-indigo-600" />
+                      Adicionar Nova Cidade
+                    </h3>
+                    <div className="flex items-center gap-4">
+                      <input
+                        type="text"
+                        value={newCityName}
+                        onChange={(e) => setNewCityName(e.target.value)}
+                        className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm"
+                        placeholder="Nome da Cidade (Ex: Goiatuba, Jataí...)"
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' && newCityName.trim()) {
+                            const slug = newCityName.trim().toLowerCase()
+                              .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                              .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                            const exists = (config.franchise?.cities || []).some(c => c.id === slug);
+                            if (exists) { alert('Cidade com este ID já existe!'); return; }
+                            const newCity = { id: slug, name: newCityName.trim(), units: [] };
+                            setConfig({
+                              ...config,
+                              franchise: { ...config.franchise!, cities: [...(config.franchise?.cities || []), newCity] }
+                            });
+                            setNewCityName('');
+                            setEditingCityId(slug);
+                          }
+                        }}
+                      />
+                      <button
+                        onClick={() => {
+                          if (!newCityName.trim()) { alert('Digite o nome da cidade'); return; }
+                          const slug = newCityName.trim().toLowerCase()
+                            .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                            .replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                          const exists = (config.franchise?.cities || []).some(c => c.id === slug);
+                          if (exists) { alert('Cidade com este ID já existe!'); return; }
+                          const newCity = { id: slug, name: newCityName.trim(), units: [] };
+                          setConfig({
+                            ...config,
+                            franchise: { ...config.franchise!, cities: [...(config.franchise?.cities || []), newCity] }
+                          });
+                          setNewCityName('');
+                          setEditingCityId(slug);
+                        }}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-bold transition-colors flex items-center gap-2 shadow-sm whitespace-nowrap"
+                      >
+                        <Plus className="w-5 h-5" />
+                        Adicionar
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Lista de Cidades */}
+                  <div className="space-y-4">
+                    <h3 className="font-bold text-gray-800 ml-1 text-lg">
+                      Cidades ({(config.franchise?.cities || []).length})
+                    </h3>
+                    
+                    {(config.franchise?.cities || []).length === 0 && (
+                      <div className="text-center py-8 bg-gray-50 rounded-xl border-2 border-dashed border-gray-300">
+                        <Building2 className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                        <p className="text-gray-500 font-medium">Nenhuma cidade cadastrada</p>
+                        <p className="text-xs text-gray-400 mt-1">Adicione a primeira cidade acima</p>
+                      </div>
+                    )}
+
+                    {(config.franchise?.cities || []).map((city, cityIndex) => {
+                      const isCityOpen = editingCityId === city.id;
+                      return (
+                        <div key={city.id} className={`bg-white rounded-xl shadow-md border-2 overflow-hidden transition-all ${isCityOpen ? 'border-indigo-500' : 'border-gray-200'}`}>
+                          {/* City Header */}
+                          <div 
+                            className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                            onClick={() => setEditingCityId(isCityOpen ? null : city.id)}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-lg bg-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-sm">
+                                {city.name.charAt(0).toUpperCase()}
+                              </div>
+                              <div>
+                                <p className="font-bold text-gray-800 text-lg">{city.name}</p>
+                                <p className="text-xs text-gray-400">
+                                  ID: {city.id} • {city.units.length} unidade(s)
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={(e) => { 
+                                  e.stopPropagation();
+                                  if (!confirm(`Remover a cidade "${city.name}" e todas as suas unidades?`)) return;
+                                  const cities = (config.franchise?.cities || []).filter(c => c.id !== city.id);
+                                  setConfig({ ...config, franchise: { ...config.franchise!, cities } });
+                                }}
+                                className="p-2 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 transition-colors"
+                                title="Remover cidade"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                              <div className={`w-6 h-6 flex items-center justify-center transition-transform ${isCityOpen ? 'rotate-180' : ''}`}>
+                                <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* City Content (expandido) */}
+                          {isCityOpen && (
+                            <div className="border-t border-gray-200 p-5 space-y-5 bg-gray-50">
+                              {/* Nome da cidade */}
+                              <div className="max-w-sm">
+                                <label className="block text-sm font-medium text-gray-700 mb-1">Nome da Cidade</label>
+                                <input
+                                  type="text"
+                                  value={city.name}
+                                  onChange={(e) => {
+                                    const cities = [...(config.franchise?.cities || [])];
+                                    cities[cityIndex] = { ...city, name: e.target.value };
+                                    setConfig({ ...config, franchise: { ...config.franchise!, cities } });
+                                  }}
+                                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                                />
+                              </div>
+
+                              {/* Unidades desta cidade */}
+                              <div className="pt-3 border-t border-gray-200">
+                                <div className="flex items-center justify-between mb-4">
+                                  <h4 className="font-bold text-gray-700 flex items-center gap-2">
+                                    <Building2 className="w-4 h-4 text-indigo-500" />
+                                    Unidades / Franquias — {city.name} ({city.units.length})
+                                  </h4>
+                                </div>
+
+                                {city.units.length === 0 && (
+                                  <p className="text-sm text-gray-400 italic mb-3">Nenhuma unidade. Adicione abaixo.</p>
+                                )}
+
+                                {/* Lista de unidades */}
+                                <div className="space-y-3 mb-4">
+                                  {city.units.map((unit, unitIndex) => {
+                                    const isUnitOpen = editingUnitId === unit.id;
+                                    return (
+                                      <div key={unit.id} className={`bg-white rounded-lg border overflow-hidden transition-all ${isUnitOpen ? 'border-purple-400 shadow-md' : 'border-gray-200'}`}>
+                                        {/* Unit header */}
+                                        <div 
+                                          className="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50"
+                                          onClick={() => setEditingUnitId(isUnitOpen ? null : unit.id)}
+                                        >
+                                          <div className="flex items-center gap-2.5">
+                                            <div className="w-8 h-8 rounded-lg bg-purple-600 flex items-center justify-center text-white font-bold text-sm">
+                                              {unitIndex + 1}
+                                            </div>
+                                            <div>
+                                              <p className="font-bold text-gray-800 text-sm">{unit.name}</p>
+                                              <p className="text-xs text-gray-400">
+                                                {unit.address || 'Sem endereço'} • {unit.sectors?.length || 0} setor(es) • {unit.isOpen !== false ? '🟢' : '🔴'}
+                                              </p>
+                                            </div>
+                                          </div>
+                                          <div className="flex items-center gap-1.5">
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (!confirm(`Remover unidade "${unit.name}"?`)) return;
+                                                const cities = [...(config.franchise?.cities || [])];
+                                                const newUnits = [...city.units];
+                                                newUnits.splice(unitIndex, 1);
+                                                cities[cityIndex] = { ...city, units: newUnits };
+                                                setConfig({ ...config, franchise: { ...config.franchise!, cities } });
+                                              }}
+                                              className="p-1.5 rounded bg-red-50 hover:bg-red-100 text-red-500"
+                                            >
+                                              <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                            <div className={`transition-transform ${isUnitOpen ? 'rotate-180' : ''}`}>
+                                              <svg className="w-3.5 h-3.5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        {/* Unit details */}
+                                        {isUnitOpen && (
+                                          <div className="border-t border-gray-100 p-4 space-y-3 bg-purple-50/30">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                              <div>
+                                                <label className="block text-xs font-medium text-gray-600 mb-1">Nome da Unidade</label>
+                                                <input type="text" value={unit.name}
+                                                  onChange={(e) => {
+                                                    const cities = [...(config.franchise?.cities || [])];
+                                                    const newUnits = [...city.units];
+                                                    newUnits[unitIndex] = { ...unit, name: e.target.value };
+                                                    cities[cityIndex] = { ...city, units: newUnits };
+                                                    setConfig({ ...config, franchise: { ...config.franchise!, cities } });
+                                                  }}
+                                                  className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 outline-none"
+                                                />
+                                              </div>
+                                              <div>
+                                                <label className="block text-xs font-medium text-gray-600 mb-1">📞 Telefone</label>
+                                                <input type="text" value={unit.phone || ''}
+                                                  onChange={(e) => {
+                                                    const cities = [...(config.franchise?.cities || [])];
+                                                    const newUnits = [...city.units];
+                                                    newUnits[unitIndex] = { ...unit, phone: e.target.value };
+                                                    cities[cityIndex] = { ...city, units: newUnits };
+                                                    setConfig({ ...config, franchise: { ...config.franchise!, cities } });
+                                                  }}
+                                                  className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 outline-none"
+                                                  placeholder="(00) 00000-0000"
+                                                />
+                                              </div>
+                                              <div className="md:col-span-2">
+                                                <label className="block text-xs font-medium text-gray-600 mb-1">📍 Endereço</label>
+                                                <input type="text" value={unit.address || ''}
+                                                  onChange={(e) => {
+                                                    const cities = [...(config.franchise?.cities || [])];
+                                                    const newUnits = [...city.units];
+                                                    newUnits[unitIndex] = { ...unit, address: e.target.value };
+                                                    cities[cityIndex] = { ...city, units: newUnits };
+                                                    setConfig({ ...config, franchise: { ...config.franchise!, cities } });
+                                                  }}
+                                                  className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 outline-none"
+                                                  placeholder="Rua, Número, Bairro"
+                                                />
+                                              </div>
+                                              <div>
+                                                <label className="block text-xs font-medium text-gray-600 mb-1">🗺️ Link Google Maps</label>
+                                                <input type="text" value={unit.googleMapsUrl || ''}
+                                                  onChange={(e) => {
+                                                    const cities = [...(config.franchise?.cities || [])];
+                                                    const newUnits = [...city.units];
+                                                    newUnits[unitIndex] = { ...unit, googleMapsUrl: e.target.value };
+                                                    cities[cityIndex] = { ...city, units: newUnits };
+                                                    setConfig({ ...config, franchise: { ...config.franchise!, cities } });
+                                                  }}
+                                                  className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 outline-none"
+                                                  placeholder="https://maps.google.com/..."
+                                                />
+                                              </div>
+                                              <div>
+                                                <label className="block text-xs font-medium text-gray-600 mb-1">🕐 Horário</label>
+                                                <input type="text" value={unit.openingHours || ''}
+                                                  onChange={(e) => {
+                                                    const cities = [...(config.franchise?.cities || [])];
+                                                    const newUnits = [...city.units];
+                                                    newUnits[unitIndex] = { ...unit, openingHours: e.target.value };
+                                                    cities[cityIndex] = { ...city, units: newUnits };
+                                                    setConfig({ ...config, franchise: { ...config.franchise!, cities } });
+                                                  }}
+                                                  className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 outline-none"
+                                                  placeholder="Seg a Dom 19:00-00:00"
+                                                />
+                                              </div>
+                                              <div>
+                                                <label className="block text-xs font-medium text-gray-600 mb-1">💰 Taxa de Entrega (R$)</label>
+                                                <input type="number" step="0.5" value={unit.deliveryFee ?? 5}
+                                                  onChange={(e) => {
+                                                    const cities = [...(config.franchise?.cities || [])];
+                                                    const newUnits = [...city.units];
+                                                    newUnits[unitIndex] = { ...unit, deliveryFee: parseFloat(e.target.value) || 0 };
+                                                    cities[cityIndex] = { ...city, units: newUnits };
+                                                    setConfig({ ...config, franchise: { ...config.franchise!, cities } });
+                                                  }}
+                                                  className="w-full p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 outline-none"
+                                                />
+                                              </div>
+                                              <div className="flex items-center gap-3">
+                                                <label className="block text-xs font-medium text-gray-600">Aberta?</label>
+                                                <button
+                                                  onClick={() => {
+                                                    const cities = [...(config.franchise?.cities || [])];
+                                                    const newUnits = [...city.units];
+                                                    newUnits[unitIndex] = { ...unit, isOpen: unit.isOpen === false ? true : false };
+                                                    cities[cityIndex] = { ...city, units: newUnits };
+                                                    setConfig({ ...config, franchise: { ...config.franchise!, cities } });
+                                                  }}
+                                                  className={`relative w-10 h-5 rounded-full transition-colors ${unit.isOpen !== false ? 'bg-green-500' : 'bg-gray-300'}`}
+                                                >
+                                                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${unit.isOpen !== false ? 'translate-x-5' : 'translate-x-0.5'}`} />
+                                                </button>
+                                              </div>
+                                            </div>
+
+                                            {/* Setores desta unidade */}
+                                            <div className="mt-3 pt-3 border-t border-gray-200">
+                                              <h5 className="font-bold text-gray-600 mb-2 text-xs flex items-center gap-1.5">
+                                                <Truck className="w-3.5 h-3.5 text-orange-500" />
+                                                Setores de Entrega ({unit.sectors?.length || 0})
+                                              </h5>
+                                              <div className="space-y-1.5 mb-2">
+                                                {(unit.sectors || []).map((sector, sectorIndex) => (
+                                                  <div key={sector.id} className="flex items-center gap-2 p-2 bg-white rounded border border-gray-100">
+                                                    <div className="w-6 h-6 rounded flex items-center justify-center text-white font-bold text-xs" style={{ backgroundColor: sector.color }}>
+                                                      {sector.name.charAt(0)}
+                                                    </div>
+                                                    <span className="flex-1 text-xs font-medium text-gray-700">{sector.name}</span>
+                                                    <button
+                                                      onClick={() => {
+                                                        const cities = [...(config.franchise?.cities || [])];
+                                                        const newUnits = [...city.units];
+                                                        const newSectors = [...(unit.sectors || [])];
+                                                        newSectors.splice(sectorIndex, 1);
+                                                        newUnits[unitIndex] = { ...unit, sectors: newSectors };
+                                                        cities[cityIndex] = { ...city, units: newUnits };
+                                                        setConfig({ ...config, franchise: { ...config.franchise!, cities } });
+                                                      }}
+                                                      className="p-1 rounded bg-red-50 hover:bg-red-100 text-red-400"
+                                                    >
+                                                      <Trash2 className="w-3 h-3" />
+                                                    </button>
+                                                  </div>
+                                                ))}
+                                              </div>
+                                              <div className="flex gap-2">
+                                                <input
+                                                  type="text"
+                                                  placeholder="Nome do setor..."
+                                                  className="flex-1 p-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-orange-400 outline-none"
+                                                  id={`new-sector-${unit.id}`}
+                                                  onKeyDown={(e) => {
+                                                    if (e.key === 'Enter') {
+                                                      const input = e.target as HTMLInputElement;
+                                                      if (!input.value.trim()) return;
+                                                      const sId = input.value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                                                      const colors = ['#EF4444','#3B82F6','#10B981','#F59E0B','#8B5CF6','#EC4899','#F97316','#14B8A6','#6366F1','#84CC16'];
+                                                      const color = colors[(unit.sectors?.length || 0) % colors.length];
+                                                      const cities = [...(config.franchise?.cities || [])];
+                                                      const newUnits = [...city.units];
+                                                      newUnits[unitIndex] = { ...unit, sectors: [...(unit.sectors || []), { id: sId, name: input.value.trim(), color }] };
+                                                      cities[cityIndex] = { ...city, units: newUnits };
+                                                      setConfig({ ...config, franchise: { ...config.franchise!, cities } });
+                                                      input.value = '';
+                                                    }
+                                                  }}
+                                                />
+                                                <button
+                                                  onClick={() => {
+                                                    const input = document.getElementById(`new-sector-${unit.id}`) as HTMLInputElement;
+                                                    if (!input?.value.trim()) return;
+                                                    const sId = input.value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                                                    const colors = ['#EF4444','#3B82F6','#10B981','#F59E0B','#8B5CF6','#EC4899','#F97316','#14B8A6','#6366F1','#84CC16'];
+                                                    const color = colors[(unit.sectors?.length || 0) % colors.length];
+                                                    const cities = [...(config.franchise?.cities || [])];
+                                                    const newUnits = [...city.units];
+                                                    newUnits[unitIndex] = { ...unit, sectors: [...(unit.sectors || []), { id: sId, name: input.value.trim(), color }] };
+                                                    cities[cityIndex] = { ...city, units: newUnits };
+                                                    setConfig({ ...config, franchise: { ...config.franchise!, cities } });
+                                                    input.value = '';
+                                                  }}
+                                                  className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1"
+                                                >
+                                                  <Plus className="w-3 h-3" />
+                                                  Setor
+                                                </button>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+
+                                {/* Adicionar unidade */}
+                                <div className="flex gap-2">
+                                  <input
+                                    type="text"
+                                    placeholder="Nome da unidade (Ex: Centro, Vila Nova...)"
+                                    className="flex-1 p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 outline-none"
+                                    id={`new-unit-${city.id}`}
+                                    onKeyDown={(e) => {
+                                      if (e.key === 'Enter') {
+                                        const input = e.target as HTMLInputElement;
+                                        if (!input.value.trim()) return;
+                                        const uSlug = (input.value.trim() + '-' + city.id).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                                        const newUnit = { id: uSlug, name: input.value.trim(), phone: config.phone || '', address: '', isOpen: true, sectors: [] };
+                                        const cities = [...(config.franchise?.cities || [])];
+                                        cities[cityIndex] = { ...city, units: [...city.units, newUnit] };
+                                        setConfig({ ...config, franchise: { ...config.franchise!, cities } });
+                                        setEditingUnitId(uSlug);
+                                        input.value = '';
+                                      }
+                                    }}
+                                  />
+                                  <button
+                                    onClick={() => {
+                                      const input = document.getElementById(`new-unit-${city.id}`) as HTMLInputElement;
+                                      if (!input?.value.trim()) { alert('Digite o nome da unidade'); return; }
+                                      const uSlug = (input.value.trim() + '-' + city.id).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                                      const newUnit = { id: uSlug, name: input.value.trim(), phone: config.phone || '', address: '', isOpen: true, sectors: [] };
+                                      const cities = [...(config.franchise?.cities || [])];
+                                      cities[cityIndex] = { ...city, units: [...city.units, newUnit] };
+                                      setConfig({ ...config, franchise: { ...config.franchise!, cities } });
+                                      setEditingUnitId(uSlug);
+                                      input.value = '';
+                                    }}
+                                    className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2.5 rounded-lg text-sm font-bold flex items-center gap-1.5"
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                    Unidade
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Migração de dados */}
+                  {(config.franchise?.cities || []).some(c => c.units.length > 0) && (
+                    <div className="bg-white rounded-lg shadow-md p-6 border border-amber-200">
+                      <h3 className="font-bold text-gray-800 mb-2 flex items-center gap-2">
+                        <RefreshCw className="w-5 h-5 text-amber-600" />
+                        Migrar Dados Existentes
                       </h3>
-                      <div className="flex items-center gap-4">
-                        <input
-                          type="text"
-                          value={newSectorName}
-                          onChange={(e) => setNewSectorName(e.target.value)}
-                          className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none shadow-sm"
-                          placeholder="Nome do Setor (Ex: Centro, Zona Norte...)"
-                        />
-                        <button
-                          onClick={handleAddSector}
-                          className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold transition-colors flex items-center gap-2 shadow-sm whitespace-nowrap"
+                      <p className="text-sm text-gray-500 mb-4">
+                        Se você já tinha produtos, pedidos, cupons e setores cadastrados <strong>antes</strong> de ativar o sistema de franquias, 
+                        use o botão abaixo para copiar esses dados para uma unidade. Os dados originais não serão apagados.
+                      </p>
+
+                      <div className="flex flex-wrap items-center gap-3">
+                        <select
+                          id="migrate-target-unit"
+                          className="flex-1 min-w-[200px] p-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-amber-500 outline-none"
                         >
-                          <Plus className="w-5 h-5" />
-                          Adicionar
+                          <option value="">Selecione a unidade de destino...</option>
+                          {(config.franchise?.cities || []).map(city => 
+                            city.units.map(unit => (
+                              <option key={unit.id} value={unit.id}>
+                                {city.name} → {unit.name}
+                              </option>
+                            ))
+                          )}
+                        </select>
+                        <button
+                          onClick={async () => {
+                            const select = document.getElementById('migrate-target-unit') as HTMLSelectElement;
+                            const unitId = select?.value;
+                            if (!unitId) { alert('Selecione uma unidade'); return; }
+                            if (!confirm(`Migrar todos os dados existentes para a unidade "${unitId}"?\n\nProdutos, pedidos, cupons, setores e estoque serão copiados. Os dados originais não serão apagados.`)) return;
+                            
+                            setIsMigrating(true);
+                            setMigrationResult(null);
+                            try {
+                              const result = await api.migrateFranchiseData(token, unitId);
+                              setMigrationResult({
+                                success: result.success !== false,
+                                message: result.message || `${result.migrated || 0} itens migrados com sucesso!`
+                              });
+                            } catch (e) {
+                              setMigrationResult({ success: false, message: `Erro: ${e}` });
+                            }
+                            setIsMigrating(false);
+                          }}
+                          disabled={isMigrating}
+                          className="bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white px-5 py-2.5 rounded-lg font-bold text-sm flex items-center gap-2 whitespace-nowrap"
+                        >
+                          {isMigrating ? (
+                            <><RefreshCw className="w-4 h-4 animate-spin" /> Migrando...</>
+                          ) : (
+                            <><RefreshCw className="w-4 h-4" /> Migrar Dados</>
+                          )}
                         </button>
                       </div>
-                      <p className="text-xs text-gray-500 mt-2">
-                        A cor do setor será gerada automaticamente.
-                      </p>
-                    </div>
 
-                    {/* List */}
-                    <div className="space-y-3">
-                      <h3 className="font-bold text-gray-800 ml-1">Setores Ativos ({sectors.length})</h3>
-                      {sectors.length === 0 && (
-                        <p className="text-gray-500 italic ml-1">Nenhum setor cadastrado.</p>
+                      {migrationResult && (
+                        <div className={`mt-3 p-3 rounded-lg text-sm font-medium ${
+                          migrationResult.success 
+                            ? 'bg-green-50 text-green-700 border border-green-200' 
+                            : 'bg-red-50 text-red-700 border border-red-200'
+                        }`}>
+                          {migrationResult.success ? '✅' : '❌'} {migrationResult.message}
+                        </div>
                       )}
-                      {sectors.map(sector => (
-                        <div key={sector.id} className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-lg shadow-sm flex items-center justify-center text-white font-bold text-lg" style={{ backgroundColor: sector.color }}>
-                                {sector.name.charAt(0).toUpperCase()}
-                            </div>
-                            <div>
-                                <p className="text-gray-800 font-bold text-lg">{sector.name}</p>
-                                <p className="text-xs text-gray-400 font-mono">{sector.id}</p>
-                            </div>
-                          </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => setEditingSector(sector)}
-                              className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
-                            >
-                              <Edit2 className="w-4 h-4" />
-                              Editar
-                            </button>
-                            <button
-                              onClick={() => handleDeleteSector(sector.id, sector.name)}
-                              className="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                              Excluir
-                            </button>
-                          </div>
-                        </div>
-                      ))}
                     </div>
+                  )}
+                </>
+              ) : (
+                /* === MODO NORMAL (sem franquia) === */
+                <>
+                  <div className="bg-gradient-to-r from-orange-900 to-amber-900 p-8 rounded-xl shadow-lg text-white mb-8">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Truck className="w-8 h-8 text-orange-400" />
+                      <h3 className="text-2xl font-bold">Gestão de Setores de Entrega</h3>
+                    </div>
+                    <p className="text-orange-200">
+                      Crie os setores que aparecerão para o cliente escolher no checkout.
+                    </p>
+                  </div>
 
-                    {/* Edit Modal / Inline */}
-                    {editingSector && (
-                      <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-                        <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md animate-in fade-in zoom-in-95">
-                          <h3 className="font-bold text-xl text-gray-800 mb-4">Editar Setor</h3>
-                          
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Setor</label>
-                          <input
-                            type="text"
-                            value={editingSector.name}
-                            onChange={(e) => setEditingSector({ ...editingSector, name: e.target.value })}
-                            className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-6"
-                            placeholder="Nome do Setor"
-                          />
-                          
-                          <div className="flex gap-3">
+                  <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+                    {isLoadingSectors ? (
+                      <div className="flex justify-center p-8">
+                        <RefreshCw className="w-8 h-8 animate-spin text-orange-600" />
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6">
+                          <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                            <Plus className="w-5 h-5 text-green-600" />
+                            Adicionar Novo Setor
+                          </h3>
+                          <div className="flex items-center gap-4">
+                            <input
+                              type="text"
+                              value={newSectorName}
+                              onChange={(e) => setNewSectorName(e.target.value)}
+                              className="flex-1 p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 outline-none shadow-sm"
+                              placeholder="Nome do Setor (Ex: Centro, Zona Norte...)"
+                            />
                             <button
-                                onClick={() => setEditingSector(null)}
-                                className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-bold"
+                              onClick={handleAddSector}
+                              className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-bold transition-colors flex items-center gap-2 shadow-sm whitespace-nowrap"
                             >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleSaveEditSector}
-                                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2"
-                            >
-                                <Save className="w-5 h-5" />
-                                Salvar
+                              <Plus className="w-5 h-5" />
+                              Adicionar
                             </button>
                           </div>
+                          <p className="text-xs text-gray-500 mt-2">A cor do setor será gerada automaticamente.</p>
                         </div>
+
+                        <div className="space-y-3">
+                          <h3 className="font-bold text-gray-800 ml-1">Setores Ativos ({sectors.length})</h3>
+                          {sectors.length === 0 && (
+                            <p className="text-gray-500 italic ml-1">Nenhum setor cadastrado.</p>
+                          )}
+                          {sectors.map(sector => (
+                            <div key={sector.id} className="bg-white border border-gray-200 rounded-xl p-4 flex items-center justify-between shadow-sm hover:shadow-md transition-shadow">
+                              <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-lg shadow-sm flex items-center justify-center text-white font-bold text-lg" style={{ backgroundColor: sector.color }}>
+                                    {sector.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div>
+                                    <p className="text-gray-800 font-bold text-lg">{sector.name}</p>
+                                    <p className="text-xs text-gray-400 font-mono">{sector.id}</p>
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <button onClick={() => setEditingSector(sector)} className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
+                                  <Edit2 className="w-4 h-4" /> Editar
+                                </button>
+                                <button onClick={() => handleDeleteSector(sector.id, sector.name)} className="bg-red-50 hover:bg-red-100 text-red-600 px-4 py-2 rounded-lg font-medium transition-colors flex items-center gap-2">
+                                  <Trash2 className="w-4 h-4" /> Excluir
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+
+                        {editingSector && (
+                          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+                            <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md animate-in fade-in zoom-in-95">
+                              <h3 className="font-bold text-xl text-gray-800 mb-4">Editar Setor</h3>
+                              <label className="block text-sm font-medium text-gray-700 mb-1">Nome do Setor</label>
+                              <input type="text" value={editingSector.name} onChange={(e) => setEditingSector({ ...editingSector, name: e.target.value })} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-6" placeholder="Nome do Setor" />
+                              <div className="flex gap-3">
+                                <button onClick={() => setEditingSector(null)} className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-bold">Cancelar</button>
+                                <button onClick={() => { handleUpdateSector(editingSector.id, editingSector.name); setEditingSector(null); }} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2"><Save className="w-5 h-5" />Salvar</button>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
-                )}
-              </div>
+                </>
+              )}
             </div>
           )}
 

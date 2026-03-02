@@ -1,6 +1,7 @@
 import React from 'react';
 import { Phone, MapPin, Star, Heart, Sparkles, Zap, Snowflake, Flame, Music, Sun, Moon, Circle, Cloud } from 'lucide-react';
 import { useConfig } from '../ConfigContext';
+import { useFranchise } from '../FranchiseContext';
 import logoImage from 'figma:asset/2217307d23df7779a3757aa35c01d81549336b8b.png';
 import headerBg from 'figma:asset/6dbb44028ed8a316eb5f92fc5d24fd96935de5f0.png';
 import { hexToRgba } from '../utils/colorUtils';
@@ -33,7 +34,13 @@ const SocialBrandColors: Record<string, string> = {
 
 export function Header() {
   const { config } = useConfig();
+  const { unitOverrides } = useFranchise();
   const [isMobile, setIsMobile] = React.useState(typeof window !== 'undefined' && window.innerWidth < 768);
+
+  // Valores efetivos: unidade override > config global
+  const effectivePhone = unitOverrides.phone || config.phone || '(64) 99339-2970';
+  const effectiveAddress = unitOverrides.address || config.address || 'Praça Lucio Prado - Goiatuba/GO';
+  const effectiveGoogleMapsUrl = unitOverrides.googleMapsUrl || config.googleMapsUrl;
 
   // Cores das redes: config > fallback brand colors
   const socialColors = config.socialMediaColors || {};
@@ -152,48 +159,36 @@ export function Header() {
         </div>
 
         {/* Contato esquerda | Redes sociais direita */}
-        <div className="flex flex-row items-start justify-between gap-4 max-w-3xl mx-auto">
+        <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center lg:justify-between gap-4 max-w-3xl mx-auto">
           
-          {/* Contato e Endereço — esquerda */}
-          <div className="flex flex-col items-start gap-2.5">
-            {/* Telefone → abre WhatsApp */}
-            <a
-              href={`https://wa.me/55${(config.phone || '').replace(/\D/g, '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2.5 hover:scale-105 transition-transform cursor-pointer"
-            >
+          {/* Contato e Endereço */}
+          <div className="flex flex-col items-center lg:items-start gap-2.5">
+            <div className="inline-flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg" style={{ backgroundColor: themeColor }}>
                 <Phone className="w-4 h-4 text-white" />
               </div>
               <span className="text-sm font-extrabold text-white tracking-wide" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
-                {config.phone || '(64) 99339-2970'}
+                {effectivePhone}
               </span>
-            </a>
+            </div>
 
-            {/* Endereço → abre Google Maps */}
-            <a
-              href={config.googleMapsUrl || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(config.address || '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2.5 hover:scale-105 transition-transform cursor-pointer"
-            >
+            <div className="inline-flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 self-start mt-0.5 shadow-lg" style={{ backgroundColor: themeColor }}>
                 <MapPin className="w-4 h-4 text-white" />
               </div>
-              <div className="flex flex-col items-start">
-                {(config.address || 'Praça Lucio Prado - Goiatuba/GO').split(/,| - |\\n/).filter((line: string) => line.trim()).map((line: string, i: number) => (
+              <div className="flex flex-col items-center lg:items-start">
+                {(effectiveAddress).split(/,| - |\\n/).filter((line: string) => line.trim()).map((line: string, i: number) => (
                   <span key={i} className="text-sm font-extrabold text-white tracking-wide leading-snug" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
                     {line.trim()}
                   </span>
                 ))}
               </div>
-            </a>
+            </div>
           </div>
 
-          {/* Redes Sociais — direita */}
+          {/* Redes Sociais */}
           {activeSocials.length > 0 && (
-            <div className="flex flex-wrap items-start justify-end gap-2 flex-shrink-0">
+            <div className="flex flex-wrap items-center justify-center lg:justify-end gap-2 mt-1">
               {activeSocials.map(([network, url]) => {
                 const Icon = SocialIcons[network];
                 if (!Icon) return null;

@@ -10,9 +10,14 @@ import {
   Settings as SettingsIcon,
   Megaphone,
   Truck,
-  Warehouse
+  Warehouse,
+  Building2,
+  Lock,
+  ArrowLeftRight
 } from 'lucide-react';
 import { useConfig } from '../../ConfigContext';
+import { useFranchise } from '../../FranchiseContext';
+import { FranchiseSelectionModal } from '../FranchiseSelectionModal';
 import defaultLogo from 'figma:asset/2217307d23df7779a3757aa35c01d81549336b8b.png';
 import { DashboardHome } from './DashboardHome';
 import { ProductsManagement } from './ProductsManagement';
@@ -32,12 +37,37 @@ type MenuOption = 'dashboard' | 'products' | 'orders' | 'delivery' | 'customers'
 
 export function AdminDashboard({ onLogout, onProductsChange }: AdminDashboardProps) {
   const { config } = useConfig();
+  const { franchiseEnabled, selectedCity, selectedUnit, needsSelection, resetSelection } = useFranchise();
   const themeColor = config.themeColor || '#d97706';
   const logoUrl = config.logoUrl || defaultLogo;
   const siteName = config.siteName || 'NewBurguer Lanches';
   
   const [currentMenu, setCurrentMenu] = useState<MenuOption>('dashboard');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Franchise switch modal
+  const [showSwitchModal, setShowSwitchModal] = useState(false);
+  const [switchPassword, setSwitchPassword] = useState('');
+  const [switchError, setSwitchError] = useState('');
+
+  const handleSwitchFranchise = () => {
+    const requiredPassword = config.franchise?.switchPassword;
+    if (!requiredPassword) {
+      // Se não há senha configurada, trocar direto
+      resetSelection();
+      setShowSwitchModal(false);
+      setSwitchPassword('');
+      return;
+    }
+    if (switchPassword === requiredPassword) {
+      resetSelection();
+      setShowSwitchModal(false);
+      setSwitchPassword('');
+      setSwitchError('');
+    } else {
+      setSwitchError('Senha incorreta');
+    }
+  };
 
   const handleProductsChange = () => {
     // Notificar o App.tsx que produtos mudaram (atualiza homepage)
@@ -82,13 +112,35 @@ export function AdminDashboard({ onLogout, onProductsChange }: AdminDashboardPro
             />
             <div>
               <h2 className="font-bold text-lg leading-tight">{siteName}</h2>
-              <p className="text-xs text-white/70">Painel Admin</p>
+              {franchiseEnabled && selectedUnit ? (
+                <p className="text-xs text-white/70">{selectedUnit.name}</p>
+              ) : (
+                <p className="text-xs text-white/70">Painel Admin</p>
+              )}
             </div>
           </div>
         </div>
 
         {/* Menu Items */}
         <nav className="flex-1 p-4 space-y-2">
+          {/* Franchise indicator */}
+          {franchiseEnabled && selectedUnit && (
+            <div className="mb-3 p-3 rounded-lg bg-white/10 border border-white/10">
+              <div className="flex items-center gap-2 mb-1.5">
+                <Building2 className="w-4 h-4 text-white/70" />
+                <span className="text-xs font-bold text-white/90 uppercase tracking-wide">Franquia</span>
+              </div>
+              <p className="text-sm font-bold text-white leading-tight">{selectedUnit.name}</p>
+              <p className="text-[10px] text-white/50">{selectedCity?.name}</p>
+              <button
+                onClick={() => { setShowSwitchModal(true); setSwitchError(''); setSwitchPassword(''); }}
+                className="mt-2 w-full flex items-center justify-center gap-1.5 text-[11px] font-medium text-white/70 hover:text-white bg-white/5 hover:bg-white/15 rounded-md py-1.5 transition-colors"
+              >
+                <ArrowLeftRight className="w-3 h-3" />
+                Trocar Franquia
+              </button>
+            </div>
+          )}
           {menuItems.map(item => {
             const Icon = item.icon;
             const isActive = currentMenu === item.id;
@@ -136,7 +188,13 @@ export function AdminDashboard({ onLogout, onProductsChange }: AdminDashboardPro
             />
             <div>
               <h2 className="font-bold">{siteName}</h2>
-              <p className="text-xs text-white/70">Admin</p>
+              {franchiseEnabled && selectedUnit ? (
+                <p className="text-xs text-white/70">
+                  {selectedUnit.name} • {selectedCity?.name}
+                </p>
+              ) : (
+                <p className="text-xs text-white/70">Admin</p>
+              )}
             </div>
           </div>
           <button
@@ -172,6 +230,15 @@ export function AdminDashboard({ onLogout, onProductsChange }: AdminDashboardPro
                 </button>
               );
             })}
+            {franchiseEnabled && selectedUnit && (
+              <button
+                onClick={() => { setShowSwitchModal(true); setSwitchError(''); setSwitchPassword(''); setIsMobileMenuOpen(false); }}
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-white/10 transition-colors"
+              >
+                <ArrowLeftRight className="w-5 h-5" />
+                <span className="font-medium">Trocar Franquia</span>
+              </button>
+            )}
             <button
               onClick={handleLogout}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-red-600/80 transition-colors"
@@ -196,6 +263,60 @@ export function AdminDashboard({ onLogout, onProductsChange }: AdminDashboardPro
           {currentMenu === 'settings' && <Settings />}
         </div>
       </main>
+
+      {/* 🏙️ Franchise Selection Modal (shows when no city/unit selected) */}
+      <FranchiseSelectionModal />
+
+      {/* 🔒 Password Modal for switching franchise */}
+      {showSwitchModal && (
+        <div className="fixed inset-0 z-[9998] flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.6)' }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in-95">
+            <div className="p-5 text-center" style={{ backgroundColor: themeColor }}>
+              <Lock className="w-8 h-8 text-white mx-auto mb-2" />
+              <h3 className="text-lg font-bold text-white">Trocar de Franquia</h3>
+              <p className="text-white/70 text-xs mt-1">
+                {selectedUnit?.name} • {selectedCity?.name}
+              </p>
+            </div>
+            <div className="p-5">
+              {config.franchise?.switchPassword ? (
+                <>
+                  <p className="text-sm text-gray-600 mb-3">Digite a senha para alternar entre franquias:</p>
+                  <input
+                    type="password"
+                    value={switchPassword}
+                    onChange={(e) => { setSwitchPassword(e.target.value); setSwitchError(''); }}
+                    onKeyDown={(e) => { if (e.key === 'Enter') handleSwitchFranchise(); }}
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                    placeholder="Senha de troca"
+                    autoFocus
+                  />
+                  {switchError && (
+                    <p className="text-red-500 text-xs mt-2 font-medium">{switchError}</p>
+                  )}
+                </>
+              ) : (
+                <p className="text-sm text-gray-600">Confirma que deseja trocar de franquia?</p>
+              )}
+              <div className="flex gap-3 mt-4">
+                <button
+                  onClick={() => { setShowSwitchModal(false); setSwitchPassword(''); setSwitchError(''); }}
+                  className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-2.5 rounded-lg font-bold text-sm"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleSwitchFranchise}
+                  className="flex-1 text-white py-2.5 rounded-lg font-bold text-sm"
+                  style={{ backgroundColor: themeColor }}
+                >
+                  Trocar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

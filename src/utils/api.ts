@@ -32,8 +32,14 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 2, ti
       externalSignal?.addEventListener('abort', onExternalAbort, { once: true });
       
       const { signal: _ignoredSignal, ...restOptions } = options;
+      
+      // 🏙️ Injetar X-Unit-Id quando franchise ativo
+      const unitHeaders = _activeUnitId ? { 'X-Unit-Id': _activeUnitId } : {};
+      const mergedHeaders = { ...(restOptions.headers || {}), ...unitHeaders };
+      
       const response = await fetch(url, { 
         ...restOptions, 
+        headers: mergedHeaders,
         signal: controller.signal 
       });
       
@@ -192,6 +198,27 @@ const headers = {
   'Authorization': `Bearer ${publicAnonKey}`,
 };
 
+// ===== 🏙️ FRANCHISE: Unit-aware requests =====
+let _activeUnitId: string | null = null;
+
+export function setActiveUnitId(id: string | null) {
+  _activeUnitId = id;
+  console.log(`🏙️ [API] Unit ID atualizado: ${id || '(nenhum)'}`);
+}
+
+export function getActiveUnitId(): string | null {
+  return _activeUnitId;
+}
+
+// Helper: retorna headers base + X-Unit-Id quando franchise ativo
+function getHeadersWithUnit(extra?: Record<string, string>): Record<string, string> {
+  return {
+    ...headers,
+    ...(_activeUnitId ? { 'X-Unit-Id': _activeUnitId } : {}),
+    ...(extra || {}),
+  };
+}
+
 // ===== HELPER PARA REQUISIÇÕES ADMIN COM CSRF =====
 
 // Helper para adicionar headers de autenticação admin (token + CSRF)
@@ -203,6 +230,7 @@ function getAdminHeaders(): HeadersInit {
     ...headers,
     ...(token && { 'X-Admin-Token': token }),
     ...(csrfToken && { 'X-CSRF-Token': csrfToken }),
+    ...(_activeUnitId ? { 'X-Unit-Id': _activeUnitId } : {}),
   };
 }
 
@@ -1575,6 +1603,7 @@ function getDriverHeaders(): HeadersInit {
   return {
     ...headers,
     ...(token && { 'X-Driver-Token': token }),
+    ...(_activeUnitId ? { 'X-Unit-Id': _activeUnitId } : {}),
   };
 }
 
@@ -1612,6 +1641,9 @@ export async function authFetch(endpoint: string, options: RequestInit = {}): Pr
   } else if (driverToken) {
     authHeaders['X-Driver-Token'] = driverToken;
   }
+
+  // 🏙️ Franchise unit header
+  if (_activeUnitId) authHeaders['X-Unit-Id'] = _activeUnitId;
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
@@ -1774,7 +1806,6 @@ export interface RecipeIngredient {
   selectedPortionG?: number; // gramas da porção (para cálculo de desconto)
   selectedPortionLabel?: string; // label da porção (ex: "Hambúrguer 120g")
   hideFromClient: boolean;
-  hidePortionFromClient?: boolean; // Oculta gramatura/porção do cliente (mostra só o nome)
   category?: 'ingredient' | 'embalagem' | 'acompanhamento'; // Categoria do ingrediente
   defaultQuantityPerOrder?: number; // Quantidade padrão por pedido (acompanhamentos)
 }
@@ -1901,14 +1932,25 @@ export async function saveRestockSchedule(schedule: RestockSchedule): Promise<{ 
 }
 
 // Re-export do tipo Product para uso nos componentes
-// Buscar produtos mais pedidos (endpoint público)
-export async function getPopularProducts() {
+export type { Product, CartItem } from '../App';
+
+// ==========================================
+// 🏙️ FRANCHISE: Migração de dados para unidade
+// ==========================================
+export async function migrateFranchiseData(token: string, targetUnitId: string): Promise<{ success: boolean; migrated?: number; details?: Record<string, number>; message?: string }> {
+  console.log(`🏙️ [API] Migrando dados para unidade: ${targetUnitId}`);
   try {
-    const response = await fetchWithRetry(`${API_BASE_URL}/orders/popular`, { headers });
-    return await response.json();
+    const response = await masterFetch('/franchise/migrate', {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/json',
+        'X-Master-Token': token 
+      },
+      body: JSON.stringify({ targetUnitId }),
+    });
+    return response.json();
   } catch (error) {
-    console.error('❌ [API] Erro ao buscar populares:', error);
-    return { success: false, popular: [], totalOrders: 0 };
+    console.error('❌ [API] Erro na migração de franquia:', error);
+    return { success: false, message: String(error) };
   }
 }
-export type { Product, CartItem } from '../App';

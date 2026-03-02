@@ -91,6 +91,6 @@ export async function getByPrefix(prefix: string): Promise<any[]> {
   return withRetry(() => kvOriginal.getByPrefix(prefix), `getByPrefix(${prefix})`);
 }
 
-export async function atomicStockDecrement(key: string, amount: number, updatedAt: string): Promise<any> {
-  return withRetry(() => kvOriginal.atomicStockDecrement(key, amount, updatedAt), `atomicStockDecrement(${key}, ${amount})`);
+export async function getByPrefixWithKeys(prefix: string): Promise<Array<{key: string, value: any}>> {
+  return withRetry(() => kvOriginal.getByPrefixWithKeys(prefix), `getByPrefixWithKeys(${prefix})`);
 }
