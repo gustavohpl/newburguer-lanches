@@ -118,9 +118,9 @@ export function Header() {
         style={{ backgroundImage: `url(${currentBg})`, backgroundPosition: 'center center', backgroundSize: 'cover' }}
       />
       
-      {/* Overlay: escurece acima, fade to transparent embaixo */}
+      {/* Overlay: mais escuro e estende mais para baixo */}
       <div className="absolute inset-0" style={{ 
-        background: 'linear-gradient(to bottom, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.45) 60%, rgba(0,0,0,0.15) 85%, transparent 100%)' 
+        background: 'linear-gradient(to bottom, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.5) 70%, rgba(0,0,0,0.25) 90%, transparent 100%)' 
       }} />
 
       {/* Efeitos animados (configuráveis no admin) */}
@@ -138,9 +138,36 @@ export function Header() {
       ))}
 
       {/* Conteúdo principal */}
-      <div className="container mx-auto px-4 py-10 relative z-10">
+      <div className="container mx-auto px-4 pt-5 pb-12 relative z-10">
+        
+        {/* TOPO: Endereço + Contato */}
+        <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5 mb-6">
+          {/* Endereço */}
+          <div className="inline-flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 shadow-md" style={{ backgroundColor: themeColor }}>
+              <MapPin className="w-3 h-3 text-white" />
+            </div>
+            <span className="text-xs sm:text-sm font-extrabold text-white tracking-wide leading-snug text-center sm:text-left" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
+              {effectiveAddress}
+            </span>
+          </div>
+          
+          {/* Separador */}
+          <div className="hidden sm:block w-px h-4 bg-white/30" />
+          
+          {/* Telefone */}
+          <div className="inline-flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 shadow-md" style={{ backgroundColor: themeColor }}>
+              <Phone className="w-3 h-3 text-white" />
+            </div>
+            <span className="text-xs sm:text-sm font-extrabold text-white tracking-wide" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
+              {effectivePhone}
+            </span>
+          </div>
+        </div>
+
         {/* Logo centralizado */}
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center mb-5">
           <div className="relative">
             <div className="absolute inset-0 blur-2xl scale-110 animate-pulse" style={{ backgroundColor: themeColor, opacity: 0.3 }} />
             <img 
@@ -158,59 +185,30 @@ export function Header() {
           <div className="h-px w-16" style={{ background: `linear-gradient(to left, transparent, ${themeColor})` }} />
         </div>
 
-        {/* Contato esquerda | Redes sociais direita */}
-        <div className="flex flex-col lg:flex-row items-center lg:items-start justify-center lg:justify-between gap-4 max-w-3xl mx-auto">
-          
-          {/* Contato e Endereço */}
-          <div className="flex flex-col items-center lg:items-start gap-2.5">
-            <div className="inline-flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg" style={{ backgroundColor: themeColor }}>
-                <Phone className="w-4 h-4 text-white" />
-              </div>
-              <span className="text-sm font-extrabold text-white tracking-wide" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
-                {effectivePhone}
-              </span>
-            </div>
-
-            <div className="inline-flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 self-start mt-0.5 shadow-lg" style={{ backgroundColor: themeColor }}>
-                <MapPin className="w-4 h-4 text-white" />
-              </div>
-              <div className="flex flex-col items-center lg:items-start">
-                {(effectiveAddress).split(/,| - |\\n/).filter((line: string) => line.trim()).map((line: string, i: number) => (
-                  <span key={i} className="text-sm font-extrabold text-white tracking-wide leading-snug" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
-                    {line.trim()}
-                  </span>
-                ))}
-              </div>
-            </div>
+        {/* Redes Sociais centralizadas */}
+        {activeSocials.length > 0 && (
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {activeSocials.map(([network, url]) => {
+              const Icon = SocialIcons[network];
+              if (!Icon) return null;
+              const label = network.charAt(0).toUpperCase() + network.slice(1);
+              return (
+                <a
+                  key={network}
+                  href={url!.startsWith('http') ? url! : `https://${url}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all hover:scale-105 hover:shadow-lg"
+                  style={{ backgroundColor: getSocialColor(network) }}
+                  title={label}
+                >
+                  <Icon className="w-4 h-4 text-white" />
+                  <span className="text-xs font-bold text-white">{label}</span>
+                </a>
+              );
+            })}
           </div>
-
-          {/* Redes Sociais */}
-          {activeSocials.length > 0 && (
-            <div className="flex flex-wrap items-center justify-center lg:justify-end gap-2 mt-1">
-              {activeSocials.map(([network, url]) => {
-                const Icon = SocialIcons[network];
-                if (!Icon) return null;
-                const label = network.charAt(0).toUpperCase() + network.slice(1);
-                return (
-                  <a
-                    key={network}
-                    href={url!.startsWith('http') ? url! : `https://${url}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full transition-all hover:scale-105 hover:shadow-lg"
-                    style={{ backgroundColor: getSocialColor(network) }}
-                    title={label}
-                  >
-                    <Icon className="w-4 h-4 text-white" />
-                    <span className="text-xs font-bold text-white">{label}</span>
-                  </a>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </header>
   );
