@@ -56,12 +56,25 @@ export interface Product {
       hideFromClient: boolean;
     }>;
   };
+  // 🛒 Adicionais que o cliente pode escolher ao comprar
+  addons?: Array<{
+    id: string;
+    name: string;
+    price: number;         // 0 = grátis
+    ingredientId?: string; // Vínculo com ingrediente do estoque (opcional)
+  }>;
 }
 
 export interface CartItem extends Product {
   quantity: number;
   notes?: string; // Campo de observações
   selectedAcompanhamentos?: string[]; // IDs dos acompanhamentos selecionados pelo cliente
+  // 🛒 Adicionais selecionados pelo cliente
+  selectedAddons?: Array<{
+    id: string;
+    name: string;
+    price: number;
+  }>;
 }
 
 import { useCustomer } from './hooks/useCustomer';
@@ -630,22 +643,29 @@ function AppContent() {
     window.history.pushState({}, '', '/');
   };
 
-  const addToCart = (product: Product, notes?: string, quantity?: number) => {
+  const addToCart = (product: Product, notes?: string, quantity?: number, selectedAddons?: Array<{id: string; name: string; price: number}>) => {
     const qty = quantity || 1;
     setCartItems(prev => {
-      const existingItem = prev.find(item => item.id === product.id && item.notes === notes);
+      // Comparar produto + notas + adicionais para determinar se é o mesmo item
+      const addonsKey = selectedAddons?.map(a => a.id).sort().join(',') || '';
+      const existingItem = prev.find(item => {
+        const itemAddonsKey = item.selectedAddons?.map(a => a.id).sort().join(',') || '';
+        return item.id === product.id && item.notes === notes && itemAddonsKey === addonsKey;
+      });
       
       if (existingItem) {
-        // Se já existe item idêntico (mesmo produto e mesmas observações), incrementa quantidade
-        return prev.map(item =>
-          item.id === product.id && item.notes === notes
+        // Se já existe item idêntico (mesmo produto, observações e adicionais), incrementa quantidade
+        const addonsKey2 = selectedAddons?.map(a => a.id).sort().join(',') || '';
+        return prev.map(item => {
+          const itemAddonsKey = item.selectedAddons?.map(a => a.id).sort().join(',') || '';
+          return item.id === product.id && item.notes === notes && itemAddonsKey === addonsKey2
             ? { ...item, quantity: item.quantity + qty }
-            : item
-        );
+            : item;
+        });
       }
       
-      // Se não existe ou tem observações diferentes, adiciona como novo item
-      return [...prev, { ...product, quantity: qty, notes }];
+      // Se não existe ou tem adicionais/observações diferentes, adiciona como novo item
+      return [...prev, { ...product, quantity: qty, notes, selectedAddons }];
     });
   };
 
@@ -670,7 +690,10 @@ function AppContent() {
   };
 
   const getTotalPrice = () => {
-    return cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    return cartItems.reduce((sum, item) => {
+      const addonsTotal = (item.selectedAddons || []).reduce((a, addon) => a + addon.price, 0);
+      return sum + (item.price + addonsTotal) * item.quantity;
+    }, 0);
   };
 
   const handleCheckout = () => {

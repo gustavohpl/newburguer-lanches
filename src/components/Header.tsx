@@ -112,24 +112,29 @@ export function Header() {
 
   return (
     <header className="relative overflow-hidden">
-      {/* Imagem de fundo */}
-      <div 
-        className="absolute inset-0"
-        style={{ backgroundImage: `url(${currentBg})`, backgroundPosition: 'center center', backgroundSize: 'cover' }}
+      {/* Imagem de fundo — <img> nativo performa melhor que background-image no scroll mobile */}
+      <img 
+        src={currentBg} 
+        alt="" 
+        className="absolute inset-0 w-full h-full object-cover"
+        loading="eager"
+        decoding="async"
       />
       
-      {/* Overlay: escurece acima, mantém escuro até as redes sociais */}
+      {/* Overlay */}
       <div className="absolute inset-0" style={{ 
-        background: 'linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.45) 80%, rgba(0,0,0,0.2) 95%, transparent 100%)' 
+        background: 'linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.45) 80%, rgba(0,0,0,0.2) 95%, transparent 100%)',
       }} />
 
-      {/* Efeitos animados (configuráveis no admin) */}
+      {/* Efeitos animados */}
       {effects.map((effect, index) => (
         <div
           key={index}
           className={`absolute animate-pulse ${effect.size}`}
           style={{
-            color: themeColor, opacity: effect.opacity, animationDelay: effect.delay,
+            color: themeColor, 
+            opacity: effect.opacity, 
+            animationDelay: effect.delay,
             ...Object.fromEntries(Object.entries(effect).filter(([key]) => ['top', 'bottom', 'left', 'right'].includes(key))),
           }}
         >
@@ -169,7 +174,7 @@ export function Header() {
         {/* Logo centralizado */}
         <div className="flex justify-center mb-5">
           <div className="relative">
-            <div className="absolute inset-0 blur-2xl scale-110 animate-pulse" style={{ backgroundColor: themeColor, opacity: 0.3 }} />
+            <div className="absolute inset-0 scale-125 rounded-full opacity-30 animate-pulse" style={{ backgroundColor: themeColor, filter: 'blur(40px)' }} />
             <img 
               src={currentLogo} 
               alt={config.siteName || "Logo"} 

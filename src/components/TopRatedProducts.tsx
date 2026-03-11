@@ -8,7 +8,7 @@ import type { Product } from '../App';
 
 interface TopRatedProductsProps {
   products: Product[];
-  onAddToCart: (product: Product, notes?: string, quantity?: number) => void;
+  onAddToCart: (product: Product, notes?: string, quantity?: number, selectedAddons?: Array<{id: string; name: string; price: number}>) => void;
 }
 
 export function TopRatedProducts({ products, onAddToCart }: TopRatedProductsProps) {

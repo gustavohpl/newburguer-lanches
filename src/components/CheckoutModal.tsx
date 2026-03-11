@@ -412,6 +412,7 @@ export function CheckoutModal({
           quantity: item.quantity,
           price: item.price,
           notes: item.notes ? sanitizeText(item.notes, 300) : undefined,
+          selectedAddons: item.selectedAddons || [],
         })),
         total: getTotalWithDiscount(),
         totalBeforeDiscount: getFinalTotal(),
@@ -679,10 +680,21 @@ export function CheckoutModal({
     message += '━━━━━━━━━━━━━━━━━━' + nl;
     
     items.forEach((item, index) => {
+      const addonsTotal = (item.selectedAddons || []).reduce((a: number, addon: any) => a + addon.price, 0);
+      const unitPrice = item.price + addonsTotal;
       message += nl + (index + 1) + '. *' + item.name + '*' + nl;
       message += '   📦 Quantidade: ' + item.quantity + 'x' + nl;
       message += '   💵 Preço Unit.: R$ ' + item.price.toFixed(2).replace('.', ',') + nl;
-      message += '   💰 Subtotal: R$ ' + (item.price * item.quantity).toFixed(2).replace('.', ',') + nl;
+      
+      // Adicionais selecionados
+      if (item.selectedAddons && item.selectedAddons.length > 0) {
+        message += '   🛒 *Adicionais:*' + nl;
+        item.selectedAddons.forEach((addon: any) => {
+          message += '      • ' + addon.name + (addon.price > 0 ? ' (+R$ ' + addon.price.toFixed(2).replace('.', ',') + ')' : ' (grátis)') + nl;
+        });
+      }
+      
+      message += '   💰 Subtotal: R$ ' + (unitPrice * item.quantity).toFixed(2).replace('.', ',') + nl;
       
       if (item.notes) {
         message += '   🗒️ *Observação:* ' + item.notes + nl;
@@ -1658,16 +1670,33 @@ export function CheckoutModal({
                     {/* Itens */}
                     <div className="space-y-3">
                       <p className="text-[10px] font-bold text-zinc-400 dark:text-zinc-500 uppercase tracking-wider mb-1">Itens Selecionados</p>
-                      {items.map(item => (
-                        <div key={item.id} className="flex justify-between items-center text-sm bg-white dark:bg-zinc-900 px-4 py-3 rounded-xl border border-zinc-50 dark:border-zinc-800/30">
-                          <span className="text-zinc-700 dark:text-zinc-300 font-medium">
-                            <span className="text-amber-600 font-bold mr-2">{item.quantity}x</span> {item.name}
-                          </span>
-                          <span className="text-zinc-900 dark:text-zinc-100 font-bold">
-                            R$ {(item.price * item.quantity).toFixed(2).replace('.', ',')}
-                          </span>
-                        </div>
-                      ))}
+                      {items.map((item, idx) => {
+                        const addonsTotal = (item.selectedAddons || []).reduce((a: number, addon: any) => a + addon.price, 0);
+                        return (
+                          <div key={`${item.id}-${idx}`} className="bg-white dark:bg-zinc-900 px-4 py-3 rounded-xl border border-zinc-50 dark:border-zinc-800/30">
+                            <div className="flex justify-between items-center text-sm">
+                              <span className="text-zinc-700 dark:text-zinc-300 font-medium">
+                                <span className="text-amber-600 font-bold mr-2">{item.quantity}x</span> {item.name}
+                              </span>
+                              <span className="text-zinc-900 dark:text-zinc-100 font-bold">
+                                R$ {((item.price + addonsTotal) * item.quantity).toFixed(2).replace('.', ',')}
+                              </span>
+                            </div>
+                            {item.selectedAddons && item.selectedAddons.length > 0 && (
+                              <div className="mt-1.5 pl-8 space-y-0.5">
+                                {item.selectedAddons.map((addon: any) => (
+                                  <div key={addon.id} className="flex justify-between text-[11px]">
+                                    <span className="text-purple-600 dark:text-purple-400">+ {addon.name}</span>
+                                    <span className="text-purple-600 dark:text-purple-400 font-medium">
+                                      {addon.price > 0 ? `R$ ${addon.price.toFixed(2).replace('.', ',')}` : 'Grátis'}
+                                    </span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
 
                     {/* Acompanhamentos selecionados */}

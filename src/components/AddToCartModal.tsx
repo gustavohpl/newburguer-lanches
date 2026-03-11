@@ -9,7 +9,7 @@ import { useI18n } from '../hooks/useI18n';
 
 interface AddToCartModalProps {
   product: Product;
-  onConfirm: (product: Product, notes: string, quantity: number) => void;
+  onConfirm: (product: Product, notes: string, quantity: number, selectedAddons?: Array<{id: string; name: string; price: number}>) => void;
   onClose: () => void;
   categoryColor?: string; // Cor da categoria (classe Tailwind ou hex)
 }
@@ -17,6 +17,7 @@ interface AddToCartModalProps {
 export function AddToCartModal({ product, onConfirm, onClose, categoryColor }: AddToCartModalProps) {
   const [notes, setNotes] = useState('');
   const [quantity, setQuantity] = useState(1);
+  const [selectedAddonIds, setSelectedAddonIds] = useState<Set<string>>(new Set());
   const { config } = useConfig();
   const { t } = useI18n();
   const promoData = product.promoItems;
@@ -35,8 +36,30 @@ export function AddToCartModal({ product, onConfirm, onClose, categoryColor }: A
   // Montar lista de ingredientes visíveis com quantidades
   const visibleIngredients = getVisibleIngredients(product);
 
+  // Adicionais do produto
+  const availableAddons = product.addons || [];
+  const hasAddons = availableAddons.length > 0;
+
+  const toggleAddon = (addonId: string) => {
+    setSelectedAddonIds(prev => {
+      const next = new Set(prev);
+      if (next.has(addonId)) next.delete(addonId);
+      else next.add(addonId);
+      return next;
+    });
+  };
+
+  // Total dos adicionais selecionados
+  const addonsTotal = availableAddons
+    .filter(a => selectedAddonIds.has(a.id))
+    .reduce((sum, a) => sum + a.price, 0);
+
+  // Preço unitário com adicionais
+  const unitPrice = product.price + addonsTotal;
+
   const handleConfirm = () => {
-    onConfirm(product, notes.trim(), quantity);
+    const selected = availableAddons.filter(a => selectedAddonIds.has(a.id)).map(a => ({ id: a.id, name: a.name, price: a.price }));
+    onConfirm(product, notes.trim(), quantity, selected.length > 0 ? selected : undefined);
   };
 
   // Permitir confirmar com Enter (se não tiver quebra de linha)
@@ -115,7 +138,7 @@ export function AddToCartModal({ product, onConfirm, onClose, categoryColor }: A
                     className={`font-bold text-lg ${hasPromo ? 'text-red-600 dark:text-red-500' : ''}`}
                     style={!hasPromo ? { color: effectiveColor } : undefined}
                   >
-                    R$ {(product.price * quantity).toFixed(2).replace('.', ',')}
+                    R$ {(unitPrice * quantity).toFixed(2).replace('.', ',')}
                   </p>
                   {hasPromo && (
                     <span className="bg-red-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
@@ -134,6 +157,57 @@ export function AddToCartModal({ product, onConfirm, onClose, categoryColor }: A
                 <li key={index}>{ingredient}</li>
               ))}
             </ul>
+          )}
+
+          {/* 🛒 Adicionais disponíveis */}
+          {hasAddons && (
+            <div className="bg-gray-50 dark:bg-zinc-800 rounded-lg p-3">
+              <p className="text-sm font-bold text-gray-700 dark:text-gray-200 mb-2">
+                Adicionais
+              </p>
+              <div className="space-y-1.5">
+                {availableAddons.map(addon => {
+                  const isSelected = selectedAddonIds.has(addon.id);
+                  return (
+                    <button
+                      key={addon.id}
+                      onClick={() => toggleAddon(addon.id)}
+                      className={`w-full flex items-center justify-between px-3 py-2 rounded-lg border-2 transition-all text-left ${
+                        isSelected
+                          ? 'border-current bg-white dark:bg-zinc-700 shadow-sm'
+                          : 'border-gray-200 dark:border-zinc-600 hover:border-gray-300'
+                      }`}
+                      style={isSelected ? { borderColor: effectiveColor } : {}}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <div
+                          className={`w-5 h-5 rounded-md border-2 flex items-center justify-center flex-shrink-0 transition-colors ${
+                            isSelected ? 'text-white' : 'border-gray-300 dark:border-zinc-500'
+                          }`}
+                          style={isSelected ? { backgroundColor: effectiveColor, borderColor: effectiveColor } : {}}
+                        >
+                          {isSelected && (
+                            <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                        <span className="text-sm font-medium text-gray-800 dark:text-gray-200">{addon.name}</span>
+                      </div>
+                      <span className={`text-sm font-bold flex-shrink-0 ${addon.price === 0 ? 'text-green-600' : ''}`} style={addon.price > 0 ? { color: effectiveColor } : {}}>
+                        {addon.price === 0 ? 'Grátis' : `+ R$ ${addon.price.toFixed(2).replace('.', ',')}`}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              {addonsTotal > 0 && (
+                <div className="mt-2 pt-2 border-t border-gray-200 dark:border-zinc-600 flex justify-between text-sm">
+                  <span className="text-gray-500 dark:text-gray-400">Adicionais selecionados</span>
+                  <span className="font-bold" style={{ color: effectiveColor }}>+ R$ {addonsTotal.toFixed(2).replace('.', ',')}</span>
+                </div>
+              )}
+            </div>
           )}
 
           {/* Seletor de Quantidade */}

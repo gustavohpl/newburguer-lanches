@@ -1,10 +1,58 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { Clock, CheckCircle, Truck, Package, MapPin, Phone, User, Filter, Loader, RefreshCw, Printer, XCircle, MessageSquare, Send, Store, Star, Wifi, WifiOff } from 'lucide-react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { Clock, CheckCircle, Truck, Package, MapPin, Phone, User, Filter, Loader, RefreshCw, Printer, XCircle, MessageSquare, Send, Store, Star, Wifi, WifiOff, Bell, BellOff } from 'lucide-react';
 import * as api from '../../utils/api';
 import { usePrinter } from '../PrinterManager';
 import type { OrderPrintData } from '../../utils/thermalPrinter';
 import { useConfig } from '../../ConfigContext';
 import { useOrdersRealtime } from '../../hooks/useRealtime';
+
+// 🔔 Som de notificação gerado via Web Audio API (sem arquivo externo)
+function playNotificationSound() {
+  try {
+    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    
+    // Tocar 3 beeps curtos
+    const playBeep = (startTime: number, freq: number) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.frequency.value = freq;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0.4, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.3);
+      osc.start(startTime);
+      osc.stop(startTime + 0.3);
+    };
+
+    const now = ctx.currentTime;
+    playBeep(now, 880);        // A5
+    playBeep(now + 0.35, 1100); // ~C#6
+    playBeep(now + 0.7, 1320);  // E6
+    
+    // Fechar contexto depois
+    setTimeout(() => ctx.close().catch(() => {}), 2000);
+  } catch (e) {
+    console.warn('🔔 [NOTIFY] Erro ao tocar som:', e);
+  }
+}
+
+// 🔔 Mostrar notificação do browser
+function showBrowserNotification(title: string, body: string) {
+  if ('Notification' in window && Notification.permission === 'granted') {
+    try {
+      const n = new Notification(title, { 
+        body, 
+        icon: '/favicon.ico',
+        tag: 'new-order', // Substitui notificação anterior
+        requireInteraction: true, // Não desaparece sozinha
+      });
+      n.onclick = () => { window.focus(); n.close(); };
+    } catch (e) {
+      console.warn('🔔 [NOTIFY] Erro na notificação:', e);
+    }
+  }
+}
 
 type OrderStatus = 'pending' | 'preparing' | 'packing' | 'ready_for_delivery' | 'out_for_delivery' | 'ready_for_pickup' | 'completed' | 'cancelled';
 
@@ -36,6 +84,43 @@ export function OrderManager() {
   const [sectors, setSectors] = useState<Array<{id: string, name: string, color: string}>>([]);
   const [updatingOrderIds, setUpdatingOrderIds] = useState<Set<string>>(new Set()); // Rastrear pedidos sendo atualizados
 
+  // 🔔 Sistema de notificação de novos pedidos
+  const [notifyEnabled, setNotifyEnabled] = useState(() => {
+    return localStorage.getItem('admin_notify_orders') !== 'false'; // Ativado por padrão
+  });
+  const [notifyPermission, setNotifyPermission] = useState<string>('default');
+  const knownOrderIdsRef = useRef<Set<string>>(new Set());
+  const isFirstLoadRef = useRef(true);
+  const notifyEnabledRef = useRef(notifyEnabled);
+
+  // Manter ref sincronizado
+  useEffect(() => {
+    notifyEnabledRef.current = notifyEnabled;
+  }, [notifyEnabled]);
+
+  // Pedir permissão de notificação na montagem
+  useEffect(() => {
+    if ('Notification' in window) {
+      setNotifyPermission(Notification.permission);
+      if (Notification.permission === 'default' && notifyEnabled) {
+        Notification.requestPermission().then(p => setNotifyPermission(p));
+      }
+    }
+  }, []);
+
+  // Salvar preferência
+  useEffect(() => {
+    localStorage.setItem('admin_notify_orders', String(notifyEnabled));
+  }, [notifyEnabled]);
+
+  const toggleNotify = () => {
+    const next = !notifyEnabled;
+    setNotifyEnabled(next);
+    if (next && 'Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().then(p => setNotifyPermission(p));
+    }
+  };
+
   // Printer integration
   const { isConnected, printOrder: printOrderReceipt } = usePrinter();
 
@@ -55,7 +140,7 @@ export function OrderManager() {
 
     switch (type) {
       case 'confirm':
-        message = `Olá *${name}*! 👋\n\nConfirmamos seu pedido *#${order.orderId}* no NewBurguer Lanches. 🍔\n\nJá vamos começar a preparar tudo com muito carinho! 👨‍🍳🔥`;
+        message = `Olá *${name}*! 👋\n\nConfirmamos seu pedido *#${order.orderId}* no Faroeste Lanches. 🤠\n\nJá vamos começar a preparar tudo com muito carinho! 👨‍🍳🔥`;
         break;
       case 'delivery':
         message = `Olá *${name}*! 🛵\n\nSeu pedido *#${order.orderId}* acabou de sair para entrega!${sectorName ? `\n📍 Destino: ${sectorName}` : ''}\n\nFique de olho na campainha/interfone. Bom apetite! 😋`;
@@ -77,6 +162,16 @@ export function OrderManager() {
     loadHistory(); // Carregar histórico
     loadSectors(); // Carregar setores
     // Polling agora é gerenciado pelo useOrdersRealtime hook
+    
+    // 🔔 Polling de segurança para notificações (funciona com aba minimizada)
+    // O realtime pode não funcionar em background, então polling garante
+    const bgPoll = setInterval(() => {
+      if (notifyEnabledRef.current) {
+        loadOrders();
+      }
+    }, 15000); // A cada 15 segundos
+    
+    return () => clearInterval(bgPoll);
   }, []);
 
   // Realtime: substitui o polling de 3s
@@ -121,6 +216,28 @@ export function OrderManager() {
       if (response.success) {
         // Deduplicar pedidos por ID para evitar exibição duplicada
         const uniqueOrders = response.orders ? Array.from(new Map(response.orders.map((o: any) => [o.orderId, o])).values()) : [];
+        
+        // 🔔 Detectar novos pedidos
+        if (!isFirstLoadRef.current && notifyEnabledRef.current) {
+          const currentIds = new Set((uniqueOrders as Order[]).map(o => o.orderId));
+          const newOrders = (uniqueOrders as Order[]).filter(o => !knownOrderIdsRef.current.has(o.orderId));
+          
+          if (newOrders.length > 0) {
+            console.log(`🔔 [NOTIFY] ${newOrders.length} novo(s) pedido(s)!`);
+            playNotificationSound();
+            
+            const firstNew = newOrders[0] as Order;
+            const body = newOrders.length === 1
+              ? `${firstNew.customerName} — R$ ${firstNew.total?.toFixed(2).replace('.', ',')}`
+              : `${newOrders.length} novos pedidos recebidos`;
+            showBrowserNotification('🔔 Novo Pedido!', body);
+          }
+        }
+        
+        // Atualizar IDs conhecidos
+        knownOrderIdsRef.current = new Set((uniqueOrders as Order[]).map(o => o.orderId));
+        isFirstLoadRef.current = false;
+        
         setOrders(uniqueOrders as Order[]);
         console.log('✅ [ORDER MANAGER] Total de pedidos (únicos):', uniqueOrders.length);
       }
@@ -380,11 +497,30 @@ export function OrderManager() {
           </div>
           
           {/* Store Address Badge */}
-          <div className="bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 flex items-center gap-2 text-sm text-blue-800 shadow-sm">
-            <Store className="w-4 h-4 flex-shrink-0" />
-            <div>
-              <p className="text-xs text-blue-600 font-bold uppercase tracking-wider">Local da Loja</p>
-              <p className="font-medium">{config.address || 'Endereço não configurado'}</p>
+          <div className="flex items-center gap-3">
+            {/* 🔔 Botão de notificação */}
+            <button
+              onClick={toggleNotify}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
+                notifyEnabled
+                  ? 'bg-green-50 border-green-200 text-green-700 hover:bg-green-100'
+                  : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+              }`}
+              title={notifyEnabled ? 'Notificações ativadas' : 'Notificações desativadas'}
+            >
+              {notifyEnabled ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />}
+              <span className="hidden sm:inline">{notifyEnabled ? 'Alarme ON' : 'Alarme OFF'}</span>
+              {notifyEnabled && notifyPermission !== 'granted' && (
+                <span className="text-[10px] bg-yellow-200 text-yellow-800 px-1.5 rounded font-bold">Permitir</span>
+              )}
+            </button>
+
+            <div className="bg-blue-50 px-4 py-2 rounded-lg border border-blue-100 flex items-center gap-2 text-sm text-blue-800 shadow-sm">
+              <Store className="w-4 h-4 flex-shrink-0" />
+              <div>
+                <p className="text-xs text-blue-600 font-bold uppercase tracking-wider">Local da Loja</p>
+                <p className="font-medium">{config.address || 'Endereço não configurado'}</p>
+              </div>
             </div>
           </div>
         </div>
@@ -528,12 +664,27 @@ export function OrderManager() {
                     <div className="p-4 bg-gray-50">
                       <h4 className="font-semibold text-gray-800 mb-2 text-sm">Itens do Pedido:</h4>
                       <div className="space-y-1 mb-3">
-                        {order.items.map((item, idx) => (
-                          <div key={idx} className="flex justify-between text-sm">
-                            <span className="text-gray-700">{item.quantity}x {item.name}</span>
-                            <span className="text-gray-600">R$ {(item.price * item.quantity).toFixed(2)}</span>
-                          </div>
-                        ))}
+                        {order.items.map((item: any, idx: number) => {
+                          const addonsTotal = (item.selectedAddons || []).reduce((a: number, addon: any) => a + addon.price, 0);
+                          return (
+                            <div key={idx}>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-gray-700">{item.quantity}x {item.name}</span>
+                                <span className="text-gray-600">R$ {((item.price + addonsTotal) * item.quantity).toFixed(2)}</span>
+                              </div>
+                              {item.selectedAddons && item.selectedAddons.length > 0 && (
+                                <div className="ml-6 space-y-0.5">
+                                  {item.selectedAddons.map((addon: any, aIdx: number) => (
+                                    <div key={aIdx} className="flex justify-between text-xs text-purple-600">
+                                      <span>+ {addon.name}</span>
+                                      <span>{addon.price > 0 ? `+R$ ${addon.price.toFixed(2)}` : 'Grátis'}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
                       </div>
 
                       {/* Acompanhamentos selecionados pelo cliente */}
@@ -719,14 +870,26 @@ export function OrderManager() {
                         Produtos:
                       </p>
                       <div className="space-y-1">
-                        {order.items.map((item, idx) => (
-                          <div key={idx} className="flex justify-between items-center text-xs">
-                            <span className="text-gray-700">
-                              <span className="font-bold text-green-700">{item.quantity}x</span> {item.name}
-                            </span>
-                            <span className="text-gray-600 font-medium">
-                              R$ {item.price.toFixed(2)}
-                            </span>
+                        {order.items.map((item: any, idx: number) => (
+                          <div key={idx}>
+                            <div className="flex justify-between items-center text-xs">
+                              <span className="text-gray-700">
+                                <span className="font-bold text-green-700">{item.quantity}x</span> {item.name}
+                              </span>
+                              <span className="text-gray-600 font-medium">
+                                R$ {item.price.toFixed(2)}
+                              </span>
+                            </div>
+                            {item.selectedAddons && item.selectedAddons.length > 0 && (
+                              <div className="ml-6 space-y-0.5">
+                                {item.selectedAddons.map((addon: any, aIdx: number) => (
+                                  <div key={aIdx} className="flex justify-between text-[10px] text-purple-600">
+                                    <span>+ {addon.name}</span>
+                                    <span>{addon.price > 0 ? `+R$ ${addon.price.toFixed(2)}` : 'Grátis'}</span>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>

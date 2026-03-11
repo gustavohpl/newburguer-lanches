@@ -9,7 +9,7 @@ import { useI18n } from '../hooks/useI18n';
 
 interface HomePageProps {
   products: Product[];
-  onAddToCart: (product: Product, notes?: string, quantity?: number) => void;
+  onAddToCart: (product: Product, notes?: string, quantity?: number, selectedAddons?: Array<{id: string; name: string; price: number}>) => void;
   orderHistory: Product[];
 }
 

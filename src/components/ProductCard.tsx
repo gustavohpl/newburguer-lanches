@@ -11,7 +11,7 @@ import { useI18n } from '../hooks/useI18n';
 
 interface ProductCardProps {
   product: Product;
-  onAddToCart: (product: Product, notes?: string, quantity?: number) => void;
+  onAddToCart: (product: Product, notes?: string, quantity?: number, selectedAddons?: Array<{id: string; name: string; price: number}>) => void;
   noBorder?: boolean;
 }
 
@@ -82,8 +82,8 @@ export function ProductCard({ product, onAddToCart, noBorder }: ProductCardProps
     }
   };
 
-  const handleConfirmAdd = (product: Product, notes: string, quantity: number) => {
-    onAddToCart(product, notes, quantity);
+  const handleConfirmAdd = (product: Product, notes: string, quantity: number, selectedAddons?: Array<{id: string; name: string; price: number}>) => {
+    onAddToCart(product, notes, quantity, selectedAddons);
     setShowModal(false);
     
     // Feedback visual com toast
@@ -119,8 +119,6 @@ export function ProductCard({ product, onAddToCart, noBorder }: ProductCardProps
             className="relative w-28 min-w-[7rem] sm:w-32 sm:min-w-[8rem] h-28 sm:h-32 flex-shrink-0 overflow-hidden"
             onMouseEnter={() => setImgZoomed(true)}
             onMouseLeave={() => setImgZoomed(false)}
-            onTouchStart={() => setImgZoomed(true)}
-            onTouchEnd={() => setTimeout(() => setImgZoomed(false), 600)}
           >
             <ImageWithFallback
               src={getImageUrl()}

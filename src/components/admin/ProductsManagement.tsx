@@ -45,6 +45,7 @@ export function ProductsManagement({ onProductsChange }: ProductsManagementProps
   const [stockIngredients, setStockIngredients] = useState<StockIngredient[]>([]);
   const [recipeIngredients, setRecipeIngredients] = useState<RecipeIngredient[]>([]);
   const [extraIngredients, setExtraIngredients] = useState<ExtraIngredient[]>([]);
+  const [productAddons, setProductAddons] = useState<Array<{id: string; name: string; price: number; ingredientId?: string}>>([]);
   const [unavailableProducts, setUnavailableProducts] = useState<string[]>([]);
   const [ingredientPickerOpen, setIngredientPickerOpen] = useState(false);
   const [ingredientSearch, setIngredientSearch] = useState('');
@@ -222,6 +223,7 @@ export function ProductsManagement({ onProductsChange }: ProductsManagementProps
     // Carregar ficha técnica se existir
     setRecipeIngredients(product.recipe?.ingredients || []);
     setExtraIngredients(product.recipe?.extras || []);
+    setProductAddons(product.addons || []);
     if (stockEnabled) loadStockIngredients();
     setIngredientPickerOpen(false);
     setIngredientSearch('');
@@ -241,6 +243,7 @@ export function ProductsManagement({ onProductsChange }: ProductsManagementProps
     });
     setRecipeIngredients([]);
     setExtraIngredients([]);
+    setProductAddons([]);
     if (stockEnabled) loadStockIngredients();
     setIngredientPickerOpen(false);
     setIngredientSearch('');
@@ -341,6 +344,13 @@ export function ProductsManagement({ onProductsChange }: ProductsManagementProps
       productData.description = allVisible.length > 0
         ? allVisible.join(', ')
         : '';
+    }
+
+    // 🛒 Adicionais para o cliente
+    if (productAddons.length > 0) {
+      productData.addons = productAddons.filter(a => a.name.trim());
+    } else {
+      productData.addons = [];
     }
 
     try {
@@ -1186,6 +1196,118 @@ export function ProductsManagement({ onProductsChange }: ProductsManagementProps
                     </button>
                   </div>
                 )}
+
+                {/* ============================== */}
+                {/* 🛒 ADICIONAIS PARA O CLIENTE */}
+                {/* ============================== */}
+                <div className="border border-purple-200 dark:border-purple-800 rounded-lg p-4 bg-purple-50 dark:bg-purple-900/20">
+                  <h4 className="text-sm font-bold text-purple-800 dark:text-purple-300 mb-3 flex items-center gap-2">
+                    🛒 Adicionais (cliente pode adicionar ao pedido)
+                  </h4>
+
+                  {productAddons.length > 0 && (
+                    <div className="space-y-2 mb-3">
+                      {productAddons.map((addon, idx) => (
+                        <div key={addon.id} className="flex items-center gap-2 bg-white dark:bg-zinc-800 rounded-lg p-2 border border-purple-100 dark:border-zinc-700">
+                          <input
+                            type="text"
+                            value={addon.name}
+                            onChange={(e) => {
+                              const updated = [...productAddons];
+                              updated[idx] = { ...updated[idx], name: e.target.value };
+                              setProductAddons(updated);
+                            }}
+                            className="flex-1 text-sm border border-gray-300 dark:border-zinc-600 rounded px-2 py-1.5 bg-white dark:bg-zinc-800 dark:text-white min-w-0"
+                            placeholder="Nome do adicional"
+                          />
+                          <div className="flex items-center gap-1">
+                            <span className="text-xs text-gray-500">R$</span>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              value={addon.price}
+                              onChange={(e) => {
+                                const updated = [...productAddons];
+                                updated[idx] = { ...updated[idx], price: Math.max(0, parseFloat(e.target.value) || 0) };
+                                setProductAddons(updated);
+                              }}
+                              className="w-20 text-sm border border-gray-300 dark:border-zinc-600 rounded px-2 py-1.5 bg-white dark:bg-zinc-800 dark:text-white text-right"
+                            />
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = [...productAddons];
+                              updated[idx] = { ...updated[idx], price: 0 };
+                              setProductAddons(updated);
+                            }}
+                            className={`text-[10px] px-2 py-1 rounded font-bold whitespace-nowrap ${
+                              addon.price === 0
+                                ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400'
+                                : 'bg-gray-100 text-gray-500 dark:bg-zinc-700 dark:text-gray-400 hover:bg-green-100 hover:text-green-700'
+                            }`}
+                            title="Tornar grátis"
+                          >
+                            {addon.price === 0 ? '✓ Grátis' : 'Grátis'}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setProductAddons(productAddons.filter((_, i) => i !== idx))}
+                            className="text-red-500 hover:text-red-700 p-1"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-2">
+                    {/* Adicionar manual */}
+                    <button
+                      type="button"
+                      onClick={() => setProductAddons([...productAddons, { id: `addon_${Date.now()}`, name: '', price: 0 }])}
+                      className="text-sm text-purple-600 hover:text-purple-700 font-medium flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" /> Adicionar manual
+                    </button>
+
+                    {/* Adicionar do estoque (se habilitado) */}
+                    {stockEnabled && (
+                      <select
+                        className="text-sm border border-purple-300 dark:border-purple-700 rounded px-2 py-1 bg-white dark:bg-zinc-800 dark:text-white"
+                        value=""
+                        onChange={(e) => {
+                          const ingId = e.target.value;
+                          if (!ingId) return;
+                          const ing = stockIngredients.find(s => s.id === ingId);
+                          if (!ing) return;
+                          // Evitar duplicata
+                          if (productAddons.some(a => a.ingredientId === ingId)) return;
+                          setProductAddons([...productAddons, {
+                            id: `addon_${Date.now()}`,
+                            name: ing.name,
+                            price: ing.pricePerUnit || ing.pricePerKg || 0,
+                            ingredientId: ingId,
+                          }]);
+                        }}
+                      >
+                        <option value="">+ Do estoque...</option>
+                        {stockIngredients
+                          .filter(s => !productAddons.some(a => a.ingredientId === s.id))
+                          .map(s => (
+                            <option key={s.id} value={s.id}>{s.name}</option>
+                          ))
+                        }
+                      </select>
+                    )}
+                  </div>
+
+                  {productAddons.length === 0 && (
+                    <p className="text-xs text-gray-400 mt-2">Nenhum adicional configurado. O cliente não verá opção de adicionais para este produto.</p>
+                  )}
+                </div>
 
                 {/* Botões */}
                 <div className="flex gap-2 pt-4">
