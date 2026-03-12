@@ -343,7 +343,10 @@ export function OrderManager() {
         
         // Atualizar status localmente primeiro (optimistic update)
         setOrders(orders.map(order =>
-          order.orderId === orderId ? { ...order, status: 'cancelled' } : order
+          order.orderId === orderId ? { ...order, status: 'cancelled' as OrderStatus } : order
+        ));
+        setHistoryOrders(prev => prev.map(order =>
+          order.orderId === orderId ? { ...order, status: 'cancelled' as OrderStatus } : order
         ));
         
         // Chamar API do backend
@@ -353,17 +356,18 @@ export function OrderManager() {
           console.log('✅ [ORDER MANAGER] Pedido cancelado com sucesso:', result.order);
           // Recarregar pedidos para obter estado atualizado
           await loadOrders();
+          await loadHistory();
         } else {
           console.error('❌ [ORDER MANAGER] Erro ao cancelar pedido:', result.error);
           alert(`Erro ao cancelar pedido: ${result.error}`);
-          // Recarregar pedidos para reverter mudança
           await loadOrders();
+          await loadHistory();
         }
       } catch (error) {
         console.error('❌ [ORDER MANAGER] Erro de rede ao cancelar pedido:', error);
         alert('Erro de conexão. Tente novamente.');
-        // Recarregar pedidos para reverter mudança
         await loadOrders();
+        await loadHistory();
       }
     }
   };
@@ -465,18 +469,22 @@ export function OrderManager() {
   
   console.log('📊 [ORDER MANAGER DEBUG] Pedidos concluídos:', completedOrders.length, 'de', historyOrders.length, 'no histórico');
   
-  // Cancelados ou Expirados
-  const cancelledOrders = orders.filter(o => {
+  // Cancelados ou Expirados (de ativos + histórico)
+  const cancelledFromActive = orders.filter(o => {
     if (o.status === 'cancelled') return true;
-    
     // Antigos não finalizados (> 24h)
     const isActiveStatus = o.status !== 'completed' && o.status !== 'cancelled';
     const orderDate = new Date(o.createdAt);
     const now = new Date();
     const diffHours = (now.getTime() - orderDate.getTime()) / (1000 * 60 * 60);
-    
     return isActiveStatus && diffHours >= 24;
-  }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()); // Ordenar mais recentes primeiro
+  });
+  const cancelledFromHistory = historyOrders.filter(o => o.status === 'cancelled');
+  // Mesclar sem duplicatas
+  const cancelledMap = new Map<string, Order>();
+  [...cancelledFromActive, ...cancelledFromHistory].forEach(o => cancelledMap.set(o.orderId, o));
+  const cancelledOrders = Array.from(cancelledMap.values())
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const statusFilters = [
     { value: 'all' as const, label: 'Ativos (24h)', count: filteredOrders.length },
@@ -942,6 +950,15 @@ export function OrderManager() {
                   )}
 
                   <p className="font-bold text-green-600">R$ {order.total.toFixed(2)}</p>
+                  
+                  {/* Cancelar pedido concluído */}
+                  <button
+                    onClick={() => handleCancelOrder(order.orderId)}
+                    className="mt-2 w-full bg-red-50 hover:bg-red-100 text-red-600 py-1.5 rounded-lg font-medium transition-colors text-xs flex items-center justify-center gap-1 border border-red-200"
+                  >
+                    <XCircle className="w-3.5 h-3.5" />
+                    Cancelar Pedido
+                  </button>
                 </div>
               );
             })}
@@ -949,16 +966,22 @@ export function OrderManager() {
         )}
       </div>
 
-      {/* Cancelled Orders */}
-      {cancelledOrders.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-            <XCircle className="w-6 h-6 text-red-600" />
-            Pedidos Cancelados ({cancelledOrders.length})
-          </h2>
+      {/* Cancelled Orders - SEMPRE APARECE */}
+      <div className="mb-8">
+        <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+          <XCircle className="w-6 h-6 text-red-600" />
+          Pedidos Cancelados ({cancelledOrders.length})
+        </h2>
+
+        {cancelledOrders.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-md p-12 text-center">
+            <XCircle className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+            <p className="text-gray-500 text-lg">Nenhum pedido cancelado</p>
+          </div>
+        ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {cancelledOrders.map(order => (
-              <div key={order.id} className="bg-white rounded-lg shadow-md p-4 border-2 border-red-200 opacity-90">
+              <div key={order.id} className="bg-white rounded-lg shadow-md p-4 border-2 border-red-200 opacity-90 hover:opacity-100 transition-opacity">
                 <div className="flex items-center justify-between mb-2">
                   <h3 className="font-bold text-gray-800">#{order.orderId}</h3>
                   <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800 flex items-center gap-1">
@@ -968,12 +991,42 @@ export function OrderManager() {
                 </div>
                 <p className="text-sm text-gray-600 mb-1">{order.customerName}</p>
                 <p className="text-sm text-gray-500 mb-2">{getTimeAgo(new Date(order.createdAt))}</p>
-                <p className="font-bold text-gray-600">R$ {order.total.toFixed(2)}</p>
+
+                {/* Itens do pedido */}
+                {order.items && order.items.length > 0 && (
+                  <div className="mb-2 bg-red-50 p-2 rounded border border-red-100">
+                    <p className="text-xs font-bold text-red-800 mb-1 flex items-center gap-1">
+                      <Package className="w-3 h-3" />
+                      Itens:
+                    </p>
+                    <div className="space-y-0.5">
+                      {order.items.map((item: any, idx: number) => (
+                        <div key={idx} className="flex justify-between text-xs text-gray-600">
+                          <span>{item.quantity}x {item.name}</span>
+                          <span>R$ {item.price.toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Endereço */}
+                {order.address && (
+                  <p className="text-xs text-gray-500 mb-2 flex items-center gap-1">
+                    <MapPin className="w-3 h-3 flex-shrink-0" />
+                    {order.address}
+                  </p>
+                )}
+
+                <div className="flex items-center justify-between">
+                  <p className="font-bold text-red-600 line-through">R$ {order.total.toFixed(2)}</p>
+                  <span className="text-xs text-gray-400">{order.paymentMethod}</span>
+                </div>
               </div>
             ))}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 }
