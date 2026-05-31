@@ -1,6 +1,9 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
-import * as thermalPrinter from '../utils/thermalPrinter';
-import type { PrinterConnection, OrderPrintData } from '../utils/thermalPrinter';
+import * as api from '../utils/api';
+import { useConfig } from '../ConfigContext';
+
+// 🖨️ URL do servidor de impressão local (roda no PC com a impressora)
+const PRINT_SERVER_URL = 'http://localhost:9100';
 
 interface PrinterContextType {
   isConnected: boolean;
@@ -22,147 +25,154 @@ export function usePrinter() {
 }
 
 export function PrinterProvider({ children }: { children: React.ReactNode }) {
-  const [printerConnection, setPrinterConnection] = useState<PrinterConnection | null>(null);
-  const [printerName, setPrinterName] = useState<string | null>(null);
+  const { config } = useConfig();
+  const [isConnected, setIsConnected] = useState(false);
 
-  const connectPrinter = useCallback(async (): Promise<boolean> => {
+  // Verifica se o servidor de impressão está online
+  const checkServer = useCallback(async (): Promise<boolean> => {
     try {
-      console.log('🖨️ [PRINTER] Iniciando conexão USB...');
-      
-      // Verificar se Web Serial API está disponível
-      if (!('serial' in navigator)) {
-        alert('❌ Seu navegador não suporta conexão USB Serial.\n\nUse Google Chrome, Edge ou Opera.');
-        return false;
-      }
-
-      const connection = await thermalPrinter.connectToPrinter();
-      
-      if (connection) {
-        setPrinterConnection(connection);
-        setPrinterName('Impressora USB'); // Você pode obter mais info da porta se necessário
-        console.log('✅ [PRINTER] Impressora USB conectada com sucesso!');
-        alert('✅ Impressora USB conectada com sucesso!');
-        return true;
-      } else {
-        alert('❌ Falha ao conectar a impressora USB.');
-        return false;
-      }
-    } catch (error) {
-      console.error('❌ [PRINTER] Erro ao conectar:', error);
-      alert('❌ Erro ao conectar impressora USB. Verifique a conexão.');
+      const res = await fetch(PRINT_SERVER_URL, { method: 'GET', signal: AbortSignal.timeout(3000) });
+      const data = await res.json();
+      return data.status === 'online';
+    } catch {
       return false;
     }
   }, []);
 
-  const disconnectPrinter = useCallback(() => {
-    if (printerConnection) {
-      console.log('🖨️ [PRINTER] Desconectando impressora USB...');
-      thermalPrinter.disconnectPrinter(printerConnection);
-      setPrinterConnection(null);
-      setPrinterName(null);
-      console.log('✅ [PRINTER] Impressora desconectada');
-      alert('🖨️ Impressora desconectada');
+  // Checa o servidor periodicamente
+  useEffect(() => {
+    let active = true;
+    const check = async () => {
+      const online = await checkServer();
+      if (active) setIsConnected(online);
+    };
+    check();
+    const interval = setInterval(check, 10000); // a cada 10s
+    return () => { active = false; clearInterval(interval); };
+  }, [checkServer]);
+
+  const connectPrinter = useCallback(async (): Promise<boolean> => {
+    console.log('🖨️ [PRINTER] Verificando servidor de impressão...');
+    const online = await checkServer();
+    setIsConnected(online);
+    if (online) {
+      alert('✅ Servidor de impressão conectado!');
+    } else {
+      alert('❌ Servidor de impressão não encontrado.\n\nVerifique se o print_server.py está rodando no computador da impressora.\n\nNo terminal: python3 ~/print_server.py');
     }
-  }, [printerConnection]);
+    return online;
+  }, [checkServer]);
+
+  const disconnectPrinter = useCallback(() => {
+    setIsConnected(false);
+  }, []);
+
+  const sendToPrintServer = useCallback(async (payload: any): Promise<boolean> => {
+    try {
+      const res = await fetch(PRINT_SERVER_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      return data.success === true;
+    } catch (error) {
+      console.error('❌ [PRINTER] Erro ao enviar para servidor:', error);
+      return false;
+    }
+  }, []);
 
   const testPrint = useCallback(async (): Promise<boolean> => {
-    if (!printerConnection) {
-      console.error('❌ [PRINTER] Impressora não conectada');
-      return false;
-    }
-
-    try {
-      console.log('🖨️ [PRINTER] Testando impressão...');
-      const result = await thermalPrinter.testPrint(printerConnection);
-      
-      if (result) {
-        console.log('✅ [PRINTER] Teste de impressão bem-sucedido!');
-      } else {
-        console.error('❌ [PRINTER] Falha no teste de impressão');
-      }
-      
-      return result;
-    } catch (error) {
-      console.error('❌ [PRINTER] Erro no teste de impressão:', error);
-      return false;
-    }
-  }, [printerConnection]);
+    const result = await sendToPrintServer({
+      orderId: 'TESTE-001',
+      storeName: config.siteName || 'TESTE',
+      date: new Date().toLocaleDateString('pt-BR'),
+      time: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      customerName: 'Cliente Teste',
+      customerPhone: '64999999999',
+      isDelivery: false,
+      pickupLocation: config.address || 'Loja',
+      items: [
+        { quantity: 1, name: 'Item de Teste', price: 10.0 },
+      ],
+      subtotal: 10.0,
+      deliveryFee: 0,
+      total: 10.0,
+      paymentMethod: 'TESTE',
+    });
+    if (result) alert('✅ Teste impresso com sucesso!');
+    else alert('❌ Falha ao imprimir teste. Servidor rodando?');
+    return result;
+  }, [sendToPrintServer, config]);
 
   const printOrder = useCallback(async (order: any): Promise<boolean> => {
-    if (!printerConnection) {
-      console.error('❌ [PRINTER] Impressora não conectada');
-      alert('⚠️ Impressora não conectada! Vá em Configurações para conectar.');
-      return false;
-    }
-
-    try {
-      // 🆕 Buscar o nome do setor antes de imprimir se tivermos o ID
-      let sectorName = '';
-      if (order.deliverySector) {
-        try {
-          const response = await api.getDeliverySectors();
-          if (response.success && response.sectors) {
-            const sector = response.sectors.find((s: any) => s.id === order.deliverySector);
-            if (sector) sectorName = sector.name;
-          }
-        } catch (e) {
-          console.error('Erro ao buscar nome do setor para impressão', e);
+    // Buscar nome do setor
+    let sectorName = '';
+    if (order.deliverySector) {
+      try {
+        const response = await api.getDeliverySectors();
+        if (response.success && response.sectors) {
+          const sector = response.sectors.find((s: any) => s.id === order.deliverySector);
+          if (sector) sectorName = sector.name;
         }
+      } catch (e) {
+        console.error('Erro ao buscar setor', e);
       }
-
-      console.log('🖨️ [PRINTER] Formatando pedido para impressão...', order);
-      
-      // Formatar o pedido do banco para o formato OrderPrintData
-      const now = new Date(order.createdAt);
-      const printData: OrderPrintData = {
-        orderId: order.orderId,
-        date: now.toLocaleDateString('pt-BR'),
-        time: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        customerName: order.customerName,
-        customerPhone: order.customerPhone,
-        items: order.items.map((item: any) => ({
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price * item.quantity,
-        })),
-        subtotal: order.total - (order.deliveryType === 'delivery' ? 5 : 0),
-        deliveryFee: order.deliveryType === 'delivery' ? 5 : 0,
-        total: order.total,
-        paymentMethod: order.paymentMethod?.toUpperCase() || 'N/A',
-        cardType: order.cardType, // Crédito ou Débito
-        changeFor: order.changeFor, // Troco
-        deliveryAddress: order.deliveryType === 'delivery' ? order.address : undefined,
-        deliverySector: sectorName || order.deliverySector, // Usa o nome real do setor
-        reference: order.reference, // Ponto de referência
-        pickupLocation: order.deliveryType !== 'delivery' ? 'Praça Lucio Prado - Goiatuba/GO' : undefined,
-        isDelivery: order.deliveryType === 'delivery',
-        orderType: order.deliveryType, 
-        estimatedTime: order.estimatedTime,
-      };
-      
-      console.log('🖨️ [PRINTER] Dados formatados:', printData);
-      console.log('🖨️ [PRINTER] Imprimindo pedido:', printData.orderId);
-      const result = await thermalPrinter.printOrder(printerConnection, printData);
-      
-      if (result) {
-        console.log('✅ [PRINTER] Pedido impresso com sucesso!');
-        alert('✅ Cupom impresso com sucesso!');
-      } else {
-        console.error('❌ [PRINTER] Falha ao imprimir pedido');
-        alert('❌ Falha ao imprimir cupom. Verifique a impressora.');
-      }
-      
-      return result;
-    } catch (error) {
-      console.error('❌ [PRINTER] Erro ao imprimir pedido:', error);
-      alert('❌ Erro ao imprimir cupom. Verifique a conexão.');
-      return false;
     }
-  }, [printerConnection]);
+
+    const now = new Date(order.createdAt);
+    const isDelivery = order.deliveryType === 'delivery';
+    const deliveryFee = isDelivery ? (order.deliveryFee ?? 0) : 0;
+
+    // Calcular subtotal incluindo adicionais
+    const subtotal = (order.items || []).reduce((sum: number, item: any) => {
+      const addonsTotal = (item.selectedAddons || []).reduce((a: number, ad: any) => a + (ad.price || 0), 0);
+      return sum + (item.price + addonsTotal) * item.quantity;
+    }, 0);
+
+    const payload = {
+      orderId: order.orderId,
+      storeName: config.siteName || 'PEDIDO',
+      date: now.toLocaleDateString('pt-BR'),
+      time: now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+      customerName: order.customerName,
+      customerPhone: order.customerPhone,
+      isDelivery,
+      orderType: order.deliveryType,
+      deliveryAddress: isDelivery ? order.address : undefined,
+      deliverySector: sectorName || order.deliverySector,
+      reference: order.reference,
+      pickupLocation: !isDelivery ? (config.address || 'Loja') : undefined,
+      items: (order.items || []).map((item: any) => ({
+        name: item.name,
+        quantity: item.quantity,
+        price: item.price,
+        selectedAddons: item.selectedAddons || [],
+        notes: item.notes,
+      })),
+      subtotal,
+      deliveryFee,
+      discount: order.discount || 0,
+      total: order.total,
+      paymentMethod: order.paymentMethod?.toUpperCase() || 'N/A',
+      cardType: order.cardType,
+      changeFor: order.changeFor,
+    };
+
+    console.log('🖨️ [PRINTER] Enviando pedido para impressão:', payload.orderId);
+    const result = await sendToPrintServer(payload);
+
+    if (result) {
+      console.log('✅ [PRINTER] Pedido impresso!');
+    } else {
+      alert('⚠️ Não foi possível imprimir. Verifique se o servidor de impressão está rodando.');
+    }
+    return result;
+  }, [sendToPrintServer, config]);
 
   const value: PrinterContextType = {
-    isConnected: !!printerConnection,
-    printerName,
+    isConnected,
+    printerName: isConnected ? 'Servidor de Impressão' : null,
     connectPrinter,
     disconnectPrinter,
     testPrint,

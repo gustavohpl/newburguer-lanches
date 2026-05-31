@@ -734,11 +734,13 @@ export function Settings() {
           </div>
 
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
-            <h3 className="font-bold text-gray-800 mb-2">🔌 Conectar Impressora USB</h3>
+            <h3 className="font-bold text-gray-800 mb-2">🖨️ Servidor de Impressão Local</h3>
             <p className="text-sm text-gray-700 mb-4">
-              Conecte sua impressora térmica via cabo USB para imprimir pedidos automaticamente.
+              A impressão usa um servidor local rodando no computador onde a impressora USB está conectada.
               <br />
-              <strong>Requisitos:</strong> Google Chrome, Edge ou Opera (Web Serial API)
+              <strong>Antes de conectar:</strong> abra o terminal e rode <code className="bg-gray-200 px-1 rounded">python3 ~/print_server.py</code>
+              <br />
+              <strong>Navegador:</strong> Google Chrome, Edge ou Opera
             </p>
 
             <div className="flex gap-3">
@@ -755,12 +757,12 @@ export function Settings() {
                 ) : isConnected ? (
                   <>
                     <CheckCircle className="w-5 h-5" />
-                    Impressora Conectada
+                    Servidor Conectado
                   </>
                 ) : (
                   <>
                     <Printer className="w-5 h-5" />
-                    🔌 Conectar Impressora USB
+                    🖨️ Conectar Servidor
                   </>
                 )}
               </button>
