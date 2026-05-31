@@ -93,6 +93,18 @@ export function OrderManager() {
   const isFirstLoadRef = useRef(true);
   const notifyEnabledRef = useRef(notifyEnabled);
 
+  // 🖨️ Auto-impressão de novos pedidos
+  const [autoPrintEnabled, setAutoPrintEnabled] = useState(() => {
+    return localStorage.getItem('admin_autoprint_orders') === 'true';
+  });
+  const autoPrintEnabledRef = useRef(autoPrintEnabled);
+  const printOrderRef = useRef<((order: any) => Promise<boolean>) | null>(null);
+
+  useEffect(() => {
+    localStorage.setItem('admin_autoprint_orders', String(autoPrintEnabled));
+    autoPrintEnabledRef.current = autoPrintEnabled;
+  }, [autoPrintEnabled]);
+
   // Manter ref sincronizado
   useEffect(() => {
     notifyEnabledRef.current = notifyEnabled;
@@ -123,6 +135,11 @@ export function OrderManager() {
 
   // Printer integration
   const { isConnected, printOrder: printOrderReceipt } = usePrinter();
+
+  // Manter ref da função de impressão atualizada (evita stale closure no loadOrders)
+  useEffect(() => {
+    printOrderRef.current = printOrderReceipt;
+  }, [printOrderReceipt]);
 
   // Helper para buscar nome do setor pelo ID
   const getSectorName = (sectorId?: string) => {
@@ -217,20 +234,34 @@ export function OrderManager() {
         // Deduplicar pedidos por ID para evitar exibição duplicada
         const uniqueOrders = response.orders ? Array.from(new Map(response.orders.map((o: any) => [o.orderId, o])).values()) : [];
         
-        // 🔔 Detectar novos pedidos
-        if (!isFirstLoadRef.current && notifyEnabledRef.current) {
-          const currentIds = new Set((uniqueOrders as Order[]).map(o => o.orderId));
+        // 🔔🖨️ Detectar novos pedidos (para alarme e/ou auto-impressão)
+        if (!isFirstLoadRef.current && (notifyEnabledRef.current || autoPrintEnabledRef.current)) {
           const newOrders = (uniqueOrders as Order[]).filter(o => !knownOrderIdsRef.current.has(o.orderId));
           
           if (newOrders.length > 0) {
-            console.log(`🔔 [NOTIFY] ${newOrders.length} novo(s) pedido(s)!`);
-            playNotificationSound();
-            
-            const firstNew = newOrders[0] as Order;
-            const body = newOrders.length === 1
-              ? `${firstNew.customerName} — R$ ${firstNew.total?.toFixed(2).replace('.', ',')}`
-              : `${newOrders.length} novos pedidos recebidos`;
-            showBrowserNotification('🔔 Novo Pedido!', body);
+            console.log(`🔔 [NOVO] ${newOrders.length} novo(s) pedido(s)!`);
+
+            // Alarme sonoro + notificação (só se ativado)
+            if (notifyEnabledRef.current) {
+              playNotificationSound();
+              const firstNew = newOrders[0] as Order;
+              const body = newOrders.length === 1
+                ? `${firstNew.customerName} — R$ ${firstNew.total?.toFixed(2).replace('.', ',')}`
+                : `${newOrders.length} novos pedidos recebidos`;
+              showBrowserNotification('🔔 Novo Pedido!', body);
+            }
+
+            // 🖨️ Imprimir automaticamente (só se ativado)
+            if (autoPrintEnabledRef.current && printOrderRef.current) {
+              for (const novoPedido of newOrders) {
+                console.log(`🖨️ [AUTO-PRINT] Imprimindo pedido #${(novoPedido as Order).orderId}...`);
+                try {
+                  await printOrderRef.current(novoPedido);
+                } catch (e) {
+                  console.error('❌ [AUTO-PRINT] Erro ao imprimir:', e);
+                }
+              }
+            }
           }
         }
         
@@ -520,6 +551,23 @@ export function OrderManager() {
               <span className="hidden sm:inline">{notifyEnabled ? 'Alarme ON' : 'Alarme OFF'}</span>
               {notifyEnabled && notifyPermission !== 'granted' && (
                 <span className="text-[10px] bg-yellow-200 text-yellow-800 px-1.5 rounded font-bold">Permitir</span>
+              )}
+            </button>
+
+            {/* 🖨️ Botão de auto-impressão */}
+            <button
+              onClick={() => setAutoPrintEnabled(v => !v)}
+              className={`flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all ${
+                autoPrintEnabled
+                  ? 'bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100'
+                  : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+              }`}
+              title={autoPrintEnabled ? 'Auto-impressão ativada' : 'Auto-impressão desativada'}
+            >
+              <Printer className="w-4 h-4" />
+              <span className="hidden sm:inline">{autoPrintEnabled ? 'Auto-imprimir ON' : 'Auto-imprimir OFF'}</span>
+              {autoPrintEnabled && !isConnected && (
+                <span className="text-[10px] bg-red-200 text-red-800 px-1.5 rounded font-bold">Sem servidor</span>
               )}
             </button>
 
