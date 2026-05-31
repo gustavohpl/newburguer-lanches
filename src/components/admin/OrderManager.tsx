@@ -180,13 +180,13 @@ export function OrderManager() {
     loadSectors(); // Carregar setores
     // Polling agora é gerenciado pelo useOrdersRealtime hook
     
-    // 🔔 Polling de segurança para notificações (funciona com aba minimizada)
-    // O realtime pode não funcionar em background, então polling garante
+    // 🔔🖨️ Polling de segurança para alarme E auto-impressão
+    // (funciona com aba minimizada; realtime pode falhar em background)
     const bgPoll = setInterval(() => {
-      if (notifyEnabledRef.current) {
+      if (notifyEnabledRef.current || autoPrintEnabledRef.current) {
         loadOrders();
       }
-    }, 15000); // A cada 15 segundos
+    }, 8000); // A cada 8 segundos
     
     return () => clearInterval(bgPoll);
   }, []);
@@ -237,6 +237,9 @@ export function OrderManager() {
         // 🔔🖨️ Detectar novos pedidos (para alarme e/ou auto-impressão)
         if (!isFirstLoadRef.current && (notifyEnabledRef.current || autoPrintEnabledRef.current)) {
           const newOrders = (uniqueOrders as Order[]).filter(o => !knownOrderIdsRef.current.has(o.orderId));
+          
+          // Marcar como conhecidos IMEDIATAMENTE (evita impressão dupla por chamadas simultâneas)
+          newOrders.forEach(o => knownOrderIdsRef.current.add(o.orderId));
           
           if (newOrders.length > 0) {
             console.log(`🔔 [NOVO] ${newOrders.length} novo(s) pedido(s)!`);
