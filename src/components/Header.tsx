@@ -166,25 +166,31 @@ export function Header() {
         </div>
 
         {/* Endereço + Telefone + Horário — abaixo da logo */}
-        <div className="flex flex-col items-center gap-2 mb-5">
-          <div className="inline-flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 shadow-md" style={{ backgroundColor: themeColor }}>
-              <MapPin className="w-3 h-3 text-white" />
+        <div className="flex flex-col items-center gap-2.5 mb-5">
+          {/* Endereço e Telefone na mesma linha (quebra no mobile se faltar espaço) */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4">
+            <div className="inline-flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 shadow-md" style={{ backgroundColor: themeColor }}>
+                <MapPin className="w-3 h-3 text-white" />
+              </div>
+              <span className="text-xs sm:text-sm font-extrabold text-white tracking-wide leading-snug text-center sm:text-left" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
+                {effectiveAddress}
+              </span>
             </div>
-            <span className="text-xs sm:text-sm font-extrabold text-white tracking-wide leading-snug text-center" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
-              {effectiveAddress}
-            </span>
+
+            <div className="hidden sm:block w-px h-4 bg-white/30" />
+
+            <div className="inline-flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 shadow-md" style={{ backgroundColor: themeColor }}>
+                <Phone className="w-3 h-3 text-white" />
+              </div>
+              <span className="text-xs sm:text-sm font-extrabold text-white tracking-wide" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
+                {effectivePhone}
+              </span>
+            </div>
           </div>
 
-          <div className="inline-flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 shadow-md" style={{ backgroundColor: themeColor }}>
-              <Phone className="w-3 h-3 text-white" />
-            </div>
-            <span className="text-xs sm:text-sm font-extrabold text-white tracking-wide" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
-              {effectivePhone}
-            </span>
-          </div>
-
+          {/* Horário de funcionamento */}
           <div className="inline-flex items-center gap-2">
             <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 shadow-md" style={{ backgroundColor: themeColor }}>
               <Clock className="w-3 h-3 text-white" />
