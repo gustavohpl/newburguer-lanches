@@ -1,5 +1,5 @@
 import React from 'react';
-import { Phone, MapPin, Star, Heart, Sparkles, Zap, Snowflake, Flame, Music, Sun, Moon, Circle, Cloud } from 'lucide-react';
+import { Phone, MapPin, Clock, Star, Heart, Sparkles, Zap, Snowflake, Flame, Music, Sun, Moon, Circle, Cloud } from 'lucide-react';
 import { useConfig } from '../ConfigContext';
 import { useFranchise } from '../FranchiseContext';
 import logoImage from 'figma:asset/2217307d23df7779a3757aa35c01d81549336b8b.png';
@@ -41,6 +41,7 @@ export function Header() {
   const effectivePhone = unitOverrides.phone || config.phone || '(64) 99339-2970';
   const effectiveAddress = unitOverrides.address || config.address || 'Praça Lucio Prado - Goiatuba/GO';
   const effectiveGoogleMapsUrl = unitOverrides.googleMapsUrl || config.googleMapsUrl;
+  const effectiveHours = unitOverrides.openingHours || config.openingHours || 'Todos os dias a partir das 18h30';
 
   // Cores das redes: config > fallback brand colors
   const socialColors = config.socialMediaColors || {};
@@ -143,34 +144,8 @@ export function Header() {
       ))}
 
       {/* Conteúdo principal */}
-      <div className="container mx-auto px-4 pt-5 pb-14 relative z-10">
+      <div className="container mx-auto px-4 pt-8 pb-14 relative z-10">
         
-        {/* TOPO: Endereço + Contato — centralizado */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-5 mb-6">
-          {/* Endereço */}
-          <div className="inline-flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 shadow-md" style={{ backgroundColor: themeColor }}>
-              <MapPin className="w-3 h-3 text-white" />
-            </div>
-            <span className="text-xs sm:text-sm font-extrabold text-white tracking-wide leading-snug" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
-              {effectiveAddress}
-            </span>
-          </div>
-          
-          {/* Separador */}
-          <div className="hidden sm:block w-px h-4 bg-white/30" />
-          
-          {/* Telefone */}
-          <div className="inline-flex items-center gap-2">
-            <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 shadow-md" style={{ backgroundColor: themeColor }}>
-              <Phone className="w-3 h-3 text-white" />
-            </div>
-            <span className="text-xs sm:text-sm font-extrabold text-white tracking-wide" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
-              {effectivePhone}
-            </span>
-          </div>
-        </div>
-
         {/* Logo centralizado */}
         <div className="flex justify-center mb-5">
           <div className="relative">
@@ -188,6 +163,36 @@ export function Header() {
           <div className="h-px w-16" style={{ background: `linear-gradient(to right, transparent, ${themeColor})` }} />
           <Star className="w-4 h-4" style={{ fill: themeColor, color: themeColor }} />
           <div className="h-px w-16" style={{ background: `linear-gradient(to left, transparent, ${themeColor})` }} />
+        </div>
+
+        {/* Endereço + Telefone + Horário — abaixo da logo */}
+        <div className="flex flex-col items-center gap-2 mb-5">
+          <div className="inline-flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 shadow-md" style={{ backgroundColor: themeColor }}>
+              <MapPin className="w-3 h-3 text-white" />
+            </div>
+            <span className="text-xs sm:text-sm font-extrabold text-white tracking-wide leading-snug text-center" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
+              {effectiveAddress}
+            </span>
+          </div>
+
+          <div className="inline-flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 shadow-md" style={{ backgroundColor: themeColor }}>
+              <Phone className="w-3 h-3 text-white" />
+            </div>
+            <span className="text-xs sm:text-sm font-extrabold text-white tracking-wide" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
+              {effectivePhone}
+            </span>
+          </div>
+
+          <div className="inline-flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 shadow-md" style={{ backgroundColor: themeColor }}>
+              <Clock className="w-3 h-3 text-white" />
+            </div>
+            <span className="text-xs sm:text-sm font-extrabold text-white tracking-wide text-center" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
+              {effectiveHours}
+            </span>
+          </div>
         </div>
 
         {/* Redes Sociais centralizadas */}
