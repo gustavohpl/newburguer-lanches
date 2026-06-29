@@ -275,7 +275,7 @@ export async function adminFetch(endpoint: string, options: RequestInit = {}): P
   
   // 🛡️ Tratar sessão expirada/inválida (401) ou CSRF inválido (403)
   // Usar debounce para evitar cascata quando múltiplas requests paralelas falham
-  if (response.status === 401 || response.status === 403) {
+  if (response.status === 401) { // 403 (CSRF) não desloga mais
     console.warn(`⚠️ [AUTH] Servidor retornou ${response.status} em ${endpoint} — sessão expirada ou token inválido`);
     dispatchAdminSessionExpired();
   }
@@ -316,7 +316,7 @@ export async function masterFetch(endpoint: string, options: RequestInit = {}): 
   externalSignal?.removeEventListener('abort', onExternalAbort);
   
   // Tratar sessão expirada
-  if (response.status === 401 || response.status === 403) {
+  if (response.status === 401) { // 403 (CSRF) não desloga mais
     console.warn(`⚠️ [MASTER AUTH] Servidor retornou ${response.status} — sessão master expirada`);
     sessionStorage.removeItem('faroeste_master_token');
     window.dispatchEvent(new CustomEvent('master-session-expired'));
@@ -917,7 +917,7 @@ export async function uploadProductImage(file: File) {
   }
 
   // Handle session expired (com debounce para evitar cascata)
-  if (response.status === 401 || response.status === 403) {
+  if (response.status === 401) { // 403 (CSRF) não desloga mais
     dispatchAdminSessionExpired();
   }
 
@@ -1661,7 +1661,7 @@ export async function authFetch(endpoint: string, options: RequestInit = {}): Pr
   }
 
   // Tratar sessão expirada (com debounce para evitar cascata)
-  if (response.status === 401 || response.status === 403) {
+  if (response.status === 401) { // 403 (CSRF) não desloga mais
     if (adminToken) {
       console.warn('⚠️ [AUTH] Admin session expired via authFetch');
       dispatchAdminSessionExpired();

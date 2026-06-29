@@ -130,16 +130,14 @@ export const requireAdmin = async (c: Context, next: Next) => {
   }
 
   // CSRF validation for mutation requests
+  // Token CSRF é fixo durante a sessão (não rotaciona) para evitar
+  // dessincronia em requisições simultâneas que deslogava o admin.
   if (['POST', 'PUT', 'DELETE'].includes(c.req.method)) {
     const csrfToken = c.req.header('X-CSRF-Token');
     if (session.csrfToken && csrfToken !== session.csrfToken) {
       console.warn('⚠️ [AUTH] Token CSRF inválido');
       return error(c, 'Token CSRF inválido. Faça login novamente.', 403);
     }
-    const newCsrf = `csrf_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-    (session as AdminSession).csrfToken = newCsrf;
-    await kv.set(`admin_session:${token}`, session);
-    c.set('_newCsrf' as never, newCsrf);
   }
 
   console.log('✅ [AUTH] Admin autenticado:', token.slice(0, 20) + '...');
@@ -194,16 +192,12 @@ export const requireAdminOrDriver = async (c: Context, next: Next) => {
   if (adminToken) {
     const session = await kv.get(`admin_session:${adminToken}`) as AdminSession | null;
     if (session && (!session.expiresAt || new Date(session.expiresAt) > new Date())) {
-      // CSRF for mutations
+      // CSRF for mutations (token fixo na sessão, não rotaciona)
       if (['POST', 'PUT', 'DELETE'].includes(c.req.method)) {
         const csrf = c.req.header('X-CSRF-Token');
         if (session.csrfToken && csrf !== session.csrfToken) {
           return error(c, 'Token CSRF inválido', 403);
         }
-        const newCsrf = `csrf_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
-        session.csrfToken = newCsrf;
-        await kv.set(`admin_session:${adminToken}`, session);
-        c.set('_newCsrf' as never, newCsrf);
       }
       c.set('authType' as never, 'admin');
       await next();
