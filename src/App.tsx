@@ -21,6 +21,7 @@ import { projectId, publicAnonKey } from './utils/supabase/info';
 import { MetaPixel } from './components/MetaPixel';
 import { ConfigProvider, useConfig } from './ConfigContext';
 import { useDesign } from './useDesign';
+import { CleanLayout } from './components/clean/CleanLayout';
 import { FranchiseProvider, useFranchise } from './FranchiseContext';
 import { FranchiseSelectionModal } from './components/FranchiseSelectionModal';
 import { MasterDashboard } from './components/master/MasterDashboard';
@@ -799,6 +800,16 @@ function AppContent() {
             <DeliverymanPage />
           ) : (
             <div className="relative flex flex-col flex-1 z-[1]">
+              {isClean ? (
+                <CleanLayout
+                  products={products}
+                  onAddToCart={addToCart}
+                  cartCount={cartItems.reduce((s, i) => s + (i.quantity || 1), 0)}
+                  onOpenCart={() => setIsCartOpen(true)}
+                  isStoreOpen={effectiveIsOpen}
+                />
+              ) : (
+              <>
               <Header />
 
               <StatusBar 
@@ -848,6 +859,8 @@ function AppContent() {
               )}
 
               <Footer />
+              </>
+              )}
 
               <Cart
                 isOpen={isCartOpen}
