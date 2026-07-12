@@ -5,12 +5,11 @@ import { applyTheme } from './utils/themeUtils';
 export interface SystemConfig {
   siteName: string;
   themeColor: string;
+  designStyle?: 'classic' | 'clean'; // 🎨 Estilo de design do site (extensível)
   phone: string;
   address: string;
-  googleMapsUrl?: string;
   logoUrl?: string;
   headerBackgroundUrl?: string;
-  headerBackgroundMobileUrl?: string; // Imagem do header para mobile
   headerEffectShape?: string; // Formato do efeito no header
   headerEffectCount?: number; // Quantidade de efeitos pulsantes (1-15)
   headerEffectRandomPosition?: boolean; // Se true, posiciona aleatoriamente
@@ -50,59 +49,6 @@ export interface SystemConfig {
   cardColor?: string;
   textColor?: string;
   forceDarkMode?: boolean; // 🌓 NOVO: Forçar modo claro ou escuro
-  // Fundo da área de conteúdo (produtos)
-  contentBackgroundUrl?: string;
-  contentBackgroundMobileUrl?: string; // Imagem de fundo para mobile
-  bgAnimationEnabled?: boolean; // Ken Burns animation on/off
-  // Banner entre boas-vindas e promoções
-  homeBannerUrl?: string;
-  homeBannerLink?: string;
-  homeBanners?: Array<{ imageUrl: string; link?: string }>;
-  hiddenBestSellers?: string[]; // IDs de produtos ocultos dos "Mais Pedidos"
-  popularProducts?: Array<{ productId: string; count: number }>; // Lista de populares (salva pelo admin)
-  popularUpdatedAt?: string;
-  noveltyProductIds?: string[]; // IDs de produtos selecionados como "Novidades"
-  socialMediaColors?: Record<string, string>; // Cores personalizadas dos ícones de redes sociais
-  // Banner cards antes do footer
-  bannerCards?: Array<{ imageUrl: string; link?: string }>;
-  // Redes sociais
-  socialMedia?: {
-    instagram?: string;
-    facebook?: string;
-    tiktok?: string;
-    youtube?: string;
-    twitter?: string;
-  };
-  // Sistema de Franquias (SaaS)
-  franchise?: {
-    enabled: boolean;
-    cities: FranchiseCity[];
-    switchPassword?: string; // Senha para admin trocar de franquia
-  };
-}
-
-// Tipo de cidade no sistema de franquias
-export interface FranchiseCity {
-  id: string;        // slug: "goiatuba", "jatai"
-  name: string;      // "Goiatuba"
-  units: FranchiseUnit[]; // Franquias/unidades da cidade
-}
-
-// Tipo de unidade/franquia dentro de uma cidade
-export interface FranchiseUnit {
-  id: string;         // slug: "centro-goiatuba"
-  name: string;       // "NewBurguer Centro"
-  phone: string;
-  address: string;
-  googleMapsUrl?: string;
-  openingHours?: string;
-  deliveryFee?: number;
-  isOpen?: boolean;
-  sectors?: Array<{
-    id: string;
-    name: string;
-    color: string;
-  }>;
 }
 
 interface ConfigContextType {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { hexToRgba } from '../../utils/colorUtils';
 import { 
   Palette, 
+  CheckCircle,
   Settings, 
   Key, 
   Globe, 
@@ -874,6 +875,81 @@ export function MasterDashboard() {
           {/* TAB: APARÊNCIA */}
           {activeTab === 'appearance' && (
             <div className="space-y-6 animate-in fade-in">
+              {/* 🎨 SELETOR DE DESIGN */}
+              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                <h3 className="text-lg font-bold text-gray-800 mb-1 flex items-center gap-2">
+                  <Palette className="w-5 h-5 text-purple-600" />
+                  Estilo de Design do Site
+                </h3>
+                <p className="text-sm text-gray-500 mb-4">
+                  Escolha o visual geral do site. A logo, cores e conteúdo continuam os mesmos — muda só o estilo.
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {/* Design Clássico */}
+                  {(() => {
+                    const isActive = (config.designStyle || 'classic') === 'classic';
+                    return (
+                      <button
+                        onClick={() => {
+                          setConfig({ ...config, designStyle: 'classic' });
+                          updateConfigLocal({ designStyle: 'classic' });
+                        }}
+                        className={`text-left border-2 rounded-xl overflow-hidden transition-all ${isActive ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200 hover:border-purple-300'}`}
+                      >
+                        {/* Miniatura Clássico */}
+                        <div className="h-32 relative" style={{ background: `linear-gradient(135deg, ${config.themeColor || '#d97706'}, #1a1a1a)` }}>
+                          <div className="absolute inset-0 bg-black/30" />
+                          <div className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-white/90 shadow" />
+                          <div className="absolute bottom-3 left-3 right-3 flex gap-2">
+                            <div className="flex-1 h-8 rounded-lg bg-white/90 shadow" />
+                            <div className="flex-1 h-8 rounded-lg bg-white/90 shadow" />
+                          </div>
+                        </div>
+                        <div className="p-3 flex items-center justify-between">
+                          <div>
+                            <span className="block font-bold text-gray-800">Clássico</span>
+                            <span className="text-xs text-gray-500">Imersivo, imagem de fundo, cards escuros</span>
+                          </div>
+                          {isActive && <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />}
+                        </div>
+                      </button>
+                    );
+                  })()}
+
+                  {/* Design Clean */}
+                  {(() => {
+                    const isActive = config.designStyle === 'clean';
+                    return (
+                      <button
+                        onClick={() => {
+                          setConfig({ ...config, designStyle: 'clean' });
+                          updateConfigLocal({ designStyle: 'clean' });
+                        }}
+                        className={`text-left border-2 rounded-xl overflow-hidden transition-all ${isActive ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200 hover:border-purple-300'}`}
+                      >
+                        {/* Miniatura Clean */}
+                        <div className="h-32 relative bg-zinc-50 border-b border-zinc-200">
+                          <div className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full shadow" style={{ backgroundColor: config.themeColor || '#d97706' }} />
+                          <div className="absolute top-14 left-1/2 -translate-x-1/2 w-16 h-1.5 rounded-full bg-zinc-300" />
+                          <div className="absolute bottom-3 left-3 right-3 flex gap-2">
+                            <div className="flex-1 h-8 rounded-lg bg-white border border-zinc-200 shadow-sm" />
+                            <div className="flex-1 h-8 rounded-lg bg-white border border-zinc-200 shadow-sm" />
+                          </div>
+                        </div>
+                        <div className="p-3 flex items-center justify-between">
+                          <div>
+                            <span className="block font-bold text-gray-800">Clean</span>
+                            <span className="text-xs text-gray-500">Minimalista, fundo claro, cantos suaves</span>
+                          </div>
+                          {isActive && <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />}
+                        </div>
+                      </button>
+                    );
+                  })()}
+                </div>
+              </div>
+
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                   <Palette className="w-5 h-5 text-purple-600" />
