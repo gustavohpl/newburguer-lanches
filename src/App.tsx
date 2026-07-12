@@ -20,6 +20,7 @@ import * as api from './utils/api';
 import { projectId, publicAnonKey } from './utils/supabase/info';
 import { MetaPixel } from './components/MetaPixel';
 import { ConfigProvider, useConfig } from './ConfigContext';
+import { useDesign } from './useDesign';
 import { FranchiseProvider, useFranchise } from './FranchiseContext';
 import { FranchiseSelectionModal } from './components/FranchiseSelectionModal';
 import { MasterDashboard } from './components/master/MasterDashboard';
@@ -81,6 +82,8 @@ import { useCustomer } from './hooks/useCustomer';
 
 function AppContent() {
   const { config, updateConfigLocal } = useConfig();
+  const design = useDesign();
+  const isClean = design.headerLayout === 'minimal';
   const { unitOverrides, franchiseEnabled, selectedUnit, needsSelection } = useFranchise();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   
@@ -753,11 +756,11 @@ function AppContent() {
       ) : (
         <div 
           id="client-app" 
-          className={`min-h-screen bg-background text-foreground flex flex-col transition-colors duration-300 ${isDarkMode ? 'dark' : ''}`}
+          className={`min-h-screen ${isClean ? 'bg-zinc-50 text-zinc-900' : 'bg-background text-foreground'} flex flex-col transition-colors duration-300 ${isDarkMode && !isClean ? 'dark' : ''}`}
           style={{ position: 'relative' }}
         >
-          {/* Imagem de fundo fixa com zoom suave (Ken Burns) */}
-          {(config.contentBackgroundUrl || config.contentBackgroundMobileUrl) && (
+          {/* Imagem de fundo fixa com zoom suave (Ken Burns) — apenas no Clássico */}
+          {!isClean && (config.contentBackgroundUrl || config.contentBackgroundMobileUrl) && (
             <>
               {/* Preload da imagem em alta qualidade */}
               <link 
