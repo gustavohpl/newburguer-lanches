@@ -2,6 +2,7 @@ import React from 'react';
 import { Phone, MapPin, Clock, Star, Heart, Sparkles, Zap, Snowflake, Flame, Music, Sun, Moon, Circle, Cloud } from 'lucide-react';
 import { useConfig } from '../ConfigContext';
 import { useFranchise } from '../FranchiseContext';
+import { useDesign } from '../useDesign';
 import logoImage from 'figma:asset/2217307d23df7779a3757aa35c01d81549336b8b.png';
 import headerBg from 'figma:asset/6dbb44028ed8a316eb5f92fc5d24fd96935de5f0.png';
 import { hexToRgba } from '../utils/colorUtils';
@@ -35,7 +36,13 @@ const SocialBrandColors: Record<string, string> = {
 export function Header() {
   const { config } = useConfig();
   const { unitOverrides } = useFranchise();
+  const design = useDesign();
+  const isClean = design.headerLayout === 'minimal';
   const [isMobile, setIsMobile] = React.useState(typeof window !== 'undefined' && window.innerWidth < 768);
+
+  // Tokens visuais que mudam entre Clássico e Clean
+  const headerTextColor = isClean ? 'text-zinc-900' : 'text-white';
+  const headerTextShadow = isClean ? 'none' : '0 1px 4px rgba(0,0,0,0.7)';
 
   // Valores efetivos: unidade override > config global
   const effectivePhone = unitOverrides.phone || config.phone || '(64) 99339-2970';
@@ -112,23 +119,28 @@ export function Header() {
   const activeSocials = Object.entries(social).filter(([_, url]) => url && url.trim());
 
   return (
-    <header className="relative overflow-hidden">
-      {/* Imagem de fundo — <img> nativo performa melhor que background-image no scroll mobile */}
-      <img 
-        src={currentBg} 
-        alt="" 
-        className="absolute inset-0 w-full h-full object-cover"
-        loading="eager"
-        decoding="async"
-      />
-      
-      {/* Overlay */}
-      <div className="absolute inset-0" style={{ 
-        background: 'linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.45) 80%, rgba(0,0,0,0.2) 95%, transparent 100%)',
-      }} />
+    <header className={`relative overflow-hidden ${isClean ? 'bg-zinc-50 border-b border-zinc-200' : ''}`}>
+      {/* Imagem de fundo + overlay — apenas no design Clássico */}
+      {design.showHeaderBackground && (
+        <>
+          {/* Imagem de fundo — <img> nativo performa melhor que background-image no scroll mobile */}
+          <img 
+            src={currentBg} 
+            alt="" 
+            className="absolute inset-0 w-full h-full object-cover"
+            loading="eager"
+            decoding="async"
+          />
+          
+          {/* Overlay */}
+          <div className="absolute inset-0" style={{ 
+            background: 'linear-gradient(to bottom, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0.55) 60%, rgba(0,0,0,0.45) 80%, rgba(0,0,0,0.2) 95%, transparent 100%)',
+          }} />
+        </>
+      )}
 
-      {/* Efeitos animados */}
-      {effects.map((effect, index) => (
+      {/* Efeitos animados — só no Clássico (Clean é minimalista) */}
+      {!isClean && effects.map((effect, index) => (
         <div
           key={index}
           className={`absolute animate-pulse ${effect.size}`}
@@ -173,18 +185,18 @@ export function Header() {
               <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 shadow-md" style={{ backgroundColor: themeColor }}>
                 <MapPin className="w-3 h-3 text-white" />
               </div>
-              <span className="text-xs sm:text-sm font-extrabold text-white tracking-wide leading-snug text-center sm:text-left" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
+              <span className={`text-xs sm:text-sm font-extrabold ${headerTextColor} tracking-wide leading-snug text-center sm:text-left`} style={{ textShadow: headerTextShadow }}>
                 {effectiveAddress}
               </span>
             </div>
 
-            <div className="hidden sm:block w-px h-4 bg-white/30" />
+            <div className={`hidden sm:block w-px h-4 ${isClean ? 'bg-zinc-300' : 'bg-white/30'}`} />
 
             <div className="inline-flex items-center gap-2">
               <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 shadow-md" style={{ backgroundColor: themeColor }}>
                 <Phone className="w-3 h-3 text-white" />
               </div>
-              <span className="text-xs sm:text-sm font-extrabold text-white tracking-wide" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
+              <span className={`text-xs sm:text-sm font-extrabold ${headerTextColor} tracking-wide`} style={{ textShadow: headerTextShadow }}>
                 {effectivePhone}
               </span>
             </div>
@@ -195,7 +207,7 @@ export function Header() {
             <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 shadow-md" style={{ backgroundColor: themeColor }}>
               <Clock className="w-3 h-3 text-white" />
             </div>
-            <span className="text-xs sm:text-sm font-extrabold text-white tracking-wide text-center" style={{ textShadow: '0 1px 4px rgba(0,0,0,0.7)' }}>
+            <span className={`text-xs sm:text-sm font-extrabold ${headerTextColor} tracking-wide text-center`} style={{ textShadow: headerTextShadow }}>
               {effectiveHours}
             </span>
           </div>

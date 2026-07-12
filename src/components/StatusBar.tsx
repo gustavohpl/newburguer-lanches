@@ -1,6 +1,7 @@
 import React from 'react';
 import { useConfig } from '../ConfigContext';
 import { useFranchise } from '../FranchiseContext';
+import { useDesign } from '../useDesign';
 
 interface StatusBarProps {
   isStoreOpen?: boolean;
@@ -9,15 +10,41 @@ interface StatusBarProps {
 export function StatusBar({ isStoreOpen = true }: StatusBarProps) {
   const { config } = useConfig();
   const { unitOverrides } = useFranchise();
+  const design = useDesign();
+  const isClean = design.statusStyle === 'dot';
   const themeColor = config.themeColor || '#d97706';
   const effectiveHours = unitOverrides.openingHours || config.openingHours || 'Todos os dias a partir das 18h30';
 
   return (
-    <div className="border-b border-white/5 py-4">
+    <div className={`py-4 ${isClean ? 'border-b border-zinc-200 bg-zinc-50' : 'border-b border-white/5'}`}>
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-center">
           {/* Status Central com animações */}
           <div className="flex flex-col items-center gap-3">
+            {isClean ? (
+              /* ===== DESIGN CLEAN: dot minimalista + horário leve ===== */
+              <>
+                <div className="flex items-center gap-2">
+                  <span className={`relative flex h-2.5 w-2.5`}>
+                    {isStoreOpen && (
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75" style={{ backgroundColor: '#16a34a' }} />
+                    )}
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5" style={{ backgroundColor: isStoreOpen ? '#16a34a' : '#dc2626' }} />
+                  </span>
+                  <span className={`font-semibold text-sm tracking-wide ${isStoreOpen ? 'text-green-700' : 'text-red-600'}`}>
+                    {isStoreOpen ? 'Aberto agora' : 'Fechado'}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 px-4 py-2 rounded-lg bg-white border border-zinc-200 shadow-sm">
+                  <span className="text-base" style={{ color: themeColor }}>🕐</span>
+                  <span className="text-sm font-medium text-zinc-700 whitespace-pre-line text-center">
+                    {effectiveHours}
+                  </span>
+                </div>
+              </>
+            ) : (
+              /* ===== DESIGN CLÁSSICO: badge original (inalterado) ===== */
+              <>
             {/* Status Aberto/Fechado */}
             {isStoreOpen ? (
               <div className="relative">
@@ -58,6 +85,8 @@ export function StatusBar({ isStoreOpen = true }: StatusBarProps) {
                 {effectiveHours}
               </span>
             </div>
+              </>
+            )}
           </div>
         </div>
       </div>
