@@ -5,7 +5,7 @@ import { applyTheme } from './utils/themeUtils';
 export interface SystemConfig {
   siteName: string;
   themeColor: string;
-  designStyle?: 'classic' | 'clean'; // 🎨 Estilo de design do site (extensível)
+  designStyle?: 'classic' | 'clean' | 'rustic'; // 🎨 Estilo de design do site (extensível)
   phone: string;
   address: string;
   logoUrl?: string;

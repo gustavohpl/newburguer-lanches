@@ -12,7 +12,7 @@ import { useConfig } from './ConfigContext';
 //   3. Adicione a miniatura no seletor do Master
 // ============================================================
 
-export type DesignId = 'classic' | 'clean';
+export type DesignId = 'classic' | 'clean' | 'rustic';
 
 export interface DesignTokens {
   id: DesignId;
@@ -89,6 +89,27 @@ const DESIGNS: Record<DesignId, DesignTokens> = {
     categoryStyle: 'underline',
     statusStyle: 'dot',
     accentIntensity: 'subtle',
+  },
+
+  // ========== DESIGN 3: RÚSTICO (dark/dourado, layout próprio) ==========
+  rustic: {
+    id: 'rustic',
+    name: 'Rústico',
+    description: 'Dark com dourado, textura de madeira, categorias em círculos',
+    showHeaderBackground: true,
+    headerTextClass: 'text-amber-50',
+    headerLayout: 'immersive',
+    pageBackgroundClass: '',
+    cardClass: 'border',
+    cardTitleClass: 'text-amber-50 font-black uppercase',
+    cardPriceClass: 'font-black',
+    cardRounded: 'rounded-2xl',
+    cardShadow: 'shadow-lg',
+    buttonRounded: 'rounded-xl',
+    buttonStyle: 'solid',
+    categoryStyle: 'pill',
+    statusStyle: 'badge',
+    accentIntensity: 'strong',
   },
 };
 

@@ -885,7 +885,7 @@ export function MasterDashboard() {
                   Escolha o visual geral do site. A logo, cores e conteúdo continuam os mesmos — muda só o estilo.
                 </p>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   {/* Design Clássico */}
                   {(() => {
                     const isActive = (config.designStyle || 'classic') === 'classic';
@@ -941,6 +941,41 @@ export function MasterDashboard() {
                           <div>
                             <span className="block font-bold text-gray-800">Clean</span>
                             <span className="text-xs text-gray-500">Minimalista, fundo claro, cantos suaves</span>
+                          </div>
+                          {isActive && <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />}
+                        </div>
+                      </button>
+                    );
+                  })()}
+
+                  {/* Design Rústico */}
+                  {(() => {
+                    const isActive = config.designStyle === 'rustic';
+                    return (
+                      <button
+                        onClick={() => {
+                          setConfig({ ...config, designStyle: 'rustic' });
+                          updateConfigLocal({ designStyle: 'rustic' });
+                        }}
+                        className={`text-left border-2 rounded-xl overflow-hidden transition-all ${isActive ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200 hover:border-purple-300'}`}
+                      >
+                        {/* Miniatura Rústico */}
+                        <div className="h-32 relative" style={{ background: 'linear-gradient(135deg, #2a1f16, #140f0c)' }}>
+                          <div className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full shadow" style={{ backgroundColor: config.themeColor || '#d97706' }} />
+                          <div className="absolute top-14 left-0 right-0 flex justify-center gap-2">
+                            {[0, 1, 2].map((i) => (
+                              <div key={i} className="w-6 h-6 rounded-full border-2" style={{ borderColor: `${config.themeColor || '#d97706'}88`, backgroundColor: 'rgba(40,30,22,0.9)' }} />
+                            ))}
+                          </div>
+                          <div className="absolute bottom-3 left-3 right-3 flex gap-2">
+                            <div className="flex-1 h-8 rounded-lg border" style={{ backgroundColor: 'rgba(28,22,18,0.9)', borderColor: `${config.themeColor || '#d97706'}55` }} />
+                            <div className="flex-1 h-8 rounded-lg border" style={{ backgroundColor: 'rgba(28,22,18,0.9)', borderColor: `${config.themeColor || '#d97706'}55` }} />
+                          </div>
+                        </div>
+                        <div className="p-3 flex items-center justify-between">
+                          <div>
+                            <span className="block font-bold text-gray-800">Rústico</span>
+                            <span className="text-xs text-gray-500">Dark dourado, textura madeira, categorias em círculos</span>
                           </div>
                           {isActive && <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />}
                         </div>

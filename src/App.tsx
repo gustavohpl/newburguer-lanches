@@ -22,6 +22,7 @@ import { MetaPixel } from './components/MetaPixel';
 import { ConfigProvider, useConfig } from './ConfigContext';
 import { useDesign } from './useDesign';
 import { CleanLayout } from './components/clean/CleanLayout';
+import { RusticLayout } from './components/rustic/RusticLayout';
 import { FranchiseProvider, useFranchise } from './FranchiseContext';
 import { FranchiseSelectionModal } from './components/FranchiseSelectionModal';
 import { MasterDashboard } from './components/master/MasterDashboard';
@@ -85,6 +86,7 @@ function AppContent() {
   const { config, updateConfigLocal } = useConfig();
   const design = useDesign();
   const isClean = design.headerLayout === 'minimal';
+  const isRustic = design.id === 'rustic';
   const { unitOverrides, franchiseEnabled, selectedUnit, needsSelection } = useFranchise();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   
@@ -761,7 +763,7 @@ function AppContent() {
           style={{ position: 'relative' }}
         >
           {/* Imagem de fundo fixa com zoom suave (Ken Burns) — apenas no Clássico */}
-          {!isClean && (config.contentBackgroundUrl || config.contentBackgroundMobileUrl) && (
+          {!isClean && !isRustic && (config.contentBackgroundUrl || config.contentBackgroundMobileUrl) && (
             <>
               {/* Preload da imagem em alta qualidade */}
               <link 
@@ -802,6 +804,14 @@ function AppContent() {
             <div className="relative flex flex-col flex-1 z-[1]">
               {isClean ? (
                 <CleanLayout
+                  products={products}
+                  onAddToCart={addToCart}
+                  cartCount={cartItems.reduce((s, i) => s + (i.quantity || 1), 0)}
+                  onOpenCart={() => setIsCartOpen(true)}
+                  isStoreOpen={effectiveIsOpen}
+                />
+              ) : isRustic ? (
+                <RusticLayout
                   products={products}
                   onAddToCart={addToCart}
                   cartCount={cartItems.reduce((s, i) => s + (i.quantity || 1), 0)}
