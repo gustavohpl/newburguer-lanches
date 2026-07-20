@@ -3,6 +3,8 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import App from './App'
 import AdminPage from './admin'
+import { AwwwardsHero } from './components/awwwards/AwwwardsHero'
+import { ConfigProvider } from './ConfigContext'
 import './styles/globals.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -14,6 +16,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         <Route path="/master" element={<App />} />
         <Route path="/admin" element={<App />} />
         <Route path="/admin/:password" element={<AdminPage />} />
+        <Route path="/hero3d" element={<ConfigProvider><AwwwardsHero /></ConfigProvider>} />
       </Routes>
     </BrowserRouter>
   </React.StrictMode>,

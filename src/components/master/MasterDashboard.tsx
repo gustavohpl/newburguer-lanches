@@ -166,6 +166,132 @@ function ImageConfig({ label, value, onChange, placeholder, helpText, token }: a
   );
 }
 
+// Componente para upload/definição do modelo 3D (.glb) do Hero Awwwards
+function ModelConfig({ value, onChange, token }: any) {
+  const [uploading, setUploading] = useState(false);
+  const [showInput, setShowInput] = useState(false);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const name = file.name.toLowerCase();
+    if (!name.endsWith('.glb') && !name.endsWith('.gltf')) {
+      alert('Envie um arquivo .glb (ou .gltf).');
+      return;
+    }
+    // Aviso de tamanho (recomendado < 15MB para bom desempenho no celular)
+    if (file.size > 25 * 1024 * 1024) {
+      const ok = confirm('Esse modelo tem mais de 25MB e pode deixar o site lento no celular. Deseja enviar mesmo assim?');
+      if (!ok) return;
+    }
+
+    if (!token) {
+      alert('Sessão expirada. Faça login novamente.');
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const response = await api.uploadMasterImage(token, file);
+      if (response.success && response.url) {
+        onChange(response.url);
+      } else {
+        alert('Erro ao enviar o modelo: ' + (response.error || 'o servidor pode não aceitar arquivos .glb. Use o campo de URL abaixo como alternativa.'));
+      }
+    } catch (error) {
+      console.error('Erro no upload do GLB:', error);
+      alert('Erro ao enviar o modelo. Você pode colar uma URL manualmente abaixo.');
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  return (
+    <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+      <div className="flex justify-between items-start mb-3">
+        <label className="block text-sm font-bold text-gray-700">🍔 Modelo 3D do Hero (.glb)</label>
+        <button
+          onClick={() => setShowInput(!showInput)}
+          className="text-xs bg-white border border-gray-300 px-2 py-1 rounded hover:bg-gray-50 text-gray-600"
+        >
+          {showInput ? 'Ocultar URL' : 'Editar URL Manualmente'}
+        </button>
+      </div>
+
+      <div className="mb-3 flex items-center gap-4">
+        <div className="relative w-24 h-24 bg-zinc-800 rounded-lg overflow-hidden border border-gray-600 flex items-center justify-center shrink-0">
+          {uploading ? (
+            <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
+          ) : value ? (
+            <div className="text-center px-1">
+              <span className="text-3xl">🍔</span>
+              <p className="text-[9px] text-green-400 mt-1 leading-tight">Modelo definido</p>
+            </div>
+          ) : (
+            <div className="text-center px-1">
+              <span className="text-3xl opacity-40">🍔</span>
+              <p className="text-[9px] text-gray-400 mt-1 leading-tight">Nenhum modelo</p>
+            </div>
+          )}
+        </div>
+        <div className="flex-1">
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileChange}
+            accept=".glb,.gltf,model/gltf-binary"
+            className="hidden"
+          />
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            disabled={uploading}
+            className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-colors mb-2"
+          >
+            {uploading ? (
+              <>
+                <RefreshCw className="w-4 h-4 animate-spin" />
+                Enviando...
+              </>
+            ) : (
+              <>
+                <Upload className="w-4 h-4" />
+                Carregar arquivo .glb
+              </>
+            )}
+          </button>
+          {value && (
+            <button
+              onClick={() => onChange('')}
+              className="ml-2 text-xs text-red-600 hover:text-red-700 underline"
+            >
+              Remover
+            </button>
+          )}
+          <p className="text-xs text-gray-500">
+            Recomendado abaixo de 15MB. Aparece no design com Hero 3D (rota /hero3d).
+          </p>
+        </div>
+      </div>
+
+      {showInput && (
+        <input
+          type="text"
+          value={value || ''}
+          onChange={(e) => onChange(e.target.value)}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+          placeholder="/burger.glb ou https://.../modelo.glb"
+        />
+      )}
+      <p className="text-[11px] text-gray-400 mt-1">
+        Dica: se preferir, coloque o arquivo em <code>public/burger.glb</code> no projeto e deixe este campo vazio.
+      </p>
+    </div>
+  );
+}
+
 export function MasterDashboard() {
   const { refreshConfig, updateConfigLocal } = useConfig();
   // Alterado para sessionStorage para exigir login sempre que fechar o navegador
@@ -982,6 +1108,18 @@ export function MasterDashboard() {
                       </button>
                     );
                   })()}
+                </div>
+
+                {/* 🍔 Modelo 3D do Hero (aparece no design com Hero Awwwards) */}
+                <div className="mt-5 pt-5 border-t border-gray-100">
+                  <ModelConfig
+                    value={config.heroModelUrl}
+                    onChange={(val: string) => {
+                      setConfig({ ...config, heroModelUrl: val });
+                      updateConfigLocal({ heroModelUrl: val });
+                    }}
+                    token={token}
+                  />
                 </div>
               </div>
 

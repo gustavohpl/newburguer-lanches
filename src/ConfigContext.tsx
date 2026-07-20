@@ -6,6 +6,7 @@ export interface SystemConfig {
   siteName: string;
   themeColor: string;
   designStyle?: 'classic' | 'clean' | 'rustic'; // 🎨 Estilo de design do site (extensível)
+  heroModelUrl?: string; // 🍔 Modelo 3D (.glb) do Hero Awwwards
   phone: string;
   address: string;
   logoUrl?: string;
