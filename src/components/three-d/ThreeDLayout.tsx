@@ -147,8 +147,23 @@ export function ThreeDLayout({ products, onAddToCart, cartCount, onOpenCart, isS
         }
       `}</style>
 
+      {/* CAMADAS DE PROFUNDIDADE (glow âmbar + vinheta) atrás do modelo 3D.
+          Ficam entre o fundo e o canvas; o cardápio (bg sólido) as cobre ao rolar. */}
+      <div className="fixed inset-0 z-0 pointer-events-none" aria-hidden>
+        {/* Glow radial quente, centralizado no burger */}
+        <div
+          className="absolute inset-0"
+          style={{ background: `radial-gradient(60% 55% at 50% 42%, ${gold}22, transparent 70%)` }}
+        />
+        {/* Vinheta: escurece as bordas e dá foco ao centro */}
+        <div
+          className="absolute inset-0"
+          style={{ background: 'radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(0,0,0,0.65) 100%)' }}
+        />
+      </div>
+
       {/* CANVAS FIXO NO FUNDO (só aparece na região do hero; o cardápio cobre com bg sólido) */}
-      <div className="fixed inset-0 z-0" style={{ pointerEvents: 'none' }} aria-hidden>
+      <div className="fixed inset-0 z-[1]" style={{ pointerEvents: 'none' }} aria-hidden>
         <BurgerScene progress={progress} isMobile={isMobile} />
       </div>
 
