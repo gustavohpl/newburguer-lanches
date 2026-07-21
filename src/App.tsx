@@ -24,6 +24,7 @@ import { useDesign } from './useDesign';
 import { CleanLayout } from './components/clean/CleanLayout';
 import { RusticLayout } from './components/rustic/RusticLayout';
 import { ThreeDBackground } from './components/three-d/ThreeDBackground';
+import './components/three-d/threed-theme.css';
 import { FranchiseProvider, useFranchise } from './FranchiseContext';
 import { FranchiseSelectionModal } from './components/FranchiseSelectionModal';
 import { MasterDashboard } from './components/master/MasterDashboard';
@@ -761,7 +762,7 @@ function AppContent() {
       ) : (
         <div 
           id="client-app" 
-          className={`min-h-screen ${isClean ? 'bg-zinc-50 text-zinc-900' : 'bg-background text-foreground'} flex flex-col transition-colors duration-300 ${isDarkMode && !isClean ? 'dark' : ''}`}
+          className={`min-h-screen ${isClean ? 'bg-zinc-50 text-zinc-900' : 'bg-background text-foreground'} flex flex-col transition-colors duration-300 ${isDarkMode && !isClean ? 'dark' : ''} ${isThreeD ? 'design-threed' : ''}`}
           style={{ position: 'relative' }}
         >
           {/* Imagem de fundo fixa com zoom suave (Ken Burns) — apenas no Clássico */}

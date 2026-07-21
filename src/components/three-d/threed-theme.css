@@ -1,0 +1,106 @@
+/* ============================================================
+   TEMA "3D" — refinamento profissional (metodologia UI/UX Pro Max)
+   ------------------------------------------------------------
+   Tudo aqui é ESCOPADO em `.design-threed`, então NÃO afeta o
+   Clássico, Clean ou Rústico. O 3D reusa os componentes do
+   Clássico; este arquivo só eleva a aparência quando o wrapper
+   `.design-threed` está presente.
+
+   Direção (design-system gerado): estética culinária premium,
+   dourado quente sobre escuro, tipografia Playfair Display /
+   Karla, hover por cor (150–300ms), sem layout shift.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Karla:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;0,900;1,500&display=swap');
+
+/* ---- Tipografia ---- */
+.design-threed {
+  font-family: 'Karla', system-ui, -apple-system, sans-serif;
+  --threed-gold: #e0a012;
+  --threed-gold-soft: rgba(224, 160, 18, 0.22);
+  --threed-gold-strong: rgba(234, 179, 8, 0.6);
+}
+
+.design-threed h1,
+.design-threed h2,
+.design-threed h3,
+.design-threed .threed-serif {
+  font-family: 'Playfair Display', Georgia, serif;
+  letter-spacing: -0.01em;
+}
+
+/* Títulos de seção (Novidades / Promoções / Mais Pedidos) mais editoriais */
+.design-threed main h2 {
+  font-weight: 700;
+  font-size: clamp(1.6rem, 4.5vw, 2.1rem);
+  line-height: 1.15;
+}
+
+/* ---- Cards de produto: vidro escuro premium com fio dourado ----
+   Alvo: o container do ProductCard (utilitário `bg-card`). O
+   !important vence o `dark:bg-zinc-900` sem editar o componente. */
+.design-threed .bg-card {
+  background: rgba(18, 14, 11, 0.72) !important;
+  -webkit-backdrop-filter: blur(10px) saturate(1.1);
+  backdrop-filter: blur(10px) saturate(1.1);
+  border: 1px solid var(--threed-gold-soft);
+  box-shadow: 0 14px 34px -16px rgba(0, 0, 0, 0.8);
+  transition: border-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
+}
+
+.design-threed .bg-card:hover {
+  border-color: var(--threed-gold-strong);
+  box-shadow: 0 20px 46px -16px rgba(0, 0, 0, 0.9),
+    0 0 0 1px var(--threed-gold-soft);
+}
+
+/* Preço em destaque dourado quente */
+.design-threed .bg-card [class*='text-primary'],
+.design-threed .bg-card .text-primary {
+  color: var(--threed-gold) !important;
+}
+
+/* ---- Ritmo de seções: respiro maior (large sections 48px+) ---- */
+.design-threed main {
+  padding-top: 2.75rem;
+  padding-bottom: 4rem;
+}
+
+.design-threed main .space-y-10 > * + * {
+  margin-top: 3.25rem;
+}
+
+/* ---- Fio decorativo dourado sob os títulos de seção ---- */
+.design-threed main section > .flex.items-center.gap-3 {
+  position: relative;
+  padding-bottom: 0.85rem;
+  margin-bottom: 1.5rem;
+}
+.design-threed main section > .flex.items-center.gap-3::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 3.5rem;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--threed-gold), transparent);
+}
+
+/* ---- Barra de categorias: legibilidade sobre o 3D ---- */
+.design-threed .border-b.border-white\/5 {
+  background: linear-gradient(
+    to bottom,
+    rgba(13, 11, 10, 0.55),
+    rgba(13, 11, 10, 0)
+  );
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+/* Reduz movimento: sem transições nos cards */
+@media (prefers-reduced-motion: reduce) {
+  .design-threed .bg-card {
+    transition: none;
+  }
+}
