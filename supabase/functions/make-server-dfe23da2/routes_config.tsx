@@ -431,20 +431,41 @@ router.post('/master/upload', async (c) => {
     const formData = await c.req.formData();
     const file = formData.get('file') as File;
     if (!file) return error(c, 'Nenhum arquivo enviado', 400);
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/svg+xml'];
-    if (!allowedTypes.includes(file.type)) return error(c, 'Tipo de arquivo não permitido', 400);
-    if (file.size > 5 * 1024 * 1024) return error(c, 'Arquivo muito grande. Máximo 5MB', 400);
+    const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/svg+xml'];
+    const extension = (file.name.split('.').pop() || 'jpg').toLowerCase();
+    // Modelos 3D (.glb/.gltf): o browser às vezes envia type vazio, então
+    // detectamos também pela extensão.
+    const isModel =
+      extension === 'glb' ||
+      extension === 'gltf' ||
+      file.type === 'model/gltf-binary' ||
+      file.type === 'model/gltf+json';
+    if (!allowedImageTypes.includes(file.type) && !isModel) {
+      return error(c, 'Tipo de arquivo não permitido', 400);
+    }
+    // Imagens continuam com limite de 5MB; modelos 3D podem ser bem maiores.
+    const maxSize = isModel ? 60 * 1024 * 1024 : 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      return error(c, `Arquivo muito grande. Máximo ${isModel ? '60MB' : '5MB'}`, 400);
+    }
     const timestamp = Date.now();
     const randomStr = Math.random().toString(36).substring(2, 9);
-    const extension = file.name.split('.').pop() || 'jpg';
     const fileName = `master_${timestamp}_${randomStr}.${extension}`;
     const arrayBuffer = await file.arrayBuffer();
     const buffer = new Uint8Array(arrayBuffer);
+    // Content-type correto para GLB (o browser costuma mandar vazio).
+    const contentType =
+      file.type ||
+      (extension === 'glb'
+        ? 'model/gltf-binary'
+        : extension === 'gltf'
+        ? 'model/gltf+json'
+        : 'application/octet-stream');
     const bucketName = 'make-dfe23da2-master';
     const { data: buckets } = await supabase.storage.listBuckets();
     const bucketExists = buckets?.some(bucket => bucket.name === bucketName);
     if (!bucketExists) await supabase.storage.createBucket(bucketName, { public: false });
-    const { error: uploadError } = await supabase.storage.from(bucketName).upload(fileName, buffer, { contentType: file.type, cacheControl: '3600', upsert: false });
+    const { error: uploadError } = await supabase.storage.from(bucketName).upload(fileName, buffer, { contentType, cacheControl: '3600', upsert: false });
     if (uploadError) return error(c, `Erro ao fazer upload: ${uploadError.message}`, 500);
     const { data: signedUrlData, error: signedUrlError } = await supabase.storage.from(bucketName).createSignedUrl(fileName, 315360000);
     if (signedUrlError) return error(c, `Erro ao gerar URL: ${signedUrlError.message}`, 500);

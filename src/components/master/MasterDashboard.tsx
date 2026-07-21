@@ -181,9 +181,15 @@ function ModelConfig({ value, onChange, token }: any) {
       alert('Envie um arquivo .glb (ou .gltf).');
       return;
     }
-    // Aviso de tamanho (recomendado < 15MB para bom desempenho no celular)
-    if (file.size > 25 * 1024 * 1024) {
-      const ok = confirm('Esse modelo tem mais de 25MB e pode deixar o site lento no celular. Deseja enviar mesmo assim?');
+    // Limite do servidor: 60MB para modelos 3D.
+    if (file.size > 60 * 1024 * 1024) {
+      alert('Esse modelo tem mais de 60MB, que é o limite do servidor. Reduza/otimize o .glb (ex.: gltf-transform, Draco) e tente novamente.');
+      return;
+    }
+    // Aviso de desempenho no celular (não bloqueia).
+    if (file.size > 30 * 1024 * 1024) {
+      const mb = (file.size / (1024 * 1024)).toFixed(0);
+      const ok = confirm(`Esse modelo tem ${mb}MB e pode deixar o site lento no celular. Recomendo otimizar o .glb. Deseja enviar mesmo assim?`);
       if (!ok) return;
     }
 
@@ -271,7 +277,7 @@ function ModelConfig({ value, onChange, token }: any) {
             </button>
           )}
           <p className="text-xs text-gray-500">
-            Recomendado abaixo de 15MB. Aparece no design com Hero 3D (rota /hero3d).
+            Aceita .glb/.gltf até 60MB (ideal otimizar p/ celular). Aparece no design 3D e na rota /hero3d.
           </p>
         </div>
       </div>
