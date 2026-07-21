@@ -133,6 +133,40 @@
   }
 }
 
+/* ==========================================================================
+   Acessibilidade global (aditivo — não altera nenhum layout na tela)
+   - Foco visível apenas via teclado (:focus-visible): quem usa mouse/toque
+     não vê mudança, então o design Clássico continua idêntico.
+   - Alvos de toque mínimos (44x44) só em ponteiro grosso (celular/tablet).
+   ========================================================================== */
+@layer base {
+  /* Não mostra o anel em clique de mouse/toque; só em navegação por teclado. */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [role="button"]:focus-visible,
+  [tabindex]:focus-visible {
+    outline: 2px solid #d97706;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  @media (pointer: coarse) {
+    button,
+    a[role="button"],
+    [role="button"],
+    label[for] {
+      min-height: 44px;
+    }
+  }
+}
+
 /**
  * Base typography. This is not applied to elements which have an ancestor with a Tailwind text class.
  */
