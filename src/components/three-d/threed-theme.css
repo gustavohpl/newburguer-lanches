@@ -22,14 +22,16 @@
    Alvo: o container do ProductCard (utilitário `bg-card`). O
    !important vence o `dark:bg-zinc-900` sem editar o componente. */
 .design-threed .bg-card {
-  /* Quase sólido (94%): o 3D não vaza pelo card e o conteúdo fica legível,
-     mantendo só um leve toque de vidro/blur na borda. */
+  /* Quase sólido (94%): o 3D não vaza pelo card e o conteúdo fica legível.
+     IMPORTANTE: NADA de backdrop-filter/filter/transform aqui. O
+     AddToCartModal é renderizado DENTRO do ProductCard (.bg-card); qualquer
+     filter/transform neste elemento vira "containing block" e quebra o
+     position:fixed do modal (ele cola no card e rola junto). Como o fundo já
+     está 94% opaco, o blur era imperceptível — removido de propósito. */
   background: rgba(18, 14, 11, 0.94) !important;
-  -webkit-backdrop-filter: blur(12px) saturate(1.1);
-  backdrop-filter: blur(12px) saturate(1.1);
   border: 1px solid var(--threed-gold-soft);
   box-shadow: 0 14px 34px -16px rgba(0, 0, 0, 0.8);
-  transition: border-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
+  transition: border-color 0.22s ease, box-shadow 0.22s ease;
 }
 
 /* ---- Modais sobre o 3D: legibilidade ----
