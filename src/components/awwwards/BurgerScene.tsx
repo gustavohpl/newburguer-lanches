@@ -31,10 +31,13 @@ class EnvBoundary extends React.Component<{ children: React.ReactNode }, { faile
 export function BurgerScene({ progress, isMobile }: BurgerSceneProps) {
   return (
     <Canvas
-      shadows
-      dpr={isMobile ? [1, 1.5] : [1, 2]}
+      // No mobile: sem shadow maps e dpr travado em 1 → fluidez durante o scroll.
+      shadows={!isMobile}
+      dpr={isMobile ? 1 : [1, 2]}
+      // Deixa o R3F regredir a resolução se o frame cair (adaptativo).
+      performance={{ min: 0.5 }}
       camera={{ position: [0, 1.6, isMobile ? 9.5 : 6], fov: 40 }}
-      gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
+      gl={{ antialias: !isMobile, alpha: true, powerPreference: 'high-performance' }}
       style={{ width: '100%', height: '100%' }}
     >
       <Suspense fallback={null}>
@@ -49,15 +52,19 @@ export function BurgerScene({ progress, isMobile }: BurgerSceneProps) {
         <CameraRig progress={progress} isMobile={isMobile} />
         <Burger progress={progress} />
 
-        <ContactShadows
-          position={[0, -1.4, 0]}
-          opacity={0.55}
-          scale={10}
-          blur={2.6}
-          far={4}
-          resolution={isMobile ? 256 : 512}
-          color="#000000"
-        />
+        {/* ContactShadows é caro no mobile (render de textura extra por frame):
+            só no desktop. No mobile a vinheta do fundo já dá profundidade. */}
+        {!isMobile && (
+          <ContactShadows
+            position={[0, -1.4, 0]}
+            opacity={0.55}
+            scale={10}
+            blur={2.6}
+            far={4}
+            resolution={512}
+            color="#000000"
+          />
+        )}
       </Suspense>
     </Canvas>
   );
