@@ -23,7 +23,7 @@ import { ConfigProvider, useConfig } from './ConfigContext';
 import { useDesign } from './useDesign';
 import { CleanLayout } from './components/clean/CleanLayout';
 import { RusticLayout } from './components/rustic/RusticLayout';
-import { ThreeDLayout } from './components/three-d/ThreeDLayout';
+import { ThreeDBackground } from './components/three-d/ThreeDBackground';
 import { FranchiseProvider, useFranchise } from './FranchiseContext';
 import { FranchiseSelectionModal } from './components/FranchiseSelectionModal';
 import { MasterDashboard } from './components/master/MasterDashboard';
@@ -800,19 +800,14 @@ function AppContent() {
               />
             </>
           )}
+          {/* Fundo 3D fixo — substitui a imagem do Clássico no design "3D".
+              O conteúdo Clássico (header/menus/footer) fica por cima, transparente. */}
+          {isThreeD && <ThreeDBackground />}
           {showDelivery ? (
             <DeliverymanPage />
           ) : (
             <div className="relative flex flex-col flex-1 z-[1]">
-              {isThreeD ? (
-                <ThreeDLayout
-                  products={products}
-                  onAddToCart={addToCart}
-                  cartCount={cartItems.reduce((s, i) => s + (i.quantity || 1), 0)}
-                  onOpenCart={() => setIsCartOpen(true)}
-                  isStoreOpen={effectiveIsOpen}
-                />
-              ) : isClean ? (
+              {isClean ? (
                 <CleanLayout
                   products={products}
                   onAddToCart={addToCart}
