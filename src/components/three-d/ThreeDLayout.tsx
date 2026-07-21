@@ -102,6 +102,25 @@ export function ThreeDLayout({ products, onAddToCart, cartCount, onOpenCart, isS
     return products.filter((p) => p.category === currentCategory && p.available !== false);
   }, [currentCategory, products, bestSellers]);
 
+  // Parallax do bloco de texto ligado ao scroll (lê o progress em rAF,
+  // sem re-render). Respeita reduced-motion (fica estático).
+  const heroTextRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (prefersReduced) return;
+    let raf = 0;
+    const tick = () => {
+      const el = heroTextRef.current;
+      if (el) {
+        const p = progress.current; // 0 → 1
+        el.style.transform = `translate3d(0, ${p * -80}px, 0)`;
+        el.style.opacity = String(Math.max(0, 1 - p * 1.4));
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [prefersReduced, progress]);
+
   const scrollToMenu = () => {
     const el = document.getElementById('threed-menu');
     if (el) el.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth' });
@@ -112,6 +131,22 @@ export function ThreeDLayout({ products, onAddToCart, cartCount, onOpenCart, isS
 
   return (
     <div className="min-h-screen text-white flex flex-col" style={{ backgroundColor: '#0d0b0a' }}>
+      {/* Animação de entrada do hero (ease-out, escopada; não afeta o CSS global) */}
+      <style>{`
+        @keyframes threedEnter {
+          from { opacity: 0; transform: translateY(28px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        .threed-enter {
+          animation: threedEnter 0.7s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        .threed-enter-2 { animation-delay: 0.12s; }
+        .threed-enter-3 { animation-delay: 0.24s; }
+        @media (prefers-reduced-motion: reduce) {
+          .threed-enter { animation: none; }
+        }
+      `}</style>
+
       {/* CANVAS FIXO NO FUNDO (só aparece na região do hero; o cardápio cobre com bg sólido) */}
       <div className="fixed inset-0 z-0" style={{ pointerEvents: 'none' }} aria-hidden>
         <BurgerScene progress={progress} isMobile={isMobile} />
@@ -170,18 +205,22 @@ export function ThreeDLayout({ products, onAddToCart, cartCount, onOpenCart, isS
             <p className="uppercase tracking-[0.4em] text-xs" style={{ color: `${gold}cc` }}>{siteName}</p>
           </div>
 
-          <div className="px-6 text-center">
+          <div
+            ref={heroTextRef}
+            className="px-6 text-center"
+            style={{ willChange: prefersReduced ? undefined : 'transform, opacity' }}
+          >
             <h1
-              className="font-black uppercase leading-none"
+              className={`font-black uppercase leading-none ${prefersReduced ? '' : 'threed-enter'}`}
               style={{ fontSize: 'clamp(2.75rem, 13vw, 8rem)', letterSpacing: '-0.02em', textShadow: '0 10px 60px rgba(0,0,0,0.6)' }}
             >
               Sabor
               <br />
               <span style={{ color: gold }}>de verdade</span>
             </h1>
-            <p className="mt-5 text-white/60 text-base sm:text-lg max-w-md mx-auto leading-relaxed">{subtitle}</p>
+            <p className={`mt-5 text-white/60 text-base sm:text-lg max-w-md mx-auto leading-relaxed ${prefersReduced ? '' : 'threed-enter threed-enter-2'}`}>{subtitle}</p>
 
-            <div className="mt-7 flex justify-center">
+            <div className={`mt-7 flex justify-center ${prefersReduced ? '' : 'threed-enter threed-enter-3'}`}>
               <button
                 onClick={scrollToMenu}
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-extrabold uppercase tracking-wide text-black shadow-lg hover:brightness-110 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-4"
