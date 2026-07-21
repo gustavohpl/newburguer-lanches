@@ -75,10 +75,10 @@ export function AddToCartModal({ product, onConfirm, onClose, categoryColor }: A
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+      <div className="bg-white dark:bg-zinc-900 rounded-xl shadow-2xl w-full max-w-md overflow-hidden max-h-[90vh] flex flex-col">
         {/* Header — usa cor efetiva */}
         <div
-          className="text-white p-4 flex items-center justify-between"
+          className="text-white p-4 flex items-center justify-between flex-shrink-0"
           style={{ backgroundColor: effectiveColor }}
         >
           <div className="flex items-center gap-3">
@@ -94,8 +94,8 @@ export function AddToCartModal({ product, onConfirm, onClose, categoryColor }: A
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-4">
+        {/* Content — rola internamente quando maior que a tela (evita corte no mobile) */}
+        <div className="p-6 space-y-4 overflow-y-auto flex-1 min-h-0">
           {/* Produto — imagem + nome/preço lado a lado */}
           <div className="bg-white dark:bg-zinc-800 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-md overflow-hidden">
             <div className="flex">

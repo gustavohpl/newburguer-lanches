@@ -18,7 +18,7 @@ export function CameraRig({ progress, isMobile = false }: CameraRigProps) {
   const { camera } = useThree();
   const target = new THREE.Vector3(0, 0.2, 0);
   // Raio base maior no mobile → modelo cabe na tela estreita e não estoura.
-  const baseRadius = isMobile ? 9.5 : 6;
+  const baseRadius = isMobile ? 7.4 : 6;
 
   useFrame(() => {
     const p = progress.current;
