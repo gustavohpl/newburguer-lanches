@@ -33,7 +33,7 @@ export function BurgerScene({ progress, isMobile }: BurgerSceneProps) {
     <Canvas
       shadows
       dpr={isMobile ? [1, 1.5] : [1, 2]}
-      camera={{ position: [0, 1.6, 6], fov: 40 }}
+      camera={{ position: [0, 1.6, isMobile ? 9.5 : 6], fov: 40 }}
       gl={{ antialias: true, alpha: true, powerPreference: 'high-performance' }}
       style={{ width: '100%', height: '100%' }}
     >
@@ -46,7 +46,7 @@ export function BurgerScene({ progress, isMobile }: BurgerSceneProps) {
           </Suspense>
         </EnvBoundary>
 
-        <CameraRig progress={progress} />
+        <CameraRig progress={progress} isMobile={isMobile} />
         <Burger progress={progress} />
 
         <ContactShadows
