@@ -12,7 +12,7 @@ import { useConfig } from './ConfigContext';
 //   3. Adicione a miniatura no seletor do Master
 // ============================================================
 
-export type DesignId = 'classic' | 'clean' | 'rustic';
+export type DesignId = 'classic' | 'clean' | 'rustic' | 'threed';
 
 export interface DesignTokens {
   id: DesignId;
@@ -102,6 +102,27 @@ const DESIGNS: Record<DesignId, DesignTokens> = {
     pageBackgroundClass: '',
     cardClass: 'border',
     cardTitleClass: 'text-amber-50 font-black uppercase',
+    cardPriceClass: 'font-black',
+    cardRounded: 'rounded-2xl',
+    cardShadow: 'shadow-lg',
+    buttonRounded: 'rounded-xl',
+    buttonStyle: 'solid',
+    categoryStyle: 'pill',
+    statusStyle: 'badge',
+    accentIntensity: 'strong',
+  },
+
+  // ========== DESIGN 4: 3D (hero imersivo com modelo GLB) ==========
+  threed: {
+    id: 'threed',
+    name: '3D',
+    description: 'Hero imersivo com modelo 3D do hambúrguer girando ao scroll',
+    showHeaderBackground: false,
+    headerTextClass: 'text-white',
+    headerLayout: 'immersive',
+    pageBackgroundClass: '',
+    cardClass: 'border',
+    cardTitleClass: 'text-white font-bold',
     cardPriceClass: 'font-black',
     cardRounded: 'rounded-2xl',
     cardShadow: 'shadow-lg',

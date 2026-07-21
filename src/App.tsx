@@ -23,6 +23,7 @@ import { ConfigProvider, useConfig } from './ConfigContext';
 import { useDesign } from './useDesign';
 import { CleanLayout } from './components/clean/CleanLayout';
 import { RusticLayout } from './components/rustic/RusticLayout';
+import { ThreeDLayout } from './components/three-d/ThreeDLayout';
 import { FranchiseProvider, useFranchise } from './FranchiseContext';
 import { FranchiseSelectionModal } from './components/FranchiseSelectionModal';
 import { MasterDashboard } from './components/master/MasterDashboard';
@@ -87,6 +88,7 @@ function AppContent() {
   const design = useDesign();
   const isClean = design.headerLayout === 'minimal';
   const isRustic = design.id === 'rustic';
+  const isThreeD = design.id === 'threed';
   const { unitOverrides, franchiseEnabled, selectedUnit, needsSelection } = useFranchise();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   
@@ -763,7 +765,7 @@ function AppContent() {
           style={{ position: 'relative' }}
         >
           {/* Imagem de fundo fixa com zoom suave (Ken Burns) — apenas no Clássico */}
-          {!isClean && !isRustic && (config.contentBackgroundUrl || config.contentBackgroundMobileUrl) && (
+          {!isClean && !isRustic && !isThreeD && (config.contentBackgroundUrl || config.contentBackgroundMobileUrl) && (
             <>
               {/* Preload da imagem em alta qualidade */}
               <link 
@@ -802,7 +804,15 @@ function AppContent() {
             <DeliverymanPage />
           ) : (
             <div className="relative flex flex-col flex-1 z-[1]">
-              {isClean ? (
+              {isThreeD ? (
+                <ThreeDLayout
+                  products={products}
+                  onAddToCart={addToCart}
+                  cartCount={cartItems.reduce((s, i) => s + (i.quantity || 1), 0)}
+                  onOpenCart={() => setIsCartOpen(true)}
+                  isStoreOpen={effectiveIsOpen}
+                />
+              ) : isClean ? (
                 <CleanLayout
                   products={products}
                   onAddToCart={addToCart}

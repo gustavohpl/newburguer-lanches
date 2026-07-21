@@ -1108,6 +1108,36 @@ export function MasterDashboard() {
                       </button>
                     );
                   })()}
+
+                  {/* Design 3D */}
+                  {(() => {
+                    const isActive = config.designStyle === 'threed';
+                    const g = config.themeColor || '#fbbf24';
+                    return (
+                      <button
+                        onClick={() => {
+                          setConfig({ ...config, designStyle: 'threed' });
+                          updateConfigLocal({ designStyle: 'threed' });
+                        }}
+                        className={`text-left border-2 rounded-xl overflow-hidden transition-all ${isActive ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200 hover:border-purple-300'}`}
+                      >
+                        {/* Miniatura 3D */}
+                        <div className="h-32 relative overflow-hidden" style={{ background: 'radial-gradient(circle at 50% 40%, #241a12, #0d0b0a 70%)' }}>
+                          {/* "modelo" 3D estilizado */}
+                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full" style={{ background: `radial-gradient(circle at 35% 30%, ${g}, ${g}55 60%, transparent)`, boxShadow: `0 0 24px ${g}88` }} />
+                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-4 w-16 h-2 rounded-full bg-black/50 blur-sm" />
+                          <span className="absolute top-3 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-[0.3em]" style={{ color: g }}>3D</span>
+                        </div>
+                        <div className="p-3 flex items-center justify-between">
+                          <div>
+                            <span className="block font-bold text-gray-800">3D</span>
+                            <span className="text-xs text-gray-500">Hero imersivo com modelo 3D girando ao scroll (usa o .glb)</span>
+                          </div>
+                          {isActive && <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />}
+                        </div>
+                      </button>
+                    );
+                  })()}
                 </div>
 
                 {/* 🍔 Modelo 3D do Hero (aparece no design com Hero Awwwards) */}
