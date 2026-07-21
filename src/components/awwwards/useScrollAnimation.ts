@@ -14,10 +14,25 @@ gsap.registerPlugin(ScrollTrigger);
  * @param triggerRef  elemento que define a área de scroll da animação (o Hero).
  * @returns progress  ref com o progresso do scroll (0 a 1).
  */
+/** Pose fixa (agradável) usada quando o usuário pede menos movimento. */
+const REDUCED_MOTION_POSE = 0.12;
+
 export function useScrollAnimation(triggerRef: React.RefObject<HTMLElement>) {
   const progress = useRef(0);
 
   useEffect(() => {
+    // Acessibilidade: se o usuário prefere menos movimento, não iniciamos
+    // Lenis nem o ScrollTrigger. Congelamos a cena numa pose bonita e fixa.
+    const prefersReduced =
+      typeof window !== 'undefined' &&
+      window.matchMedia &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (prefersReduced) {
+      progress.current = REDUCED_MOTION_POSE;
+      return;
+    }
+
     // 1) Scroll suave com Lenis
     const lenis = new Lenis({
       duration: 1.1,

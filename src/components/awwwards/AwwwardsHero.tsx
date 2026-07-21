@@ -1,6 +1,20 @@
 import React, { useRef, useState, useEffect } from 'react';
+import { Loader } from '@react-three/drei';
 import { BurgerScene } from './BurgerScene';
 import { useScrollAnimation } from './useScrollAnimation';
+
+/** Detecta a preferência de menos movimento (reativa a mudanças no SO). */
+function usePrefersReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReduced(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+  return reduced;
+}
 
 /**
  * AwwwardsHero — página de demonstração do Hero 3D.
@@ -14,6 +28,7 @@ import { useScrollAnimation } from './useScrollAnimation';
 export function AwwwardsHero() {
   const heroRef = useRef<HTMLDivElement>(null);
   const progress = useScrollAnimation(heroRef);
+  const prefersReduced = usePrefersReducedMotion();
   const [isMobile, setIsMobile] = useState(typeof window !== 'undefined' && window.innerWidth < 768);
 
   useEffect(() => {
@@ -56,7 +71,9 @@ export function AwwwardsHero() {
 
           {/* Rodapé do hero — dica de scroll */}
           <div className="pb-10 px-6 text-center">
-            <p className="text-white/50 text-sm animate-pulse">role para explorar ↓</p>
+            <p className={`text-white/50 text-sm ${prefersReduced ? '' : 'animate-pulse'}`}>
+              role para explorar ↓
+            </p>
           </div>
         </div>
       </section>
@@ -73,6 +90,16 @@ export function AwwwardsHero() {
           </p>
         </div>
       </section>
+
+      {/* Loader de marca: cobre a tela enquanto o GLB + HDRI carregam
+          (evita o "flash" de canvas em branco). Some sozinho ao concluir. */}
+      <Loader
+        containerStyles={{ background: '#0d0b0a' }}
+        innerStyles={{ background: 'rgba(255,255,255,0.12)', width: '160px', height: '3px' }}
+        barStyles={{ background: '#fbbf24', height: '3px' }}
+        dataStyles={{ color: '#fcd34d', fontSize: '12px', letterSpacing: '0.2em', marginTop: '12px' }}
+        dataInterpolation={(p) => `Preparando o pedido… ${p.toFixed(0)}%`}
+      />
     </div>
   );
 }
