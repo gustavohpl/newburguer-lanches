@@ -54,40 +54,53 @@ function GLBModel({ path }: { path: string }) {
  */
 function PlaceholderBurger() {
   return (
-    <group position={[0, -0.2, 0]} scale={1.2}>
-      {/* Pão de baixo */}
-      <mesh castShadow receiveShadow position={[0, -0.55, 0]}>
-        <cylinderGeometry args={[1, 0.9, 0.35, 48]} />
-        <meshStandardMaterial color="#c8842a" roughness={0.7} />
+    <group position={[0, -0.15, 0]} scale={1.2}>
+      {/* Pão de baixo — assado, leve brilho */}
+      <mesh castShadow receiveShadow position={[0, -0.62, 0]}>
+        <cylinderGeometry args={[1, 0.92, 0.34, 64]} />
+        <meshStandardMaterial color="#d68a3c" roughness={0.55} metalness={0.05} />
       </mesh>
-      {/* Carne */}
-      <mesh castShadow receiveShadow position={[0, -0.2, 0]}>
-        <cylinderGeometry args={[1.05, 1.05, 0.3, 48]} />
-        <meshStandardMaterial color="#4a2b1a" roughness={0.85} />
+      {/* Carne — grelhada, bem fosca */}
+      <mesh castShadow receiveShadow position={[0, -0.32, 0]}>
+        <cylinderGeometry args={[1.08, 1.08, 0.3, 64]} />
+        <meshStandardMaterial color="#43281a" roughness={0.9} />
       </mesh>
-      {/* Queijo */}
-      <mesh castShadow receiveShadow position={[0, 0, 0]} rotation={[0, 0.4, 0]}>
-        <boxGeometry args={[1.7, 0.08, 1.7]} />
-        <meshStandardMaterial color="#f2b134" roughness={0.5} />
+      {/* Queijo — cantos derretendo, tom quente */}
+      <mesh castShadow receiveShadow position={[0, -0.12, 0]} rotation={[0, 0.4, 0]}>
+        <boxGeometry args={[1.7, 0.07, 1.7]} />
+        <meshStandardMaterial
+          color="#f4b731"
+          roughness={0.35}
+          metalness={0.05}
+          emissive="#e0821c"
+          emissiveIntensity={0.12}
+        />
       </mesh>
-      {/* Alface */}
-      <mesh castShadow receiveShadow position={[0, 0.12, 0]}>
-        <torusGeometry args={[1, 0.18, 12, 48]} />
+      {/* Tomate — cor/frescor */}
+      <mesh castShadow receiveShadow position={[0, -0.02, 0]}>
+        <cylinderGeometry args={[0.96, 0.96, 0.08, 48]} />
+        <meshStandardMaterial color="#cf3e2d" roughness={0.5} />
+      </mesh>
+      {/* Alface — folha ondulada */}
+      <mesh castShadow receiveShadow position={[0, 0.08, 0]}>
+        <torusGeometry args={[1, 0.18, 14, 64]} />
         <meshStandardMaterial color="#6fae3f" roughness={0.8} />
       </mesh>
       {/* Pão de cima (cúpula) */}
-      <mesh castShadow receiveShadow position={[0, 0.5, 0]} scale={[1, 0.7, 1]}>
-        <sphereGeometry args={[1.05, 48, 32, 0, Math.PI * 2, 0, Math.PI / 2]} />
-        <meshStandardMaterial color="#d8912f" roughness={0.6} />
+      <mesh castShadow receiveShadow position={[0, 0.44, 0]} scale={[1, 0.72, 1]}>
+        <sphereGeometry args={[1.05, 64, 40, 0, Math.PI * 2, 0, Math.PI / 2]} />
+        <meshStandardMaterial color="#dc9134" roughness={0.5} metalness={0.05} />
       </mesh>
-      {/* Gergelim */}
-      {Array.from({ length: 14 }).map((_, i) => {
-        const a = (i / 14) * Math.PI * 2;
-        const r = 0.4 + (i % 3) * 0.18;
+      {/* Gergelim distribuído na cúpula */}
+      {Array.from({ length: 18 }).map((_, i) => {
+        const a = (i / 18) * Math.PI * 2 * 2.4; // espiral p/ não alinhar
+        const t = i / 18;
+        const r = 0.18 + t * 0.62;
+        const h = 0.72 - t * t * 0.42;
         return (
-          <mesh key={i} position={[Math.cos(a) * r, 0.78 - (i % 3) * 0.05, Math.sin(a) * r]}>
-            <sphereGeometry args={[0.05, 8, 8]} />
-            <meshStandardMaterial color="#f5e6c0" roughness={0.5} />
+          <mesh key={i} position={[Math.cos(a) * r, h, Math.sin(a) * r]} scale={[1, 0.6, 1]}>
+            <sphereGeometry args={[0.055, 10, 10]} />
+            <meshStandardMaterial color="#f5e6c0" roughness={0.45} />
           </mesh>
         );
       })}
