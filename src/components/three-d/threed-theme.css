@@ -11,29 +11,11 @@
    Karla, hover por cor (150–300ms), sem layout shift.
    ============================================================ */
 
-@import url('https://fonts.googleapis.com/css2?family=Karla:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;0,900;1,500&display=swap');
-
-/* ---- Tipografia ---- */
+/* ---- Tokens (mantém a fonte padrão do site) ---- */
 .design-threed {
-  font-family: 'Karla', system-ui, -apple-system, sans-serif;
   --threed-gold: #e0a012;
   --threed-gold-soft: rgba(224, 160, 18, 0.22);
   --threed-gold-strong: rgba(234, 179, 8, 0.6);
-}
-
-.design-threed h1,
-.design-threed h2,
-.design-threed h3,
-.design-threed .threed-serif {
-  font-family: 'Playfair Display', Georgia, serif;
-  letter-spacing: -0.01em;
-}
-
-/* Títulos de seção (Novidades / Promoções / Mais Pedidos) mais editoriais */
-.design-threed main h2 {
-  font-weight: 700;
-  font-size: clamp(1.6rem, 4.5vw, 2.1rem);
-  line-height: 1.15;
 }
 
 /* ---- Cards de produto: vidro escuro premium com fio dourado ----
