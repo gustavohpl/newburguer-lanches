@@ -36,7 +36,7 @@ export function BurgerScene({ progress, isMobile }: BurgerSceneProps) {
       dpr={isMobile ? 1 : [1, 2]}
       // Deixa o R3F regredir a resolução se o frame cair (adaptativo).
       performance={{ min: 0.5 }}
-      camera={{ position: [0, 1.6, isMobile ? 7.4 : 6], fov: 40 }}
+      camera={{ position: [0, 1.6, isMobile ? 5.7 : 6], fov: 40 }}
       gl={{ antialias: !isMobile, alpha: true, powerPreference: 'high-performance' }}
       style={{ width: '100%', height: '100%' }}
     >

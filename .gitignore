@@ -8,3 +8,7 @@ build
 
 # Estado interno do CLI do Supabase (não versionar)
 supabase/.temp/
+
+# Cache da skill de design (Ranch)
+.claude/skills/**/__pycache__/
+*.pyc
