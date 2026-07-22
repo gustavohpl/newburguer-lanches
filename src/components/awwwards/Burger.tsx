@@ -37,8 +37,9 @@ function RotatingGroup({ progress, children }: BurgerProps & { children: React.R
 
 /** Carrega o modelo GLB real e anima a "abertura" das camadas ao scroll.
  *
- * Se o GLB tiver 2+ malhas (o burger.glb padrão vem fatiado em 3 camadas:
- * pão de baixo / recheio / pão de cima), elas se afastam verticalmente
+ * Se o GLB tiver 2+ malhas (o burger.glb padrão vem fatiado em 4 ingredientes:
+ * pão de baixo / frango / alface+molho / pão de cima, com os cortes tapados
+ * por discos texturizados), elas se afastam verticalmente
  * conforme o scroll: fechado no topo da página, aberto no meio do hero e
  * fechando de novo perto do fim. Modelos de malha única ficam estáticos.
  */
@@ -73,7 +74,9 @@ function GLBModel({ path, progress }: { path: string; progress: React.MutableRef
     const p = progress.current;
     // Curva sino: 0 no início, pico em p=0.5, 0 no fim → fecha de novo
     const open = Math.sin(Math.min(Math.max(p, 0), 1) * Math.PI);
-    const GAP = 0.55; // afastamento máximo entre camadas
+    // Afastamento máximo entre camadas: quanto mais camadas, menor o vão,
+    // para a pilha aberta continuar cabendo no enquadramento.
+    const GAP = layers.current.length >= 4 ? 0.34 : 0.55;
     for (const layer of layers.current) {
       const target = layer.baseY + layer.order * open * GAP;
       layer.mesh.position.y += (target - layer.mesh.position.y) * 0.12;
