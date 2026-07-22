@@ -11,7 +11,9 @@
    Karla, hover por cor (150–300ms), sem layout shift.
    ============================================================ */
 
-/* ---- Tokens (mantém a fonte padrão do site) ---- */
+/* Fonte Playfair Display SC carregada via <link> no index.html */
+
+/* ---- Tokens (mantém a fonte padrão do site no corpo) ---- */
 .design-threed {
   --threed-gold: #e0a012;
   --threed-gold-soft: rgba(224, 160, 18, 0.22);
@@ -63,6 +65,14 @@
 
 .design-threed main .space-y-10 > * + * {
   margin-top: 3.25rem;
+}
+
+/* ---- Títulos de seção: display serif premium (Playfair Display SC) ---- */
+.design-threed main section h2,
+.design-threed main section > .flex.items-center.gap-3 h2 {
+  font-family: 'Playfair Display SC', Georgia, serif;
+  font-weight: 700;
+  letter-spacing: 0.02em;
 }
 
 /* ---- Fio decorativo dourado sob os títulos de seção ---- */

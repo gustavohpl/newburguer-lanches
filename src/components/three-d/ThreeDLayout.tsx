@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Menu, ShoppingBag, ArrowRight, UtensilsCrossed } from 'lucide-react';
+import { Menu, ShoppingBag, ArrowRight, UtensilsCrossed, ChevronDown } from 'lucide-react';
 import { Loader } from '@react-three/drei';
 import type { Product } from '../../App';
 import { useConfig } from '../../ConfigContext';
@@ -126,7 +126,6 @@ export function ThreeDLayout({ products, onAddToCart, cartCount, onOpenCart, isS
     if (el) el.scrollIntoView({ behavior: prefersReduced ? 'auto' : 'smooth' });
   };
 
-  const money = (v: number) => `R$ ${v.toFixed(2).replace('.', ',')}`;
   const cardBg = 'rgba(20,15,12,0.92)';
 
   return (
@@ -144,6 +143,23 @@ export function ThreeDLayout({ products, onAddToCart, cartCount, onOpenCart, isS
         .threed-enter-3 { animation-delay: 0.24s; }
         @media (prefers-reduced-motion: reduce) {
           .threed-enter { animation: none; }
+        }
+        /* Tipografia display premium (Playfair Display SC) só nos títulos */
+        .threed-display { font-family: 'Playfair Display SC', Georgia, serif; }
+        /* Cards: hover por cor/sombra (sem layout shift) + zoom sutil na foto */
+        .threed-card { transition: border-color 0.22s ease, box-shadow 0.22s ease; }
+        .threed-card img { transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1); }
+        .threed-card:hover img { transform: scale(1.05); }
+        /* Seta do hero: bounce suave */
+        @keyframes threedBounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(6px); }
+        }
+        .threed-bounce { animation: threedBounce 1.6s ease-in-out infinite; }
+        @media (prefers-reduced-motion: reduce) {
+          .threed-card img { transition: none; }
+          .threed-card:hover img { transform: none; }
+          .threed-bounce { animation: none; }
         }
       `}</style>
 
@@ -226,8 +242,8 @@ export function ThreeDLayout({ products, onAddToCart, cartCount, onOpenCart, isS
             style={{ willChange: prefersReduced ? undefined : 'transform, opacity' }}
           >
             <h1
-              className={`font-black uppercase leading-none ${prefersReduced ? '' : 'threed-enter'}`}
-              style={{ fontSize: 'clamp(2.75rem, 13vw, 8rem)', letterSpacing: '-0.02em', textShadow: '0 10px 60px rgba(0,0,0,0.6)' }}
+              className={`threed-display font-bold uppercase leading-none ${prefersReduced ? '' : 'threed-enter'}`}
+              style={{ fontSize: 'clamp(2.75rem, 12vw, 7.5rem)', letterSpacing: '0.01em', textShadow: '0 10px 60px rgba(0,0,0,0.6)' }}
             >
               Sabor
               <br />
@@ -239,7 +255,7 @@ export function ThreeDLayout({ products, onAddToCart, cartCount, onOpenCart, isS
               <button
                 onClick={scrollToMenu}
                 className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl font-extrabold uppercase tracking-wide text-black shadow-lg hover:brightness-110 transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-4"
-                style={{ background: `linear-gradient(135deg, ${gold}, ${gold}dd)`, boxShadow: `0 6px 24px ${gold}55` }}
+                style={{ background: `linear-gradient(135deg, ${gold}, ${gold}dd)`, boxShadow: `0 6px 24px ${gold}55`, ['--tw-ring-color' as any]: `${gold}66` }}
               >
                 <UtensilsCrossed className="w-5 h-5" />
                 Ver cardápio
@@ -247,17 +263,27 @@ export function ThreeDLayout({ products, onAddToCart, cartCount, onOpenCart, isS
             </div>
           </div>
 
-          <div className="pb-8 px-6 text-center pointer-events-none">
-            <p className={`text-white/45 text-sm ${prefersReduced ? '' : 'animate-pulse'}`}>role para explorar ↓</p>
+          <div className="pb-8 px-6 text-center pointer-events-none flex flex-col items-center gap-1">
+            <p className="text-white/50 text-sm uppercase tracking-[0.25em]">role para explorar</p>
+            <ChevronDown className={`w-5 h-5 ${prefersReduced ? '' : 'threed-bounce'}`} style={{ color: `${gold}cc` }} aria-hidden />
           </div>
         </div>
       </section>
 
       {/* ============ CARDÁPIO (bg sólido cobre o canvas) ============ */}
       <div id="threed-menu" className="relative z-10 flex-1 flex flex-col" style={{ backgroundColor: '#0d0b0a' }}>
-        {/* Categorias */}
-        <section className="container mx-auto max-w-6xl px-4 pt-10 pb-4">
-          <div className="flex flex-wrap gap-2">
+        {/* Transição suave: o burger "mergulha" no cardápio em vez de ser cortado */}
+        <div
+          className="absolute left-0 right-0 pointer-events-none"
+          style={{ top: '-120px', height: '120px', background: 'linear-gradient(to bottom, transparent, #0d0b0a 60%)' }}
+          aria-hidden
+        />
+        {/* Categorias — sticky abaixo do header para navegar sem voltar ao topo */}
+        <section
+          className="sticky top-16 z-20 backdrop-blur-md border-b"
+          style={{ backgroundColor: 'rgba(13,11,10,0.85)', borderColor: `${gold}22` }}
+        >
+          <div className="container mx-auto max-w-6xl px-4 py-3 flex flex-wrap gap-2">
             <button
               onClick={() => setCurrentCategory(null)}
               className={`px-4 py-2 rounded-lg text-sm font-bold uppercase tracking-wide transition-colors cursor-pointer border ${currentCategory === null ? 'text-black' : 'text-white/70 hover:bg-white/5'}`}
@@ -279,9 +305,9 @@ export function ThreeDLayout({ products, onAddToCart, cartCount, onOpenCart, isS
         </section>
 
         {/* Grade de produtos */}
-        <main className="flex-1 container mx-auto max-w-6xl px-4 pb-16">
+        <main className="flex-1 container mx-auto max-w-6xl px-4 pt-8 pb-16">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-black uppercase tracking-wide text-2xl" style={{ color: gold }}>
+            <h2 className="threed-display font-bold uppercase tracking-wide text-2xl" style={{ color: gold }}>
               {currentCategory === null ? 'Mais Pedidos' : (categories.find((c) => c.id === currentCategory)?.label || 'Cardápio')}
             </h2>
             {currentCategory !== null && (
@@ -298,7 +324,13 @@ export function ThreeDLayout({ products, onAddToCart, cartCount, onOpenCart, isS
               {displayedProducts.map((product) => {
                 const img = product.imageUrl || product.image;
                 return (
-                  <div key={product.id} className="rounded-2xl overflow-hidden border flex flex-col" style={{ backgroundColor: cardBg, borderColor: `${gold}33` }}>
+                  <div
+                    key={product.id}
+                    className="threed-card rounded-2xl overflow-hidden border flex flex-col"
+                    style={{ backgroundColor: cardBg, borderColor: `${gold}33` }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = `${gold}99`; e.currentTarget.style.boxShadow = '0 16px 38px -18px rgba(0,0,0,0.9)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = `${gold}33`; e.currentTarget.style.boxShadow = 'none'; }}
+                  >
                     {img && (
                       <div className="aspect-square overflow-hidden bg-black/40">
                         <ImageWithFallback src={img} alt={product.name} className="w-full h-full object-cover" />
@@ -307,15 +339,20 @@ export function ThreeDLayout({ products, onAddToCart, cartCount, onOpenCart, isS
                     <div className="p-3 flex flex-col flex-1">
                       <h3 className="font-bold text-sm leading-snug text-white line-clamp-2">{product.name}</h3>
                       {product.description && (
-                        <p className="text-white/45 text-xs mt-1 leading-snug line-clamp-2">{product.description}</p>
+                        <p className="text-white/60 text-xs mt-1 leading-snug line-clamp-2">{product.description}</p>
                       )}
                       <div className="mt-auto pt-3 flex items-center justify-between">
-                        <span className="font-black text-lg" style={{ color: gold }}>{money(product.price)}</span>
+                        <span className="font-black" style={{ color: gold }}>
+                          <span className="text-xs font-bold align-top mr-0.5">R$</span>
+                          <span className="text-lg">{product.price.toFixed(2).replace('.', ',')}</span>
+                        </span>
                         <button
                           onClick={() => onAddToCart(product)}
                           disabled={!isStoreOpen}
-                          className="w-11 h-11 rounded-xl flex items-center justify-center text-black shadow-md hover:brightness-110 transition-all disabled:opacity-40 cursor-pointer focus-visible:outline-none focus-visible:ring-4"
-                          style={{ backgroundColor: gold }}
+                          className="w-11 h-11 rounded-xl flex items-center justify-center border transition-colors disabled:opacity-40 cursor-pointer focus-visible:outline-none focus-visible:ring-4 hover:text-black"
+                          style={{ color: gold, borderColor: `${gold}66`, ['--tw-ring-color' as any]: `${gold}66` }}
+                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = gold; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = 'transparent'; }}
                           aria-label={`Adicionar ${product.name}`}
                         >
                           <span className="text-2xl leading-none">+</span>
