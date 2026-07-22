@@ -1157,6 +1157,48 @@ export function MasterDashboard() {
                     token={token}
                   />
                 </div>
+
+                {/* ✨ Efeitos 3D do Hero (design 3D) */}
+                <div className="mt-5 pt-5 border-t border-gray-100">
+                  <label className="block text-sm font-bold text-gray-800 mb-1">✨ Efeitos 3D do Hero</label>
+                  <p className="text-xs text-gray-500 mb-3">
+                    Efeitos extras na cena 3D, na cor do tema. Sem nenhum marcado, usa o padrão (partículas douradas).
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {[
+                      { id: 'sparkles', label: 'Partículas douradas', desc: 'Brilhos flutuando ao redor do modelo' },
+                      { id: 'ring', label: 'Anel de luz', desc: 'Anel dourado girando sob o modelo' },
+                      { id: 'orbiters', label: 'Esferas em órbita', desc: 'Pontos de luz orbitando o modelo' },
+                      { id: 'stars', label: 'Céu estrelado', desc: 'Campo de estrelas ao fundo' },
+                    ].map((fx) => {
+                      const current = config.heroEffects || [];
+                      const checked = current.includes(fx.id);
+                      return (
+                        <label
+                          key={fx.id}
+                          className={`flex items-start gap-3 p-3 border-2 rounded-xl cursor-pointer transition-all ${checked ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300'}`}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={checked}
+                            onChange={() => {
+                              const next = checked
+                                ? current.filter((id) => id !== fx.id)
+                                : [...current, fx.id];
+                              setConfig({ ...config, heroEffects: next });
+                              updateConfigLocal({ heroEffects: next });
+                            }}
+                            className="mt-0.5 w-4 h-4 accent-purple-600"
+                          />
+                          <span>
+                            <span className="block text-sm font-bold text-gray-800">{fx.label}</span>
+                            <span className="block text-xs text-gray-500">{fx.desc}</span>
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">

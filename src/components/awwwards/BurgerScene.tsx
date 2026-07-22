@@ -4,6 +4,7 @@ import { ContactShadows, Environment } from '@react-three/drei';
 import { Lights } from './Lights';
 import { CameraRig } from './CameraRig';
 import { Burger } from './Burger';
+import { HeroEffects } from './HeroEffects';
 
 interface BurgerSceneProps {
   progress: React.MutableRefObject<number>;
@@ -51,6 +52,7 @@ export function BurgerScene({ progress, isMobile }: BurgerSceneProps) {
 
         <CameraRig progress={progress} isMobile={isMobile} />
         <Burger progress={progress} />
+        <HeroEffects isMobile={isMobile} />
 
         {/* ContactShadows é caro no mobile (render de textura extra por frame):
             só no desktop. No mobile a vinheta do fundo já dá profundidade. */}

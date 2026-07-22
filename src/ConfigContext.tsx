@@ -7,6 +7,7 @@ export interface SystemConfig {
   themeColor: string;
   designStyle?: 'classic' | 'clean' | 'rustic' | 'threed'; // 🎨 Estilo de design do site (extensível)
   heroModelUrl?: string; // 🍔 Modelo 3D (.glb) do Hero Awwwards
+  heroEffects?: string[]; // ✨ Efeitos extras da cena 3D ('sparkles' | 'ring' | 'orbiters' | 'stars')
   phone: string;
   address: string;
   logoUrl?: string;
