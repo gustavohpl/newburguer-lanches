@@ -35,16 +35,51 @@ function RotatingGroup({ progress, children }: BurgerProps & { children: React.R
   return <group ref={group}>{children}</group>;
 }
 
-/** Carrega o modelo GLB real. */
-function GLBModel({ path }: { path: string }) {
+/** Carrega o modelo GLB real e anima a "abertura" das camadas ao scroll.
+ *
+ * Se o GLB tiver 2+ malhas (o burger.glb padrão vem fatiado em 3 camadas:
+ * pão de baixo / recheio / pão de cima), elas se afastam verticalmente
+ * conforme o scroll: fechado no topo da página, aberto no meio do hero e
+ * fechando de novo perto do fim. Modelos de malha única ficam estáticos.
+ */
+function GLBModel({ path, progress }: { path: string; progress: React.MutableRefObject<number> }) {
   const { scene } = useGLTF(path);
-  // Ativa sombras em todas as malhas do modelo
-  scene.traverse((obj) => {
-    if ((obj as THREE.Mesh).isMesh) {
-      obj.castShadow = true;
-      obj.receiveShadow = true;
+
+  // Coleta as malhas em ordem de altura e guarda a posição original
+  const layers = useRef<Array<{ mesh: THREE.Object3D; baseY: number; order: number }>>([]);
+  React.useMemo(() => {
+    const meshes: Array<{ mesh: THREE.Mesh; centerY: number }> = [];
+    scene.traverse((obj) => {
+      if ((obj as THREE.Mesh).isMesh) {
+        const mesh = obj as THREE.Mesh;
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        mesh.geometry.computeBoundingBox();
+        const bb = mesh.geometry.boundingBox!;
+        meshes.push({ mesh, centerY: (bb.min.y + bb.max.y) / 2 });
+      }
+    });
+    meshes.sort((a, b) => a.centerY - b.centerY);
+    const mid = (meshes.length - 1) / 2;
+    layers.current = meshes.map((m, i) => ({
+      mesh: m.mesh,
+      baseY: m.mesh.position.y,
+      order: i - mid, // negativo desce, positivo sobe
+    }));
+  }, [scene]);
+
+  useFrame(() => {
+    if (layers.current.length < 2) return;
+    const p = progress.current;
+    // Curva sino: 0 no início, pico em p=0.5, 0 no fim → fecha de novo
+    const open = Math.sin(Math.min(Math.max(p, 0), 1) * Math.PI);
+    const GAP = 0.55; // afastamento máximo entre camadas
+    for (const layer of layers.current) {
+      const target = layer.baseY + layer.order * open * GAP;
+      layer.mesh.position.y += (target - layer.mesh.position.y) * 0.12;
     }
   });
+
   return <primitive object={scene} scale={1.6} position={[0, -0.3, 0]} />;
 }
 
@@ -140,7 +175,7 @@ export function Burger({ progress }: BurgerProps) {
       {/* key={modelPath}: se o modelo mudar no Master, remonta e tenta carregar de novo */}
       <ModelErrorBoundary key={modelPath} fallback={<PlaceholderBurger />}>
         <Suspense fallback={<PlaceholderBurger />}>
-          <GLBModel path={modelPath} />
+          <GLBModel path={modelPath} progress={progress} />
         </Suspense>
       </ModelErrorBoundary>
     </RotatingGroup>
