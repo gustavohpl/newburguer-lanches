@@ -5,3 +5,6 @@ build
 .env.local
 .vercel
 *.log
+
+# Estado interno do CLI do Supabase (não versionar)
+supabase/.temp/

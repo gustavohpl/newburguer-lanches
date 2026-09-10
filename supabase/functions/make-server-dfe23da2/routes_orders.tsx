@@ -11,6 +11,7 @@ import {
   getClientIp, getBrasiliaISOString,
 } from "./server_utils.tsx";
 import { requireAdmin, requireAdminOrDriver, checkRateLimit, recordFailedAttempt } from "./middleware.tsx";
+import { validateAndPriceOrder } from "./order_validation.tsx";
 import type { OrderStatus, OrderReview } from "./types.tsx";
 
 const router = new Hono();
@@ -19,7 +20,7 @@ const router = new Hono();
 // Migração (organizar banco order: → archive:)
 // ==========================================
 
-router.post('/admin/migrate-scale', async (c) => {
+router.post('/admin/migrate-scale', requireAdmin, async (c) => {
   try {
     const allOrders = await kv.getByPrefix('order:');
     let moved = 0;
@@ -171,6 +172,23 @@ router.post('/orders', async (c) => {
       })) : rawBody.items,
       couponCode: rawBody.couponCode ? sanitizeText(rawBody.couponCode, 50) : rawBody.couponCode,
     };
+
+    // 🔒 Validação e recomputação de preços no servidor (anti-adulteração de total/preço)
+    const pricing = await validateAndPriceOrder(body);
+    if (!pricing.ok) {
+      console.warn('🚫 [ORDER] Pedido rejeitado por validação de preço:', pricing.message);
+      return error(c, pricing.message || 'Dados do pedido inválidos', pricing.status || 400);
+    }
+    if (pricing.tampered) {
+      console.warn('⚠️ [SECURITY] Total do cliente diverge do recomputado — usando o do servidor. Cliente:', body.total, 'Servidor:', pricing.total);
+    }
+    // Servidor é a fonte da verdade dos valores monetários
+    body.subtotal = pricing.subtotal;
+    body.discount = pricing.discount;
+    body.couponDiscount = pricing.discount;
+    body.deliveryFee = pricing.deliveryFee;
+    body.total = pricing.total;
+    body.totalBeforeDiscount = Number((pricing.subtotal + pricing.deliveryFee).toFixed(2));
 
     const timestamp = Date.now();
     const id = body.id || `order_${timestamp}`;
@@ -426,7 +444,7 @@ router.post('/orders/:id/confirm-payment', async (c) => {
 });
 
 // Limpar todos os pedidos
-router.delete('/admin/orders/clear-all', async (c) => {
+router.delete('/admin/orders/clear-all', requireAdmin, async (c) => {
   const orders = await kv.getByPrefix('order:');
   for (const o of orders) await kv.del(`order:${(o as any).orderId}`);
   const archives = await kv.getByPrefix('archive:');
@@ -435,7 +453,7 @@ router.delete('/admin/orders/clear-all', async (c) => {
 });
 
 // Cancelar pedido (admin)
-router.put('/admin/orders/:id/cancel', async (c) => {
+router.put('/admin/orders/:id/cancel', requireAdmin, async (c) => {
   const id = c.req.param('id');
   const { reason } = await c.req.json();
   const order: any = await kv.get(`order:${id}`);
