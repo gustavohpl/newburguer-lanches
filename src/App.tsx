@@ -23,6 +23,7 @@ import { ConfigProvider, useConfig } from './ConfigContext';
 import { useDesign } from './useDesign';
 import { CleanLayout } from './components/clean/CleanLayout';
 import { RusticLayout } from './components/rustic/RusticLayout';
+import { PrimeLayout } from './components/prime/PrimeLayout';
 import { ThreeDBackground } from './components/three-d/ThreeDBackground';
 import './components/three-d/threed-theme.css';
 import { FranchiseProvider, useFranchise } from './FranchiseContext';
@@ -90,6 +91,7 @@ function AppContent() {
   const isClean = design.headerLayout === 'minimal';
   const isRustic = design.id === 'rustic';
   const isThreeD = design.id === 'threed';
+  const isPrime = design.id === 'prime';
   const { unitOverrides, franchiseEnabled, selectedUnit, needsSelection } = useFranchise();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   
@@ -766,7 +768,7 @@ function AppContent() {
           style={{ position: 'relative' }}
         >
           {/* Imagem de fundo fixa com zoom suave (Ken Burns) — apenas no Clássico */}
-          {!isClean && !isRustic && !isThreeD && (config.contentBackgroundUrl || config.contentBackgroundMobileUrl) && (
+          {!isClean && !isRustic && !isThreeD && !isPrime && (config.contentBackgroundUrl || config.contentBackgroundMobileUrl) && (
             <>
               {/* Preload da imagem em alta qualidade */}
               <link 
@@ -818,6 +820,14 @@ function AppContent() {
                 />
               ) : isRustic ? (
                 <RusticLayout
+                  products={products}
+                  onAddToCart={addToCart}
+                  cartCount={cartItems.reduce((s, i) => s + (i.quantity || 1), 0)}
+                  onOpenCart={() => setIsCartOpen(true)}
+                  isStoreOpen={effectiveIsOpen}
+                />
+              ) : isPrime ? (
+                <PrimeLayout
                   products={products}
                   onAddToCart={addToCart}
                   cartCount={cartItems.reduce((s, i) => s + (i.quantity || 1), 0)}

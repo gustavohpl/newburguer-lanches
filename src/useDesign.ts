@@ -12,7 +12,7 @@ import { useConfig } from './ConfigContext';
 //   3. Adicione a miniatura no seletor do Master
 // ============================================================
 
-export type DesignId = 'classic' | 'clean' | 'rustic' | 'threed';
+export type DesignId = 'classic' | 'clean' | 'rustic' | 'threed' | 'prime';
 
 export interface DesignTokens {
   id: DesignId;
@@ -129,6 +129,27 @@ const DESIGNS: Record<DesignId, DesignTokens> = {
     buttonRounded: 'rounded-xl',
     buttonStyle: 'solid',
     categoryStyle: 'pill',
+    statusStyle: 'badge',
+    accentIntensity: 'strong',
+  },
+
+  // ========== DESIGN 5: PRIME (editorial/cinematográfico, layout próprio) ==========
+  prime: {
+    id: 'prime',
+    name: 'Prime',
+    description: 'Editorial cinematográfico: fundo quase preto, tipografia gigante, seções numeradas e cor de destaque',
+    showHeaderBackground: false,
+    headerTextClass: 'text-white',
+    headerLayout: 'immersive',
+    pageBackgroundClass: '',
+    cardClass: 'border',
+    cardTitleClass: 'text-white font-black uppercase',
+    cardPriceClass: 'font-black',
+    cardRounded: 'rounded-2xl',
+    cardShadow: 'shadow-2xl',
+    buttonRounded: 'rounded-full',
+    buttonStyle: 'solid',
+    categoryStyle: 'underline',
     statusStyle: 'badge',
     accentIntensity: 'strong',
   },

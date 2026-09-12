@@ -1144,6 +1144,40 @@ export function MasterDashboard() {
                       </button>
                     );
                   })()}
+
+                  {/* Design PRIME */}
+                  {(() => {
+                    const isActive = config.designStyle === 'prime';
+                    const a = config.themeColor || '#f5a524';
+                    return (
+                      <button
+                        onClick={() => {
+                          setConfig({ ...config, designStyle: 'prime' });
+                          updateConfigLocal({ designStyle: 'prime' });
+                        }}
+                        className={`text-left border-2 rounded-xl overflow-hidden transition-all ${isActive ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200 hover:border-purple-300'}`}
+                      >
+                        {/* Miniatura PRIME */}
+                        <div className="h-32 relative overflow-hidden" style={{ background: 'radial-gradient(circle at 50% 0%, #17141c, #08070a 70%)' }}>
+                          <div className="absolute top-2 left-3 text-[9px] font-black" style={{ color: a }}>// 01</div>
+                          <span className="absolute top-6 left-3 text-lg font-black uppercase tracking-tight text-white leading-none">PRIME</span>
+                          <span className="absolute top-[42px] left-3 text-[10px] font-black uppercase" style={{ color: a }}>// THE STACK</span>
+                          <div className="absolute -right-4 top-1/2 -translate-y-1/2 w-16 h-16 rounded-full" style={{ background: `radial-gradient(circle at 35% 30%, ${a}, ${a}44 60%, transparent)`, boxShadow: `0 0 24px ${a}77` }} />
+                          <div className="absolute bottom-3 left-3 right-3 flex gap-2">
+                            <div className="h-6 w-20 rounded-full" style={{ backgroundColor: a }} />
+                            <div className="h-6 flex-1 rounded-full border" style={{ borderColor: `${a}55` }} />
+                          </div>
+                        </div>
+                        <div className="p-3 flex items-center justify-between">
+                          <div>
+                            <span className="block font-bold text-gray-800">Prime</span>
+                            <span className="text-xs text-gray-500">Editorial cinematográfico, dark, tipografia gigante, seções numeradas</span>
+                          </div>
+                          {isActive && <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />}
+                        </div>
+                      </button>
+                    );
+                  })()}
                 </div>
 
                 {/* 🍔 Modelo 3D do Hero (aparece no design com Hero Awwwards) */}
