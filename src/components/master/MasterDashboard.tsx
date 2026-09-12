@@ -1158,20 +1158,22 @@ export function MasterDashboard() {
                         className={`text-left border-2 rounded-xl overflow-hidden transition-all ${isActive ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200 hover:border-purple-300'}`}
                       >
                         {/* Miniatura PRIME */}
-                        <div className="h-32 relative overflow-hidden" style={{ background: 'radial-gradient(circle at 50% 0%, #17141c, #08070a 70%)' }}>
-                          <div className="absolute top-2 left-3 text-[9px] font-black" style={{ color: a }}>// 01</div>
-                          <span className="absolute top-6 left-3 text-lg font-black uppercase tracking-tight text-white leading-none">PRIME</span>
-                          <span className="absolute top-[42px] left-3 text-[10px] font-black uppercase" style={{ color: a }}>// THE STACK</span>
-                          <div className="absolute -right-4 top-1/2 -translate-y-1/2 w-16 h-16 rounded-full" style={{ background: `radial-gradient(circle at 35% 30%, ${a}, ${a}44 60%, transparent)`, boxShadow: `0 0 24px ${a}77` }} />
-                          <div className="absolute bottom-3 left-3 right-3 flex gap-2">
-                            <div className="h-6 w-20 rounded-full" style={{ backgroundColor: a }} />
-                            <div className="h-6 flex-1 rounded-full border" style={{ borderColor: `${a}55` }} />
-                          </div>
+                        <div className="h-32 relative overflow-hidden" style={{ background: config.primeHeroUrl ? `linear-gradient(90deg, #0a0a0bdd, #0a0a0b22), url(${config.primeHeroUrl}) center/cover` : `radial-gradient(ellipse at 70% 60%, ${a}55, #0a0a0b 60%)` }}>
+                          {/* cantoneiras */}
+                          <span className="absolute top-2 left-2 w-3 h-3 border-t border-l border-white/70" />
+                          <span className="absolute top-2 right-2 w-3 h-3 border-t border-r border-white/70" />
+                          <span className="absolute bottom-2 left-2 w-3 h-3 border-b border-l border-white/70" />
+                          <span className="absolute bottom-2 right-2 w-3 h-3 border-b border-r border-white/70" />
+                          <div className="absolute top-4 left-4 text-[8px] font-mono uppercase tracking-widest" style={{ color: a }}>// 01</div>
+                          <span className="absolute top-8 left-4 text-2xl font-extrabold uppercase text-white leading-none" style={{ fontStretch: 'condensed' }}>PRIME</span>
+                          <span className="absolute top-[54px] left-4 text-[11px] font-extrabold uppercase text-white"><span style={{ color: a }}>//</span> THE STACK</span>
+                          <div className="absolute bottom-5 left-4 h-4 w-16" style={{ backgroundColor: a }} />
+                          <div className="absolute bottom-3 left-6 right-6 h-1.5" style={{ backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,.4) 0 1px, transparent 1px 5px)' }} />
                         </div>
                         <div className="p-3 flex items-center justify-between">
                           <div>
                             <span className="block font-bold text-gray-800">Prime</span>
-                            <span className="text-xs text-gray-500">Editorial cinematográfico, dark, tipografia gigante, seções numeradas</span>
+                            <span className="text-xs text-gray-500">Cinematográfico HUD: fotos de tela cheia, contador de chapa e montador</span>
                           </div>
                           {isActive && <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />}
                         </div>
@@ -1234,6 +1236,65 @@ export function MasterDashboard() {
                   </div>
                 </div>
               </div>
+
+              {/* 🔥 IMAGENS E TEXTOS DO ESTILO PRIME */}
+              {config.designStyle === 'prime' && (() => {
+                const setPrime = (updates: Record<string, string>) => {
+                  setConfig({ ...config, ...updates });
+                  updateConfigLocal(updates);
+                };
+                const imageFields: Array<{ key: string; label: string; help: string }> = [
+                  { key: 'primeHeroUrl', label: '// 01 Hero — Desktop', help: 'Foto de tela cheia do topo (horizontal, 1920x1080+). Deixe o lanche mais à direita: o título fica à esquerda.' },
+                  { key: 'primeHeroMobileUrl', label: '// 01 Hero — Mobile', help: 'Vertical (1080x1920). Se vazio, usa a do desktop.' },
+                  { key: 'primeSearUrl', label: '// 02 A Chapa — Desktop', help: 'Carne na chapa/grelha, fogo, cozinha. Fica presa na tela enquanto o contador de temperatura sobe.' },
+                  { key: 'primeSearMobileUrl', label: '// 02 A Chapa — Mobile', help: 'Vertical. Se vazio, usa a do desktop.' },
+                  { key: 'primeBuilderUrl', label: '// 04 Montador — Reserva', help: 'Usada na prévia do montador quando o produto escolhido não tem foto.' },
+                ];
+                const textFields: Array<{ key: string; label: string; placeholder: string }> = [
+                  { key: 'primeHeroTitle', label: 'Título do hero', placeholder: (config.siteName || 'Ranch').split(' ')[0].toUpperCase() },
+                  { key: 'primeHeroTagline', label: 'Linha "//" do hero', placeholder: 'The Stack' },
+                  { key: 'primeSearTitle', label: 'Título da seção da chapa', placeholder: 'Selado na chapa' },
+                ];
+                return (
+                  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                    <h3 className="text-lg font-bold text-gray-800 mb-1 flex items-center gap-2">🔥 Imagens do estilo Prime</h3>
+                    <p className="text-xs text-gray-500 mb-5">
+                      O Prime depende de fotos boas de ponta a ponta. Sem imagem, o hero usa o fundo do site ou a foto do produto mais caro, e a chapa é desenhada.
+                      O montador usa os produtos que têm <b>adicionais</b> cadastrados. Clique em <b>Salvar</b> no fim.
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {imageFields.map((f) => (
+                        <div key={f.key}>
+                          <ImageConfig
+                            label={f.label}
+                            value={(config as any)[f.key] || ''}
+                            onChange={(url: string) => setPrime({ [f.key]: url })}
+                            placeholder="https://..."
+                            helpText={f.help}
+                            token={token}
+                          />
+                          {(config as any)[f.key] && (
+                            <button onClick={() => setPrime({ [f.key]: '' })} className="mt-2 text-xs text-red-500 hover:text-red-700 font-bold">✕ Remover</button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 pt-5 border-t border-gray-100">
+                      {textFields.map((f) => (
+                        <label key={f.key} className="block">
+                          <span className="block text-sm font-bold text-gray-800 mb-1">{f.label}</span>
+                          <input
+                            value={(config as any)[f.key] || ''}
+                            onChange={(e) => setPrime({ [f.key]: e.target.value })}
+                            placeholder={f.placeholder}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                          />
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
               <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
                 <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
