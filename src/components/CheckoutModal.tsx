@@ -1454,7 +1454,7 @@ export function CheckoutModal({
                     <div className="text-center">
                       <p className={`font-bold ${paymentMethod === 'card' ? 'text-amber-700 dark:text-amber-500' : 'text-zinc-700 dark:text-zinc-300'}`}>Cartão</p>
                       <p className="text-[10px] text-zinc-500 dark:text-zinc-500">
-                        {config.automaticPayment ? 'Online (Crédito/Débito)' : 'Maquininha na entrega'}
+                        {pagamentoAutomatico ? 'Online (Crédito/Débito)' : 'Maquininha na entrega'}
                       </p>
                     </div>
                   </button>

@@ -1834,7 +1834,7 @@ export function MasterDashboard() {
                     {aba === 'prime' && (
                       <>
                         {caixa('🔥 Capa', fotosTopo('primeHero', 'Horizontal (1920x1080+), com o lanche mais à direita.'), 'Sem capa, o Prime abre com a animação do lanche se montando. Com capa, ela entra no lugar da animação.')}
-                        {caixa('✍️ Textos da abertura', (
+                        {caixa('✍️ Textos da capa', (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {([['primeHeroTitle', 'Título', config.siteName || 'NewBurguer Lanches'], ['primeHeroTagline', 'Frase', config.siteSubtitle || 'Cada camada feita na hora.']] as const).map(([key, label, padrao]) => (
                               <label key={key} className="block">
@@ -1848,7 +1848,7 @@ export function MasterDashboard() {
                               </label>
                             ))}
                           </div>
-                        ), 'Vazios, usam o nome e o subtítulo da loja.')}
+                        ), 'Aparecem sobre a foto de capa (com a animação, ficam escondidos). Vazios, usam o nome e o subtítulo da loja.')}
                         {caixa('🎨 Cor do rodapé', (
                           <div className="flex items-center gap-3">
                             <input
