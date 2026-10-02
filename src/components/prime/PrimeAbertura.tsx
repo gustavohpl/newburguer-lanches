@@ -94,7 +94,7 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       desenhar(atual);
     };
     const pronta = (im?: HTMLImageElement) => !!im && im.complete && im.naturalWidth > 0;
-    let atual = 0, alvo = 0, raf = 0, ultimo = -1;
+    let atual = 0, alvo = 0, raf = 0, ultimo = -1, rapido = false;
     const desenhar = (f: number) => {
       const i = Math.max(0, Math.min(n - 1, Math.floor(f)));
       let a = imgs[i];
@@ -104,12 +104,13 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       }
       if (!a) return;
       const t = f - i, b = imgs[i + 1];
-      const chave = Math.round(f * 50) * 4 + (a === imgs[i] ? 2 : 0) + (pronta(b) ? 1 : 0);
+      const chave = Math.round(f * 50) * 4 + (a === imgs[i] ? 2 : 0) + (pronta(b) ? 1 : 0) + (rapido ? 1e6 : 0);
       if (chave === ultimo) return;
       ultimo = chave;
       g.setTransform(dpr, 0, 0, dpr, 0, 0);
       g.imageSmoothingEnabled = true;
-      g.imageSmoothingQuality = 'high';
+      // scroll rápido = suavização leve (mais fluido); parado/devagar = alta (nítido)
+      g.imageSmoothingQuality = rapido ? 'low' : 'high';
       const p = Math.min(1, f / ((n - 1) * 0.45));
       const prog = n > 1 ? f / (n - 1) : 0;
       // sobe o tempo todo (rolagem contínua), além da subida inicial do fechado e de abrir
@@ -134,22 +135,25 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       grad.addColorStop(1, esc(1));
       g.fillStyle = grad;
       g.fillRect(0, 0, W, H);
-      if (quadro.width !== a.naturalWidth) { quadro.width = a.naturalWidth; quadro.height = a.naturalHeight; }
-      q.globalAlpha = 1;
-      q.drawImage(a, 0, 0);
-      // mistura com o próximo quadro: movimento contínuo entre os quadros do vídeo
-      if (a === imgs[i] && t > 0.02 && pronta(b)) {
-        q.globalAlpha = t;
-        q.drawImage(b, 0, 0);
-      }
       g.globalCompositeOperation = clarear ? 'lighten' : 'source-over';
-      g.drawImage(quadro, caixa.x, y, caixa.w, caixa.h);
+      if (rapido) {
+        // caminho leve: desenha o quadro direto (sem offscreen nem mistura) — fluido no scroll rápido
+        g.drawImage(a, caixa.x, y, caixa.w, caixa.h);
+      } else {
+        // caminho de qualidade: compõe no offscreen + mistura entre quadros, depois lighten
+        if (quadro.width !== a.naturalWidth) { quadro.width = a.naturalWidth; quadro.height = a.naturalHeight; }
+        q.globalAlpha = 1;
+        q.drawImage(a, 0, 0);
+        if (a === imgs[i] && t > 0.02 && pronta(b)) { q.globalAlpha = t; q.drawImage(b, 0, 0); }
+        g.drawImage(quadro, caixa.x, y, caixa.w, caixa.h);
+      }
       g.globalCompositeOperation = 'source-over';
     };
     const laco = () => {
       const d = alvo - atual;
       // amortecimento adaptativo: acompanha de perto no scroll rápido, suave no devagar
       atual += d * (0.45 + 0.5 * Math.min(1, Math.abs(d) / 14));
+      rapido = Math.abs(d) > 4; // rolando rápido -> caminho leve
       desenhar(atual);
       raf = requestAnimationFrame(laco);
     };
