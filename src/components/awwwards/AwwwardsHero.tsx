@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import { Loader } from '@react-three/drei';
 import { BurgerScene } from './BurgerScene';
 import { useScrollAnimation } from './useScrollAnimation';
+import { useConfig } from '../../ConfigContext';
 
 /** Detecta a preferência de menos movimento (reativa a mudanças no SO). */
 function usePrefersReducedMotion() {
@@ -26,6 +27,8 @@ function usePrefersReducedMotion() {
  * - Área de scroll alta o suficiente para percorrer "a primeira dobra" da animação.
  */
 export function AwwwardsHero() {
+  const { config } = useConfig();
+  const siteName = config.siteName || 'NewBurguer Lanches';
   const heroRef = useRef<HTMLDivElement>(null);
   const progress = useScrollAnimation(heroRef);
   const prefersReduced = usePrefersReducedMotion();
@@ -54,7 +57,7 @@ export function AwwwardsHero() {
         <div className="sticky top-0 h-screen flex flex-col justify-between pointer-events-none">
           {/* Topo */}
           <div className="pt-10 px-6 text-center">
-            <p className="uppercase tracking-[0.4em] text-xs text-amber-300/80">Ranch Hamburgueria</p>
+            <p className="uppercase tracking-[0.4em] text-xs text-amber-300/80">{siteName}</p>
           </div>
 
           {/* Título grande (atrás/na frente do burger conforme layout) */}
@@ -86,7 +89,7 @@ export function AwwwardsHero() {
           </h2>
           <p className="text-white/60 text-lg">
             Um hambúrguer artesanal de verdade, com pão brioche, carne suculenta e aquele
-            capricho que só o Ranch tem.
+            capricho que só a {siteName} tem.
           </p>
         </div>
       </section>

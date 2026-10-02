@@ -1251,7 +1251,7 @@ export function MasterDashboard() {
                   { key: 'primeBuilderUrl', label: '// 04 Montador — Reserva', help: 'Usada na prévia do montador quando o produto escolhido não tem foto.' },
                 ];
                 const textFields: Array<{ key: string; label: string; placeholder: string }> = [
-                  { key: 'primeHeroTitle', label: 'Título do hero', placeholder: (config.siteName || 'Ranch').split(' ')[0].toUpperCase() },
+                  { key: 'primeHeroTitle', label: 'Título do hero', placeholder: (config.siteName || 'NewBurguer').split(' ')[0].toUpperCase() },
                   { key: 'primeHeroTagline', label: 'Linha "//" do hero', placeholder: 'The Stack' },
                   { key: 'primeSearTitle', label: 'Título da seção da chapa', placeholder: 'Selado na chapa' },
                 ];

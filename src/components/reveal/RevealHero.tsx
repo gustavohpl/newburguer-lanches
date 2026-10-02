@@ -84,7 +84,7 @@ export function RevealHero({ baseImage, revealImage }: RevealHeroProps) {
   const { config } = useConfig();
   const gold = config.themeColor || '#e8702a';
   const logo = config.logoUrl;
-  const siteName = config.siteName || 'Ranch Hamburgueria';
+  const siteName = config.siteName || 'NewBurguer Lanches';
 
   const base = baseImage || (config as any).headerBackgroundUrl || (config as any).contentBackgroundUrl || '';
   const reveal = revealImage || base;

@@ -32,7 +32,7 @@ export function RusticLayout({ products, onAddToCart, cartCount, onOpenCart, isS
 
   const gold = config.themeColor || '#d97706';
   const logo = config.logoUrl;
-  const siteName = config.siteName || 'Ranch Hamburgueria';
+  const siteName = config.siteName || 'NewBurguer Lanches';
   const subtitle = config.siteSubtitle || 'Experimente nosso hambúrguer artesanal e sinta a diferença a cada mordida.';
 
   const effectiveAddress = unitOverrides.address || config.address || '';

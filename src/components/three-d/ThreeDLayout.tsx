@@ -54,7 +54,7 @@ export function ThreeDLayout({ products, onAddToCart, cartCount, onOpenCart, isS
 
   const gold = config.themeColor || '#fbbf24';
   const logo = config.logoUrl;
-  const siteName = config.siteName || 'Ranch Hamburgueria';
+  const siteName = config.siteName || 'NewBurguer Lanches';
   const subtitle = config.siteSubtitle || 'Ingredientes selecionados, montados na hora. Um hambúrguer artesanal de verdade.';
   const whatsappNumber = (config.whatsappNumber || '5564993392970').replace(/\D/g, '');
 

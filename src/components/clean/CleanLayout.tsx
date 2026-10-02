@@ -30,7 +30,7 @@ export function CleanLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
 
   const themeColor = config.themeColor || '#d97706';
   const logo = config.logoUrl;
-  const siteName = config.siteName || 'Ranch Hamburgueria';
+  const siteName = config.siteName || 'NewBurguer Lanches';
   const subtitle = config.siteSubtitle || 'Hambúrgueres artesanais, ingredientes selecionados e muito sabor em cada mordida.';
 
   // Valores efetivos (override de unidade > config global)

@@ -66,7 +66,7 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
   const accent = config.themeColor || '#e8c547';
   const onAccent = readableOn(accent);
   const logo = config.logoUrl;
-  const siteName = config.siteName || 'Ranch Hamburgueria';
+  const siteName = config.siteName || 'NewBurguer Lanches';
   const heroTitle = (cfg.primeHeroTitle || siteName.split(' ')[0] || 'Prime').toUpperCase();
   const heroTagline = cfg.primeHeroTagline || 'The Stack';
   const subtitle = config.siteSubtitle || 'Camadas selecionadas, ponto certo, montado na hora.';
