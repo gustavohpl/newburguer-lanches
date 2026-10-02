@@ -54,8 +54,6 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
     const vrd = (a: number) => `rgba(${vr},${vg},${vb},${a})`;
     // 'lighten' troca o preto do estúdio do vídeo pela cor do fundo sem tocar no lanche
     const clarear = (0.2126 * er + 0.7152 * eg + 0.0722 * eb) / 255 < 0.3;
-    const quadro = document.createElement('canvas');
-    const q = quadro.getContext('2d')!;
     const emPe = window.innerWidth < 768 && window.innerHeight > window.innerWidth;
     const corte = emPe && info.corteCel ? info.corteCel : null;
     const pasta = `${BASE}/${corte ? 'cel' : 'pc'}`;
@@ -103,8 +101,7 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
         for (let d = 1; d < n && !a; d++) a = pronta(imgs[i - d]) ? imgs[i - d] : pronta(imgs[i + d]) ? imgs[i + d] : undefined;
       }
       if (!a) return;
-      const t = f - i, b = imgs[i + 1];
-      const chave = Math.round(f * 50) * 4 + (a === imgs[i] ? 2 : 0) + (pronta(b) ? 1 : 0) + (rapido ? 1e6 : 0);
+      const chave = Math.round(f * 50) * 2 + (rapido ? 1 : 0);
       if (chave === ultimo) return;
       ultimo = chave;
       g.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -135,18 +132,9 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       grad.addColorStop(1, esc(1));
       g.fillStyle = grad;
       g.fillRect(0, 0, W, H);
+      // caminho único e leve: desenha o quadro direto com lighten (sem offscreen nem mistura) -> FPS máximo em qualquer velocidade
       g.globalCompositeOperation = clarear ? 'lighten' : 'source-over';
-      if (rapido) {
-        // caminho leve: desenha o quadro direto (sem offscreen nem mistura) — fluido no scroll rápido
-        g.drawImage(a, caixa.x, y, caixa.w, caixa.h);
-      } else {
-        // caminho de qualidade: compõe no offscreen + mistura entre quadros, depois lighten
-        if (quadro.width !== a.naturalWidth) { quadro.width = a.naturalWidth; quadro.height = a.naturalHeight; }
-        q.globalAlpha = 1;
-        q.drawImage(a, 0, 0);
-        if (a === imgs[i] && t > 0.02 && pronta(b)) { q.globalAlpha = t; q.drawImage(b, 0, 0); }
-        g.drawImage(quadro, caixa.x, y, caixa.w, caixa.h);
-      }
+      g.drawImage(a, caixa.x, y, caixa.w, caixa.h);
       g.globalCompositeOperation = 'source-over';
     };
     const laco = () => {
