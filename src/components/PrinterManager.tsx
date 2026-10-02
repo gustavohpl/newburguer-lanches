@@ -4,6 +4,9 @@ import { useConfig } from '../ConfigContext';
 
 // 🖨️ URL do servidor de impressão local (roda no PC com a impressora)
 const PRINT_SERVER_URL = 'http://localhost:9100';
+// só o aparelho da loja sonda a impressora: em cliente, acessar localhost faz o Chrome pedir permissão de rede local
+const IMPRESSORA_AQUI = 'impressora_local';
+const deveSondar = () => /^\/(admin|master)/.test(window.location.pathname) || localStorage.getItem(IMPRESSORA_AQUI) === '1';
 
 interface PrinterContextType {
   isConnected: boolean;
@@ -33,6 +36,7 @@ export function PrinterProvider({ children }: { children: React.ReactNode }) {
     try {
       const res = await fetch(PRINT_SERVER_URL, { method: 'GET', signal: AbortSignal.timeout(3000) });
       const data = await res.json();
+      if (data.status === 'online') localStorage.setItem(IMPRESSORA_AQUI, '1');
       return data.status === 'online';
     } catch {
       return false;
@@ -41,6 +45,7 @@ export function PrinterProvider({ children }: { children: React.ReactNode }) {
 
   // Checa o servidor periodicamente
   useEffect(() => {
+    if (!deveSondar()) return;
     let active = true;
     const check = async () => {
       const online = await checkServer();
