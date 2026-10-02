@@ -111,7 +111,9 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       g.imageSmoothingEnabled = true;
       g.imageSmoothingQuality = 'high';
       const p = Math.min(1, f / ((n - 1) * 0.45));
-      const y = caixa.y + desce * (1 - p * p * (3 - 2 * p));
+      const prog = n > 1 ? f / (n - 1) : 0;
+      // sobe o tempo todo (rolagem contínua), além da subida inicial do fechado e de abrir
+      const y = caixa.y + desce * (1 - p * p * (3 - 2 * p)) - H * 0.22 * prog;
       // papel de parede VERDE do lado do header -> ESCURO do lado do lanche (degradê direcional):
       // o lanche fica todo no escuro (lighten não encosta no verde = sem borda verde)
       const cx = caixa.x + caixa.w / 2;
@@ -168,10 +170,11 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       // posições = fração da ROLAGEM (padding força a duração total da timeline p/ 1.0)
       tl.to('.ab-dica', { opacity: 0, duration: 0.06 }, 0.02)
         // logo + infos SOBEM (rolagem natural) e saem pelo topo
-        .fromTo('.ab-intro', { yPercent: 0 }, { yPercent: -165, ease: 'none', duration: 0.52 }, 0)
+        .fromTo('.ab-intro', { yPercent: 0 }, { yPercent: -175, ease: 'none', duration: 0.52 }, 0)
         .to('.ab-intro', { opacity: 0, duration: 0.12, ease: 'power1.in' }, 0.4)
-        // "Montado do seu jeito" sobe de baixo quando a logo está ~na metade e assenta perto do fim
-        .fromTo('.ab-final', { yPercent: 130, opacity: 0 }, { yPercent: 0, opacity: 1, ease: 'power2.out', duration: 0.5 }, 0.3)
+        // "Montado do seu jeito" sobe de baixo (a partir de ~metade da logo) e NÃO trava: segue subindo até o fim
+        .fromTo('.ab-final', { yPercent: 135 }, { yPercent: -28, ease: 'none', duration: 0.7 }, 0.3)
+        .fromTo('.ab-final', { opacity: 0 }, { opacity: 1, ease: 'power1.out', duration: 0.16 }, 0.33)
         .to({}, { duration: 0.01 }, 1);
       gsap.from('.ab-intro > *', { y: 30, opacity: 0, duration: 1, stagger: 0.1, ease: 'power3.out', delay: 0.2 });
     }, secao);
