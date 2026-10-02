@@ -6,6 +6,7 @@ import { useDesign } from '../useDesign';
 import logoImage from 'figma:asset/2217307d23df7779a3757aa35c01d81549336b8b.png';
 import headerBg from 'figma:asset/6dbb44028ed8a316eb5f92fc5d24fd96935de5f0.png';
 import { hexToRgba } from '../utils/colorUtils';
+import { HORARIO_PADRAO } from './StatusBar';
 
 export const SocialIcons: Record<string, React.FC<{className?: string}>> = {
   instagram: ({ className }) => (
@@ -48,7 +49,7 @@ export function Header() {
   const effectivePhone = unitOverrides.phone || config.phone || '(64) 99339-2970';
   const effectiveAddress = unitOverrides.address || config.address || 'Praça Lucio Prado - Goiatuba/GO';
   const effectiveGoogleMapsUrl = unitOverrides.googleMapsUrl || config.googleMapsUrl;
-  const effectiveHours = unitOverrides.openingHours || config.openingHours || 'Todos os dias a partir das 18h30';
+  const effectiveHours = unitOverrides.openingHours || config.openingHours || HORARIO_PADRAO;
 
   // Cores das redes: config > fallback brand colors
   const socialColors = config.socialMediaColors || {};

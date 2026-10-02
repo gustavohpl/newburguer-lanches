@@ -3,6 +3,9 @@ import { useConfig } from '../ConfigContext';
 import { useFranchise } from '../FranchiseContext';
 import { useDesign } from '../useDesign';
 
+// mostrado quando o horário não foi configurado no Master (todos os designs)
+export const HORARIO_PADRAO = 'Todos os dias a partir das 18h30';
+
 interface StatusBarProps {
   isStoreOpen?: boolean;
 }
@@ -13,7 +16,7 @@ export function StatusBar({ isStoreOpen = true }: StatusBarProps) {
   const design = useDesign();
   const isClean = design.statusStyle === 'dot';
   const themeColor = config.themeColor || '#d97706';
-  const effectiveHours = unitOverrides.openingHours || config.openingHours || 'Todos os dias a partir das 18h30';
+  const effectiveHours = unitOverrides.openingHours || config.openingHours || HORARIO_PADRAO;
 
   return (
     <div className={`py-4 ${isClean ? 'border-b border-zinc-200 bg-zinc-50' : 'border-b border-white/5'}`}>

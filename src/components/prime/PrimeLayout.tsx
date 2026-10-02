@@ -9,6 +9,7 @@ import logoPadrao from 'figma:asset/2217307d23df7779a3757aa35c01d81549336b8b.png
 import type { Product } from '../../App';
 import { useConfig } from '../../ConfigContext';
 import { useInstalar } from '../../pwa';
+import { HORARIO_PADRAO } from '../StatusBar';
 import { useFranchise } from '../../FranchiseContext';
 import { SocialBrandColors } from '../Header';
 import { PrimeSheet } from './PrimeSheet';
@@ -54,7 +55,7 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
   const titulo = cfg.primeHeroTitle || nome;
   const frase = cfg.primeHeroTagline || config.siteSubtitle || '';
   const endereco = unitOverrides.address || config.address || '';
-  const horario = unitOverrides.openingHours || config.openingHours || '';
+  const horario = unitOverrides.openingHours || config.openingHours || HORARIO_PADRAO;
   const telefone = unitOverrides.phone || config.phone || '';
   const taxa = unitOverrides.deliveryFee ?? config.deliveryFee;
   const whats = (config.whatsappNumber || telefone || '').replace(/\D/g, '');
