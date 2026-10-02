@@ -420,7 +420,10 @@ export function CheckoutModal({
       };
       
       // Salvar pedido no banco de dados
+      // origem do anúncio (o App guarda os utm_* da URL de entrada): o painel de anúncios soma os pedidos por campanha
+      const utm = (() => { try { return JSON.parse(sessionStorage.getItem('utm_tracking') || 'null'); } catch { return null; } })();
       const orderData = {
+        ...(utm ? { utm } : {}),
         customerName: sanitizeName(name),
         customerPhone: sanitizePhone(phone),
         deliveryType,

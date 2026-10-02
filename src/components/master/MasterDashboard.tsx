@@ -49,6 +49,7 @@ import { SecurityDashboard } from '../admin/SecurityDashboard';
 
 import { applyTheme } from '../../utils/themeUtils';
 import { MercadoPagoConfig } from './MercadoPagoConfig';
+import { MetaConfig } from './MetaConfig';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { warmupWebRTCDetection } from '../../utils/webrtc-leak';
 
@@ -2080,15 +2081,8 @@ export function MasterDashboard() {
                       placeholder="Ex: 123456789012345"
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Access Token (Conversões API)</label>
-                    <input
-                      type="password"
-                      value={config.metaAccessToken || ''}
-                      onChange={(e) => setConfig({ ...config, metaAccessToken: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono text-sm"
-                      placeholder="EAAB..."
-                    />
+                  <div className="border-t border-gray-100 pt-4">
+                    <MetaConfig />
                   </div>
                 </div>
               </div>

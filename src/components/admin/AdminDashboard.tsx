@@ -24,7 +24,7 @@ import { ProductsManagement } from './ProductsManagement';
 import { OrderManager } from './OrderManager';
 import { CustomerList } from './CustomerList';
 import { Settings } from './Settings';
-import { Dashboard as TrafegoPagoDashboard } from './TrafegoPago/Dashboard';
+import { AnunciosMeta } from './AnunciosMeta';
 import { DeliveryArea } from './DeliveryArea';
 import { StockManager } from './StockManager';
 
@@ -256,7 +256,7 @@ export function AdminDashboard({ onLogout, onProductsChange }: AdminDashboardPro
           {currentMenu === 'dashboard' && <DashboardHome />}
           {currentMenu === 'products' && <ProductsManagement onProductsChange={handleProductsChange} />}
           {currentMenu === 'orders' && <OrderManager />}
-          {currentMenu === 'ads' && config.features?.paidTraffic !== false && <TrafegoPagoDashboard />}
+          {currentMenu === 'ads' && config.features?.paidTraffic !== false && <AnunciosMeta />}
           {currentMenu === 'delivery' && config.features?.deliverySystem !== false && <DeliveryArea />}
           {currentMenu === 'stock' && config.features?.stockControl && <StockManager />}
           {currentMenu === 'customers' && <CustomerList />}

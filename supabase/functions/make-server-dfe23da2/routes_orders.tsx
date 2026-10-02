@@ -175,6 +175,10 @@ router.post('/orders', async (c) => {
         name: item.name ? sanitizeText(item.name, 200) : item.name,
       })) : rawBody.items,
       couponCode: rawBody.couponCode ? sanitizeText(rawBody.couponCode, 50) : rawBody.couponCode,
+      // origem do anúncio (utm_campaign = id da campanha na Meta): o painel de anúncios soma os pedidos
+      utm: rawBody.utm && typeof rawBody.utm === 'object'
+        ? Object.fromEntries(['utm_source', 'utm_medium', 'utm_campaign'].filter((k) => typeof rawBody.utm[k] === 'string').map((k) => [k, sanitizeText(rawBody.utm[k], 100)]))
+        : undefined,
     };
 
     // 🔒 Validação e recomputação de preços no servidor (anti-adulteração de total/preço)

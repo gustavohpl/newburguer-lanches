@@ -141,7 +141,7 @@ router.get('/master/config', async (c) => {
     const systemConfig: any = await kv.get('system_config') || {};
     const hasAdminPassword = !!Deno.env.get('ADMIN_PASSWORD');
     const masterConfig = {
-      ...systemConfig, hasAdminPassword,
+      ...systemConfig, hasAdminPassword, metaAccessToken: undefined,
       pagSeguroToken: systemConfig.pagSeguroToken || '',
       pagSeguroEmail: systemConfig.pagSeguroEmail || '',
     };
@@ -161,7 +161,8 @@ router.post('/master/config', async (c) => {
       pagSeguroToken: config.pagSeguroToken || '',
       pagSeguroEmail: config.pagSeguroEmail || '',
       metaPixelId: config.metaPixelId || '',
-      metaAccessToken: config.metaAccessToken || '',
+      // token da Meta mora só em meta_segredos (Master → Integrações → Meta)
+      metaAccessToken: undefined,
     };
     if (adminPassword) {
       console.log('🔐 [MASTER CONFIG] Atualizando senha do admin via painel');
