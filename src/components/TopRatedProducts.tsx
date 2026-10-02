@@ -24,22 +24,9 @@ export function TopRatedProducts({ products, onAddToCart }: TopRatedProductsProp
 
     const fetchTopRated = async () => {
       try {
-        const response = await api.getAllOrders();
-        if (response.success && response.orders) {
-          const productRatings: Record<string, { total: number; count: number }> = {};
-
-          response.orders.forEach((order: any) => {
-            if (order.reviews && Array.isArray(order.reviews)) {
-              order.reviews.forEach((review: any) => {
-                const productName = review.productName;
-                if (!productRatings[productName]) {
-                  productRatings[productName] = { total: 0, count: 0 };
-                }
-                productRatings[productName].total += review.rating;
-                productRatings[productName].count += 1;
-              });
-            }
-          });
+        const response = await api.getTopRatings();
+        if (response.success && response.ratings) {
+          const productRatings = response.ratings;
 
           const allRankedProducts = products.map(product => {
             const stats = productRatings[product.name] || { total: 0, count: 0 };

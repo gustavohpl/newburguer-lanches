@@ -520,7 +520,7 @@ export async function getAllOrders() {
   }
   
   try {
-    const response = await fetchWithRetry(`${API_BASE_URL}/orders`, { headers });
+    const response = await authFetch('/orders');
     const data = await response.json();
     console.log('🌐 [API] Resposta GET /orders:', data);
     
@@ -536,6 +536,15 @@ export async function getAllOrders() {
     console.log('📦 [API] Erro no servidor - usando pedidos locais');
     const orders = getLocalOrders();
     return { success: true, orders, offline: true };
+  }
+}
+
+export async function getTopRatings(): Promise<{ success: boolean; ratings?: Record<string, { total: number; count: number }> }> {
+  try {
+    const response = await fetchWithRetry(`${API_BASE_URL}/reviews/top`, { headers });
+    return await response.json();
+  } catch {
+    return { success: false };
   }
 }
 

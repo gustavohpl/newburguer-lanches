@@ -41,9 +41,13 @@ router.post('/admin/migrate-scale', requireAdmin, async (c) => {
 // Listar pedidos ativos
 // ==========================================
 
-router.get('/orders', async (c) => {
+router.get('/orders', requireAdminOrDriver, async (c) => {
   try {
-    const orders = await kv.getByPrefix('order:');
+    let orders = await kv.getByPrefix('order:');
+    // entregador só recebe as entregas prontas ou em rota, nunca a base de clientes
+    if (c.get('authType' as never) === 'driver') {
+      orders = orders.filter((o: any) => o.deliveryType === 'delivery' && ['ready_for_delivery', 'out_for_delivery'].includes(o.status));
+    }
     orders.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     return success(c, { orders });
   } catch (e) {
@@ -468,6 +472,25 @@ router.put('/admin/orders/:id/cancel', requireAdmin, async (c) => {
 });
 
 // Adicionar avaliação
+// público: só a média por produto (sem dados de cliente)
+router.get('/reviews/top', async (c) => {
+  try {
+    const pedidos = [...await kv.getByPrefix('order:'), ...await kv.getByPrefix('archive:')];
+    const ratings: Record<string, { total: number; count: number }> = {};
+    for (const o of pedidos as any[]) {
+      for (const r of Array.isArray(o?.reviews) ? o.reviews : []) {
+        if (!r?.productName || typeof r.rating !== 'number') continue;
+        const n = (ratings[r.productName] ||= { total: 0, count: 0 });
+        n.total += r.rating;
+        n.count += 1;
+      }
+    }
+    return success(c, { ratings });
+  } catch (e) {
+    return error(c, `Erro ao calcular avaliações: ${e}`);
+  }
+});
+
 router.post('/orders/:id/review', async (c) => {
   const id = c.req.param('id');
   console.log('⭐ [BACKEND] POST /orders/:id/review:', id);
