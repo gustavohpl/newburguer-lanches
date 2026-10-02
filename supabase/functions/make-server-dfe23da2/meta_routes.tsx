@@ -4,7 +4,7 @@
 import { Hono } from "npm:hono";
 import * as kv from "./kv_retry.tsx";
 import { success, error } from "./server_utils.tsx";
-import { requireAdmin, requireMaster } from "./middleware.tsx";
+import { requireAdmin, requireAdminLeitura, requireMaster } from "./middleware.tsx";
 
 // META_API_URL só existe no ambiente de teste (simulador local da Graph API)
 const BASE = Deno.env.get("META_API_URL") || "https://graph.facebook.com/v23.0";
@@ -118,7 +118,12 @@ function montarPublico(b: Record<string, unknown>, soInstagram = false) {
 
 const router = new Hono();
 
-router.post("/meta/acao", requireAdmin, async (c) => {
+// consultas só pedem a sessão; o que altera a conta (criar, ativar, orçamento) passa também pelo CSRF
+const LEITURA = new Set(["resumo", "campanhas", "detalhes", "posts_instagram", "buscar_interesses", "buscar_locais", "estimar_publico"]);
+router.post("/meta/acao", async (c, next) => {
+  const b = await c.req.json().catch(() => ({} as Record<string, unknown>));
+  return LEITURA.has(String(b.acao)) ? requireAdminLeitura(c, next) : requireAdmin(c, next);
+}, async (c) => {
   const b = await c.req.json().catch(() => ({} as Record<string, unknown>));
   const acao = String(b.acao ?? "");
   try {

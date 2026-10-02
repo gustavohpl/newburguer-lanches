@@ -147,6 +147,17 @@ export const requireAdmin = async (c: Context, next: Next) => {
   await next();
 };
 
+// consulta feita por POST (ex.: /meta/acao de leitura): exige a sessão sem girar o CSRF, senão leituras em paralelo se derrubam
+export const requireAdminLeitura = async (c: Context, next: Next) => {
+  const token = c.req.header('X-Admin-Token');
+  const session = token ? await kv.get(`admin_session:${token}`) as AdminSession | null : null;
+  if (!session || (session.expiresAt && new Date(session.expiresAt) < new Date())) {
+    return error(c, 'Sessão de admin inválida ou expirada. Faça login novamente.', 401);
+  }
+  c.set('authType' as never, 'admin');
+  await next();
+};
+
 export const requireMaster = async (c: Context, next: Next) => {
   const token = c.req.header('X-Master-Token');
   if (!token) {

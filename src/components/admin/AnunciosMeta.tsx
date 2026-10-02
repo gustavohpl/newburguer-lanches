@@ -271,6 +271,7 @@ function NovaCampanha({ aoFechar, aoCriar, minimoDiario = null }: { aoFechar: ()
   const [titulo, setTitulo] = useState(`Peça no ${loja}`);
   const [cta, setCta] = useState('ORDER_NOW');
   const [cupom, setCupom] = useState('');
+  const [linkBase, setLinkBase] = useState(site);
   const [orcamento, setOrcamento] = useState('10');
   const [idadeMin, setIdadeMin] = useState('18');
   const [idadeMax, setIdadeMax] = useState('55');
@@ -288,7 +289,7 @@ function NovaCampanha({ aoFechar, aoCriar, minimoDiario = null }: { aoFechar: ()
     getCoupons().then((r: any) => setCupons((r?.coupons || []).filter((x: any) => x.isActive !== false && x.active !== false))).catch(() => {});
   }, []);
 
-  const link = cupom ? `${site}?cupom=${encodeURIComponent(cupom)}` : site;
+  const link = cupom ? `${linkBase}${linkBase.includes('?') ? '&' : '?'}cupom=${encodeURIComponent(cupom)}` : linkBase;
   const textoFinal = cupom && !texto.includes(cupom) ? `${texto}\n\n🎟️ Use o cupom ${cupom}` : texto;
   const publico = () => ({
     idade_min: Number(idadeMin), idade_max: Number(idadeMax), generos,
@@ -335,7 +336,7 @@ function NovaCampanha({ aoFechar, aoCriar, minimoDiario = null }: { aoFechar: ()
     e.preventDefault();
     if (origem === 'post' && !post) return setErro('Escolha o post do perfil que vai virar anúncio.');
     if (origem === 'nova' && !imagem) return setErro('Escolha a imagem do anúncio (foto de um produto ou imagem própria).');
-    if (!link.startsWith('https://')) return setErro('O link do anúncio precisa ser https:// (abra o Admin pelo endereço oficial do site).');
+    if (!link.startsWith('https://')) return setErro('O link do anúncio precisa começar com https:// (endereço oficial do site).');
     if (minimoDiario != null && Number(orcamento.replace(',', '.')) < minimoDiario) return setErro(`A Meta exige no mínimo ${brl(minimoDiario)} por dia nesta conta.`);
     setEnviando(true);
     setErro(null);
@@ -431,7 +432,10 @@ function NovaCampanha({ aoFechar, aoCriar, minimoDiario = null }: { aoFechar: ()
               </select>
             </label>
           </div>
-          <p className="break-all text-xs text-gray-500">Link do anúncio: {link}</p>
+          <label className="block text-sm text-gray-600">Link do anúncio
+            <input className={campo} value={linkBase} onChange={(e) => setLinkBase(e.target.value.trim())} required />
+            {cupom && <span className="break-all text-xs text-gray-400">com o cupom: {link}</span>}
+          </label>
 
           <fieldset className="space-y-4 rounded-xl border border-gray-200 p-4">
             <legend className="px-2 text-sm font-semibold text-gray-700">Público</legend>
