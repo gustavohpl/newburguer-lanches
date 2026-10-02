@@ -8,7 +8,7 @@ export interface OrderStatus {
   orderId: string;
   customerName: string;
   customerPhone: string;
-  items: Array<{ name: string; quantity: number; price: number }>;
+  items: Array<{ name: string; quantity: number; price: number; selectedAddons?: Array<{ name: string; price: number }> }>;
   total: number;
   deliveryType: 'delivery' | 'pickup' | 'dine-in';
   address?: string;
@@ -381,9 +381,14 @@ export function OrderTracking({ isOpen, onClose, orderId }: OrderTrackingProps) 
                 <div key={index} className="flex justify-between text-sm">
                   <span className="text-gray-700 dark:text-gray-300">
                     {item.quantity}x {item.name}
+                    {item.selectedAddons && item.selectedAddons.length > 0 && (
+                      <span className="block text-xs text-gray-500 dark:text-gray-400">
+                        {item.selectedAddons.map((a) => `+ ${a.name}`).join(' · ')}
+                      </span>
+                    )}
                   </span>
                   <span className="text-gray-800 dark:text-gray-100 font-medium">
-                    R$ {(item.price * item.quantity).toFixed(2).replace('.', ',')}
+                    R$ {((item.price + (item.selectedAddons || []).reduce((s, a) => s + a.price, 0)) * item.quantity).toFixed(2).replace('.', ',')}
                   </span>
                 </div>
               ))}

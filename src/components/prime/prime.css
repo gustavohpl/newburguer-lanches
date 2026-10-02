@@ -407,3 +407,4 @@
   .ck-pergunta > div { width: 440px; border-radius: 26px; animation: ck-surge .3s var(--suave) both; }
 }
 .ck-pergunta p::first-line { font-size: 19px; font-weight: 800; }
+.pc-adic { margin: 3px 0 0; font-size: 12.5px; line-height: 1.35; color: var(--muted); }

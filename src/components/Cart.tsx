@@ -81,6 +81,11 @@ export function Cart({
                         <h3 className="font-bold text-gray-800 dark:text-white text-lg mb-1 truncate">
                           {item.name}
                         </h3>
+                        {item.selectedAddons && item.selectedAddons.length > 0 && (
+                          <p className="text-xs text-gray-600 dark:text-gray-300 mb-1">
+                            {item.selectedAddons.map((a) => `+ ${a.name}${a.price ? ` (R$ ${a.price.toFixed(2).replace('.', ',')})` : ''}`).join(' · ')}
+                          </p>
+                        )}
 
                         {item.notes && (
                           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg px-2 py-1 mb-2">
@@ -103,7 +108,7 @@ export function Cart({
 
                         <div className="flex items-center justify-between mt-3">
                           <div className="text-amber-600 dark:text-amber-500 font-bold text-lg">
-                            R${(item.price * item.quantity).toFixed(2).replace(".", ",")}
+                            R${((item.price + (item.selectedAddons || []).reduce((s, a) => s + a.price, 0)) * item.quantity).toFixed(2).replace(".", ",")}
                           </div>
 
                           <div className="flex items-center gap-2">

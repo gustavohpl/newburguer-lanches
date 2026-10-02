@@ -71,9 +71,12 @@ export function PrimeCart({ isOpen, onClose, items, onUpdateQuantity, onRemove, 
                     </div>
                     <div className="pc-info">
                       <h3>{item.name}</h3>
+                      {item.selectedAddons && item.selectedAddons.length > 0 && (
+                        <p className="pc-adic">{item.selectedAddons.map((a) => `+ ${a.name}${a.price ? ` (${dinheiro(a.price)})` : ''}`).join(' · ')}</p>
+                      )}
                       {item.notes && <p className="pc-obs"><span>Obs:</span> {item.notes}</p>}
                       <div className="pc-baixo">
-                        <span className="pc-preco">{dinheiro(item.price * item.quantity)}</span>
+                        <span className="pc-preco">{dinheiro((item.price + (item.selectedAddons || []).reduce((s, a) => s + a.price, 0)) * item.quantity)}</span>
                         <div className="pr-qtd">
                           <button onClick={() => (item.quantity <= 1 ? onRemove(item.id) : onUpdateQuantity(item.id, item.quantity - 1))} aria-label="Diminuir">
                             {item.quantity <= 1 ? <Trash2 size={16} /> : <Minus size={18} />}

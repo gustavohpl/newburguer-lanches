@@ -92,6 +92,11 @@ export function MiniCart({ items, totalPrice, onOpenFullCart, onRemove, onUpdate
                     <h4 className="font-bold text-sm text-foreground truncate mb-1">
                       {item.name}
                     </h4>
+                    {item.selectedAddons && item.selectedAddons.length > 0 && (
+                      <p className="text-[11px] text-muted-foreground mb-1 line-clamp-2">
+                        {item.selectedAddons.map((a) => `+ ${a.name}${a.price ? ` (R$ ${a.price.toFixed(2).replace('.', ',')})` : ''}`).join(' · ')}
+                      </p>
+                    )}
                     
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-1.5">
@@ -116,7 +121,7 @@ export function MiniCart({ items, totalPrice, onOpenFullCart, onRemove, onUpdate
                         </button>
                       </div>
                       <div className="text-sm font-bold text-amber-600 dark:text-amber-500">
-                        R${(item.price * item.quantity).toFixed(2).replace('.', ',')}
+                        R${((item.price + (item.selectedAddons || []).reduce((s, a) => s + a.price, 0)) * item.quantity).toFixed(2).replace('.', ',')}
                       </div>
                     </div>
                   </div>
