@@ -71,10 +71,10 @@ export function PrimeAbertura({ nome, logo, logoOriginal, aberta, horario, cor, 
       if (!vivo) { if (q instanceof ImageBitmap) q.close(); return; }
       imgs[i] = q; ultimo = -1; desenhar(atual);
     };
-    const carregar = (i: number) => {
+    const carregar = (i: number, prioridade: 'high' | 'auto' = 'auto') => {
       // ?v= muda a cada vídeo novo: o cache do app nunca mistura quadros de versões diferentes
       const src = `${pasta}/${String(i + 1).padStart(3, '0')}.webp${info.v ? `?v=${info.v}` : ''}`;
-      fetch(src).then((r) => r.blob())
+      return fetch(src, { priority: prioridade } as RequestInit).then((r) => r.blob())
         .then((b) => createImageBitmap(b, ux - ox, uy, uw, uh, memPouca ? { resizeWidth: Math.round(uw * 0.7), resizeHeight: Math.round(uh * 0.7), resizeQuality: 'high' } : {}))
         .then((q) => chegou(i, q))
         .catch(() => { const im = new Image(); im.onload = () => chegou(i, im); im.src = src; });
@@ -156,10 +156,10 @@ export function PrimeAbertura({ nome, logo, logoOriginal, aberta, horario, cor, 
     };
     medir();
     window.addEventListener('resize', medir);
-    // TODOS já (grosso ao fino = prioridade), pra nunca faltar quadro ao rolar
+    // 1º quadro sozinho (senão divide a banda com os 121 e a tela fica preta no 4G); depois todos, do grosso ao fino
     const ordem: number[] = [];
     for (const passo of [8, 4, 2, 1]) for (let i = 0; i < n; i += passo) if (!ordem.includes(i)) ordem.push(i);
-    ordem.forEach(carregar);
+    carregar(0, 'high').finally(() => { if (vivo) ordem.slice(1).forEach((i) => carregar(i)); });
     const soltar = () => { vivo = false; window.removeEventListener('resize', medir); imgs.forEach((q) => q instanceof ImageBitmap && q.close()); };
 
     if (reduzido) {

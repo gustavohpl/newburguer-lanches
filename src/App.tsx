@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, lazy, Suspense } from 'react';
 import { Header } from './components/Header';
 import { StatusBar } from './components/StatusBar';
 import { CategoryNav } from './components/CategoryNav';
@@ -15,7 +15,6 @@ import { OrderSearchModal } from './components/OrderSearchModal';
 import { OrderSuccessModal } from './components/OrderSuccessModal';
 import { OrderConfirmedModal } from './components/OrderConfirmedModal';
 import { AdminLogin } from './components/admin/AdminLogin';
-import { AdminDashboard } from './components/admin/AdminDashboard';
 import { PrinterProvider } from './components/PrinterManager';
 import { Toaster, toast } from 'sonner';
 import * as api from './utils/api';
@@ -23,15 +22,17 @@ import { projectId, publicAnonKey } from './utils/supabase/info';
 import { MetaPixel } from './components/MetaPixel';
 import { ConfigProvider, useConfig } from './ConfigContext';
 import { useDesign } from './useDesign';
-import { CleanLayout } from './components/clean/CleanLayout';
-import { RusticLayout } from './components/rustic/RusticLayout';
 import { PrimeLayout } from './components/prime/PrimeLayout';
-import { ThreeDBackground } from './components/three-d/ThreeDBackground';
 import './components/three-d/threed-theme.css';
 import { FranchiseProvider, useFranchise } from './FranchiseContext';
 import { FranchiseSelectionModal } from './components/FranchiseSelectionModal';
-import { MasterDashboard } from './components/master/MasterDashboard';
-import { DeliverymanPage } from './components/delivery/DeliverymanPage';
+// áreas pesadas que o cliente do cardápio não usa: baixadas só quando abertas
+const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard').then((m) => ({ default: m.AdminDashboard })));
+const MasterDashboard = lazy(() => import('./components/master/MasterDashboard').then((m) => ({ default: m.MasterDashboard })));
+const DeliverymanPage = lazy(() => import('./components/delivery/DeliverymanPage').then((m) => ({ default: m.DeliverymanPage })));
+const ThreeDBackground = lazy(() => import('./components/three-d/ThreeDBackground').then((m) => ({ default: m.ThreeDBackground })));
+const CleanLayout = lazy(() => import('./components/clean/CleanLayout').then((m) => ({ default: m.CleanLayout })));
+const RusticLayout = lazy(() => import('./components/rustic/RusticLayout').then((m) => ({ default: m.RusticLayout })));
 
 export interface Product {
   id: string;
@@ -747,7 +748,7 @@ function AppContent() {
   };
 
   if (showMaster) {
-    return <MasterDashboard />;
+    return <Suspense fallback={null}><MasterDashboard /></Suspense>;
   }
 
   return (
@@ -760,7 +761,7 @@ function AppContent() {
           {!isAdminAuthenticated ? (
             <AdminLogin onLogin={() => setIsAdminAuthenticated(true)} />
           ) : (
-            <AdminDashboard onLogout={handleAdminExit} onProductsChange={loadProducts} />
+            <Suspense fallback={null}><AdminDashboard onLogout={handleAdminExit} onProductsChange={loadProducts} /></Suspense>
           )}
         </div>
       ) : (
@@ -807,27 +808,31 @@ function AppContent() {
           )}
           {/* Fundo 3D fixo — substitui a imagem do Clássico no design "3D".
               O conteúdo Clássico (header/menus/footer) fica por cima, transparente. */}
-          {isThreeD && <ThreeDBackground />}
+          {isThreeD && <Suspense fallback={null}><ThreeDBackground /></Suspense>}
           {showDelivery ? (
-            <DeliverymanPage />
+            <Suspense fallback={null}><DeliverymanPage /></Suspense>
           ) : (
             <div className="relative flex flex-col flex-1 z-[1]">
               {isClean ? (
-                <CleanLayout
-                  products={products}
-                  onAddToCart={addToCart}
-                  cartCount={cartItems.reduce((s, i) => s + (i.quantity || 1), 0)}
-                  onOpenCart={() => setIsCartOpen(true)}
-                  isStoreOpen={effectiveIsOpen}
-                />
+                <Suspense fallback={null}>
+                  <CleanLayout
+                    products={products}
+                    onAddToCart={addToCart}
+                    cartCount={cartItems.reduce((s, i) => s + (i.quantity || 1), 0)}
+                    onOpenCart={() => setIsCartOpen(true)}
+                    isStoreOpen={effectiveIsOpen}
+                  />
+                </Suspense>
               ) : isRustic ? (
-                <RusticLayout
-                  products={products}
-                  onAddToCart={addToCart}
-                  cartCount={cartItems.reduce((s, i) => s + (i.quantity || 1), 0)}
-                  onOpenCart={() => setIsCartOpen(true)}
-                  isStoreOpen={effectiveIsOpen}
-                />
+                <Suspense fallback={null}>
+                  <RusticLayout
+                    products={products}
+                    onAddToCart={addToCart}
+                    cartCount={cartItems.reduce((s, i) => s + (i.quantity || 1), 0)}
+                    onOpenCart={() => setIsCartOpen(true)}
+                    isStoreOpen={effectiveIsOpen}
+                  />
+                </Suspense>
               ) : isPrime ? (
                 <PrimeLayout
                   products={products}
