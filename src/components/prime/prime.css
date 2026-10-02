@@ -252,7 +252,7 @@
 .ab-intro { position: absolute; left: 0; right: 0; top: clamp(44px, 6vh, 90px); text-align: center; padding: 0 20px; display: grid; justify-items: center; }
 .ab-logo { position: relative; margin-bottom: 12px; }
 .ab-logo i { position: absolute; inset: 0; border-radius: 50%; filter: blur(40px); transform: scale(1.25); animation: ab-pulso 2s cubic-bezier(.4,0,.6,1) infinite; }
-.ab-logo img { position: relative; height: clamp(120px, 18vh, 288px); width: auto; object-fit: contain; filter: drop-shadow(0 0 25px rgba(251,191,36,.5)); }
+.ab-logo img { position: relative; height: clamp(170px, 27vh, 360px); width: auto; object-fit: contain; filter: drop-shadow(0 0 25px rgba(251,191,36,.5)); }
 @keyframes ab-pulso { 50% { opacity: .5; } }
 .ab-classico { display: grid; justify-items: center; gap: 12px; margin-bottom: 16px; font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif); }
 .ab-redes { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
@@ -284,7 +284,7 @@
 @keyframes ab-pula { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, 8px); } }
 @media (min-width: 900px) {
   .ab-intro { left: 6vw; right: auto; top: 0; bottom: 0; align-content: center; justify-items: start; text-align: left; max-width: 34vw; padding: 0; }
-  .ab-logo img { height: clamp(140px, 26vh, 288px); }
+  .ab-logo img { height: clamp(200px, 36vh, 420px); }
   .ab-classico { justify-items: start; }
   .ab-redes { justify-content: flex-start; }
     .ab-final { left: 6vw; right: auto; top: 40vh; bottom: auto; text-align: left; justify-items: start; max-width: 28vw; }

@@ -82,10 +82,10 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       const r = 16 / 9;
       let w = W, h = W / r;
       if (h < H && W / H > 0.9) { h = H; w = H * r; }
-      if (W / H <= 0.9) { w = W * 1.55; h = w / r; }
+      if (W / H <= 0.9) { w = W * 1.9; h = w / r; }
       // em pé: lanche acima do meio (botão final embaixo); computador: à direita (textos na esquerda)
       const largo = W / H > 0.9 && W >= 900;
-      if (largo) { w *= 0.9; h *= 0.9; }
+      if (largo) { w *= 1.08; h *= 1.08; }
       caixa = { x: (W - w) / 2 + (largo ? W * 0.13 : 0), y: (H - h) / 2 - (W / H <= 0.9 ? H * 0.07 : 0), w, h };
       if (corte) caixa = { ...caixa, x: caixa.x + corte[0] * caixa.w, w: corte[1] * caixa.w };
       // em pé o lanche fechado começa abaixo da logo/status e sobe enquanto abre (fechado ocupa 16,5%–78% do quadro)
@@ -155,11 +155,11 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
     raf = requestAnimationFrame(laco);
     const ctx = gsap.context(() => {
       const st = { trigger: secao.current, start: 'top top', end: 'bottom bottom', scrub: true };
-      ScrollTrigger.create({ ...st, onUpdate: (s) => { alvo = Math.min(1, s.progress / 0.8) * (n - 1); } });
+      ScrollTrigger.create({ ...st, onUpdate: (s) => { alvo = Math.min(1, s.progress / 0.65) * (n - 1); } });
       const tl = gsap.timeline({ scrollTrigger: { ...st, scrub: 0.5 } });
-      tl.to('.ab-intro', { opacity: 0, y: -60, duration: 0.18, ease: 'power2.in' }, 0.03)
+      tl.to('.ab-intro', { opacity: 0, y: -60, duration: 0.14, ease: 'power2.in' }, 0.03)
         .to('.ab-dica', { opacity: 0, duration: 0.08 }, 0.02)
-        .fromTo('.ab-final', { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.14, ease: 'power3.out' }, 0.82);
+        .fromTo('.ab-final', { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.14, ease: 'power3.out' }, 0.66);
       gsap.from('.ab-intro > *', { y: 30, opacity: 0, duration: 1, stagger: 0.1, ease: 'power3.out', delay: 0.2 });
     }, secao);
     return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', medir); ctx.revert(); };
@@ -167,7 +167,7 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
 
   if (!n) return null;
   return (
-    <section ref={secao} className="ab" style={{ height: reduzido ? '100vh' : '200vh', background: fundo, ['--ab-fundo' as string]: fundo } as React.CSSProperties} aria-label={`Abertura ${nome}`}>
+    <section ref={secao} className="ab" style={{ height: reduzido ? '100vh' : '150vh', background: fundo, ['--ab-fundo' as string]: fundo } as React.CSSProperties} aria-label={`Abertura ${nome}`}>
       <div className="ab-tela">
         <canvas ref={tela} aria-hidden />
         <div className="ab-sombra" />
