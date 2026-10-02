@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { hexToRgba } from '../../utils/colorUtils';
 import { 
   Palette, 
   CheckCircle,
@@ -305,6 +304,7 @@ export function MasterDashboard() {
   const [verifying, setVerifying] = useState(!!sessionStorage.getItem('faroeste_master_token'));
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'general' | 'appearance' | 'integrations' | 'features' | 'admin' | 'delivery' | 'tests' | 'audit' | 'security' | 'analytics'>('general');
+  const [designAba, setDesignAba] = useState<string | null>(null);
   
   // Login State
   const [loginUser, setLoginUser] = useState('');
@@ -1005,804 +1005,383 @@ export function MasterDashboard() {
           )}
 
           {/* TAB: APARÊNCIA */}
-          {activeTab === 'appearance' && (
-            <div className="space-y-6 animate-in fade-in">
-              {/* 🎨 SELETOR DE DESIGN */}
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <h3 className="text-lg font-bold text-gray-800 mb-1 flex items-center gap-2">
-                  <Palette className="w-5 h-5 text-purple-600" />
-                  Estilo de Design do Site
-                </h3>
-                <p className="text-sm text-gray-500 mb-4">
-                  Escolha o visual geral do site. A logo, cores e conteúdo continuam os mesmos — muda só o estilo.
-                </p>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                  {/* Design Clássico */}
-                  {(() => {
-                    const isActive = (config.designStyle || 'classic') === 'classic';
-                    return (
-                      <button
-                        onClick={() => {
-                          setConfig({ ...config, designStyle: 'classic' });
-                          updateConfigLocal({ designStyle: 'classic' });
-                        }}
-                        className={`text-left border-2 rounded-xl overflow-hidden transition-all ${isActive ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200 hover:border-purple-300'}`}
-                      >
-                        {/* Miniatura Clássico */}
-                        <div className="h-32 relative" style={{ background: `linear-gradient(135deg, ${config.themeColor || '#d97706'}, #1a1a1a)` }}>
-                          <div className="absolute inset-0 bg-black/30" />
-                          <div className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-white/90 shadow" />
-                          <div className="absolute bottom-3 left-3 right-3 flex gap-2">
-                            <div className="flex-1 h-8 rounded-lg bg-white/90 shadow" />
-                            <div className="flex-1 h-8 rounded-lg bg-white/90 shadow" />
-                          </div>
+          {activeTab === 'appearance' && (() => {
+            const designAtivo = config.designStyle || 'classic';
+            const aba = designAba || designAtivo;
+            const setCampos = (updates: Record<string, any>) => {
+              setConfig({ ...config, ...updates });
+              updateConfigLocal(updates);
+            };
+            const caixa = (titulo: string, conteudo: React.ReactNode, nota?: string) => (
+              <div className="p-5 bg-gray-50 rounded-xl border border-gray-200">
+                <h4 className="text-sm font-bold text-gray-800">{titulo}</h4>
+                {nota && <p className="text-xs text-gray-500 mt-1">{nota}</p>}
+                <div className="mt-4">{conteudo}</div>
+              </div>
+            );
+            const foto = (key: string, label: string, helpText: string) => (
+              <div>
+                <ImageConfig
+                  label={label}
+                  value={(config as any)[key] || ''}
+                  onChange={(url: string) => setCampos({ [key]: url })}
+                  placeholder="https://..."
+                  helpText={helpText}
+                  token={token}
+                />
+                {(config as any)[key] && (
+                  <button onClick={() => setCampos({ [key]: '' })} className="mt-2 text-xs text-red-500 hover:text-red-700 font-bold">✕ Remover</button>
+                )}
+              </div>
+            );
+            const fotosTopo = (prefixo: string, helpText: string) => (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {foto(`${prefixo}Url`, 'Desktop', helpText)}
+                {foto(`${prefixo}MobileUrl`, 'Mobile', 'Vertical (1080x1920). Se vazio, usa a do desktop.')}
+              </div>
+            );
+            type Banner = { imageUrl: string; link?: string };
+            const listaBanners = (key: 'homeBanners' | 'bannerCards' | 'primeBanners', lista: Banner[], helpText: string) => {
+              const salvar = (nova: Banner[]) => setConfig({ ...config, [key]: nova });
+              return (
+                <div>
+                  <div className="space-y-4">
+                    {lista.map((banner, i) => (
+                      <div key={i} className="p-4 bg-white rounded-xl border border-gray-200">
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm font-bold text-gray-700">Banner {i + 1}</span>
+                          <button onClick={() => salvar(lista.filter((_, j) => j !== i))} className="text-red-500 hover:text-red-700 text-sm font-bold">✕ Remover</button>
                         </div>
-                        <div className="p-3 flex items-center justify-between">
-                          <div>
-                            <span className="block font-bold text-gray-800">Clássico</span>
-                            <span className="text-xs text-gray-500">Imersivo, imagem de fundo, cards escuros</span>
-                          </div>
-                          {isActive && <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />}
-                        </div>
-                      </button>
-                    );
-                  })()}
-
-                  {/* Design Clean */}
-                  {(() => {
-                    const isActive = config.designStyle === 'clean';
-                    return (
-                      <button
-                        onClick={() => {
-                          setConfig({ ...config, designStyle: 'clean' });
-                          updateConfigLocal({ designStyle: 'clean' });
-                        }}
-                        className={`text-left border-2 rounded-xl overflow-hidden transition-all ${isActive ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200 hover:border-purple-300'}`}
-                      >
-                        {/* Miniatura Clean */}
-                        <div className="h-32 relative bg-zinc-50 border-b border-zinc-200">
-                          <div className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full shadow" style={{ backgroundColor: config.themeColor || '#d97706' }} />
-                          <div className="absolute top-14 left-1/2 -translate-x-1/2 w-16 h-1.5 rounded-full bg-zinc-300" />
-                          <div className="absolute bottom-3 left-3 right-3 flex gap-2">
-                            <div className="flex-1 h-8 rounded-lg bg-white border border-zinc-200 shadow-sm" />
-                            <div className="flex-1 h-8 rounded-lg bg-white border border-zinc-200 shadow-sm" />
-                          </div>
-                        </div>
-                        <div className="p-3 flex items-center justify-between">
-                          <div>
-                            <span className="block font-bold text-gray-800">Clean</span>
-                            <span className="text-xs text-gray-500">Minimalista, fundo claro, cantos suaves</span>
-                          </div>
-                          {isActive && <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />}
-                        </div>
-                      </button>
-                    );
-                  })()}
-
-                  {/* Design Rústico */}
-                  {(() => {
-                    const isActive = config.designStyle === 'rustic';
-                    return (
-                      <button
-                        onClick={() => {
-                          setConfig({ ...config, designStyle: 'rustic' });
-                          updateConfigLocal({ designStyle: 'rustic' });
-                        }}
-                        className={`text-left border-2 rounded-xl overflow-hidden transition-all ${isActive ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200 hover:border-purple-300'}`}
-                      >
-                        {/* Miniatura Rústico */}
-                        <div className="h-32 relative" style={{ background: 'linear-gradient(135deg, #2a1f16, #140f0c)' }}>
-                          <div className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full shadow" style={{ backgroundColor: config.themeColor || '#d97706' }} />
-                          <div className="absolute top-14 left-0 right-0 flex justify-center gap-2">
-                            {[0, 1, 2].map((i) => (
-                              <div key={i} className="w-6 h-6 rounded-full border-2" style={{ borderColor: `${config.themeColor || '#d97706'}88`, backgroundColor: 'rgba(40,30,22,0.9)' }} />
-                            ))}
-                          </div>
-                          <div className="absolute bottom-3 left-3 right-3 flex gap-2">
-                            <div className="flex-1 h-8 rounded-lg border" style={{ backgroundColor: 'rgba(28,22,18,0.9)', borderColor: `${config.themeColor || '#d97706'}55` }} />
-                            <div className="flex-1 h-8 rounded-lg border" style={{ backgroundColor: 'rgba(28,22,18,0.9)', borderColor: `${config.themeColor || '#d97706'}55` }} />
-                          </div>
-                        </div>
-                        <div className="p-3 flex items-center justify-between">
-                          <div>
-                            <span className="block font-bold text-gray-800">Rústico</span>
-                            <span className="text-xs text-gray-500">Dark dourado, textura madeira, categorias em círculos</span>
-                          </div>
-                          {isActive && <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />}
-                        </div>
-                      </button>
-                    );
-                  })()}
-
-                  {/* Design 3D */}
-                  {(() => {
-                    const isActive = config.designStyle === 'threed';
-                    const g = config.themeColor || '#fbbf24';
-                    return (
-                      <button
-                        onClick={() => {
-                          setConfig({ ...config, designStyle: 'threed' });
-                          updateConfigLocal({ designStyle: 'threed' });
-                        }}
-                        className={`text-left border-2 rounded-xl overflow-hidden transition-all ${isActive ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200 hover:border-purple-300'}`}
-                      >
-                        {/* Miniatura 3D */}
-                        <div className="h-32 relative overflow-hidden" style={{ background: 'radial-gradient(circle at 50% 40%, #241a12, #0d0b0a 70%)' }}>
-                          {/* "modelo" 3D estilizado */}
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full" style={{ background: `radial-gradient(circle at 35% 30%, ${g}, ${g}55 60%, transparent)`, boxShadow: `0 0 24px ${g}88` }} />
-                          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-4 w-16 h-2 rounded-full bg-black/50 blur-sm" />
-                          <span className="absolute top-3 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-[0.3em]" style={{ color: g }}>3D</span>
-                        </div>
-                        <div className="p-3 flex items-center justify-between">
-                          <div>
-                            <span className="block font-bold text-gray-800">3D</span>
-                            <span className="text-xs text-gray-500">Hero imersivo com modelo 3D girando ao scroll (usa o .glb)</span>
-                          </div>
-                          {isActive && <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />}
-                        </div>
-                      </button>
-                    );
-                  })()}
-
-                  {/* Design PRIME */}
-                  {(() => {
-                    const isActive = config.designStyle === 'prime';
-                    const a = config.themeColor || '#f5a524';
-                    return (
-                      <button
-                        onClick={() => {
-                          setConfig({ ...config, designStyle: 'prime' });
-                          updateConfigLocal({ designStyle: 'prime' });
-                        }}
-                        className={`text-left border-2 rounded-xl overflow-hidden transition-all ${isActive ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200 hover:border-purple-300'}`}
-                      >
-                        {/* Miniatura PRIME */}
-                        <div className="h-32 relative overflow-hidden" style={{ background: config.primeHeroUrl ? `linear-gradient(90deg, #0a0a0bdd, #0a0a0b22), url(${config.primeHeroUrl}) center/cover` : `radial-gradient(ellipse at 70% 60%, ${a}55, #0a0a0b 60%)` }}>
-                          {/* cantoneiras */}
-                          <span className="absolute top-2 left-2 w-3 h-3 border-t border-l border-white/70" />
-                          <span className="absolute top-2 right-2 w-3 h-3 border-t border-r border-white/70" />
-                          <span className="absolute bottom-2 left-2 w-3 h-3 border-b border-l border-white/70" />
-                          <span className="absolute bottom-2 right-2 w-3 h-3 border-b border-r border-white/70" />
-                          <div className="absolute top-4 left-4 text-[8px] font-mono uppercase tracking-widest" style={{ color: a }}>// 01</div>
-                          <span className="absolute top-8 left-4 text-2xl font-extrabold uppercase text-white leading-none" style={{ fontStretch: 'condensed' }}>PRIME</span>
-                          <span className="absolute top-[54px] left-4 text-[11px] font-extrabold uppercase text-white"><span style={{ color: a }}>//</span> THE STACK</span>
-                          <div className="absolute bottom-5 left-4 h-4 w-16" style={{ backgroundColor: a }} />
-                          <div className="absolute bottom-3 left-6 right-6 h-1.5" style={{ backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,.4) 0 1px, transparent 1px 5px)' }} />
-                        </div>
-                        <div className="p-3 flex items-center justify-between">
-                          <div>
-                            <span className="block font-bold text-gray-800">Prime</span>
-                            <span className="text-xs text-gray-500">Cinematográfico HUD: fotos de tela cheia, contador de chapa e montador</span>
-                          </div>
-                          {isActive && <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />}
-                        </div>
-                      </button>
-                    );
-                  })()}
-                </div>
-
-                {/* 🍔 Modelo 3D do Hero (aparece no design com Hero Awwwards) */}
-                <div className="mt-5 pt-5 border-t border-gray-100">
-                  <ModelConfig
-                    value={config.heroModelUrl}
-                    onChange={(val: string) => {
-                      setConfig({ ...config, heroModelUrl: val });
-                      updateConfigLocal({ heroModelUrl: val });
-                    }}
-                    token={token}
-                  />
-                </div>
-
-                {/* ✨ Efeitos 3D do Hero (design 3D) */}
-                <div className="mt-5 pt-5 border-t border-gray-100">
-                  <label className="block text-sm font-bold text-gray-800 mb-1">✨ Efeitos 3D do Hero</label>
-                  <p className="text-xs text-gray-500 mb-3">
-                    Efeitos extras na cena 3D, na cor do tema. Sem nenhum marcado, usa o padrão (partículas douradas).
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    {[
-                      { id: 'sparkles', label: 'Partículas douradas', desc: 'Brilhos flutuando ao redor do modelo' },
-                      { id: 'ring', label: 'Anel de luz', desc: 'Anel dourado girando sob o modelo' },
-                      { id: 'orbiters', label: 'Esferas em órbita', desc: 'Pontos de luz orbitando o modelo' },
-                      { id: 'stars', label: 'Céu estrelado', desc: 'Campo de estrelas ao fundo' },
-                    ].map((fx) => {
-                      const current = config.heroEffects || [];
-                      const checked = current.includes(fx.id);
-                      return (
-                        <label
-                          key={fx.id}
-                          className={`flex items-start gap-3 p-3 border-2 rounded-xl cursor-pointer transition-all ${checked ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300'}`}
-                        >
+                        <ImageConfig
+                          label="Imagem do Banner"
+                          value={banner.imageUrl || ''}
+                          onChange={(url: string) => salvar(lista.map((b, j) => (j === i ? { ...b, imageUrl: url } : b)))}
+                          placeholder="https://..."
+                          helpText={helpText}
+                          token={token}
+                        />
+                        <div className="mt-3">
+                          <label className="block text-xs font-medium text-gray-600 mb-1">Link (opcional)</label>
                           <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() => {
-                              const next = checked
-                                ? current.filter((id) => id !== fx.id)
-                                : [...current, fx.id];
-                              setConfig({ ...config, heroEffects: next });
-                              updateConfigLocal({ heroEffects: next });
-                            }}
-                            className="mt-0.5 w-4 h-4 accent-purple-600"
+                            type="text"
+                            value={banner.link || ''}
+                            onChange={(e) => salvar(lista.map((b, j) => (j === i ? { ...b, link: e.target.value } : b)))}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                            placeholder="https://... (clique no banner abre este link)"
                           />
-                          <span>
-                            <span className="block text-sm font-bold text-gray-800">{fx.label}</span>
-                            <span className="block text-xs text-gray-500">{fx.desc}</span>
-                          </span>
-                        </label>
+                        </div>
+                        {banner.imageUrl && (
+                          <div className="mt-3 bg-zinc-900 rounded-lg p-3 flex justify-center">
+                            <img src={banner.imageUrl} alt={`Preview ${i + 1}`} className="max-h-32 object-contain" />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                  <button onClick={() => salvar([...lista, { imageUrl: '', link: '' }])} className="mt-4 text-sm text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1">+ Adicionar Banner</button>
+                </div>
+              );
+            };
+            const modoTema = (
+              <div className="p-6 bg-gray-50 rounded-xl border border-gray-200">
+                <label className="block text-sm font-bold text-gray-800 mb-4">Modo de Exibição (Tema)</label>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <button
+                    onClick={() => {
+                      const updates = { 
+                        backgroundColor: '#f9fafb', // Gray-50
+                        cardColor: '#ffffff', // White
+                        textColor: '#111827', // Gray-900
+                        forceDarkMode: false // 🌓 Forçar Modo Claro
+                      };
+                      setConfig({ ...config, ...updates });
+                      updateConfigLocal(updates);
+                    }}
+                    className={`flex items-center justify-center gap-3 p-4 border-2 rounded-xl transition-all group ${config.forceDarkMode === false ? 'border-blue-500 bg-white' : 'border-gray-200 hover:border-blue-500 hover:bg-white'}`}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center">
+                      <Sun className="w-5 h-5 text-yellow-500" />
+                    </div>
+                    <div className="text-left">
+                      <span className="block font-bold text-gray-800">Modo Claro</span>
+                      <span className="text-xs text-gray-500">Fundo branco, visual padrão.</span>
+                    </div>
+                  </button>
+
+                  <button
+                    onClick={() => {
+                       const updates = { 
+                        backgroundColor: '#202124', // Chrome Dark
+                        cardColor: '#292A2D', // Chrome Card
+                        textColor: '#E8EAED', // Chrome Text
+                        forceDarkMode: true // 🌓 Forçar Modo Escuro
+                      };
+                      setConfig({ ...config, ...updates });
+                      updateConfigLocal(updates);
+                    }}
+                    className={`flex items-center justify-center gap-3 p-4 border-2 rounded-xl transition-all group ${config.forceDarkMode === true ? 'border-blue-500 bg-[#202124]' : 'border-gray-600 bg-[#202124] hover:border-blue-500'}`}
+                  >
+                    <div className="w-8 h-8 rounded-full bg-[#303134] border border-gray-600 flex items-center justify-center">
+                      <Moon className="w-5 h-5 text-blue-300" />
+                    </div>
+                    <div className="text-left">
+                      <span className="block font-bold text-white">Modo Escuro</span>
+                      <span className="text-xs text-gray-400">Estilo Google Chrome Dark.</span>
+                    </div>
+                  </button>
+                </div>
+
+                {/* CUSTOMIZAÇÃO AVANÇADA DE CORES */}
+                <div className="mt-6 pt-6 border-t border-gray-200">
+                   <button 
+                      onClick={() => setShowAdvancedColors(!showAdvancedColors)}
+                      className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
+                   >
+                      <Settings className="w-3 h-3" />
+                      Customizar Cores de Fundo Manualmente
+                   </button>
+
+                   {showAdvancedColors && (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 animate-in fade-in slide-in-from-top-2">
+                         <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Cor do Fundo da Página</label>
+                            <div className="flex gap-2">
+                              <input 
+                                type="color" 
+                                value={config.backgroundColor || '#f9fafb'} 
+                                onChange={(e) => {
+                                    setConfig({...config, backgroundColor: e.target.value});
+                                    updateConfigLocal({backgroundColor: e.target.value});
+                                }}
+                                className="h-8 w-8 rounded cursor-pointer border border-gray-300"
+                              />
+                              <input 
+                                type="text" 
+                                value={config.backgroundColor || ''}
+                                onChange={(e) => {
+                                    setConfig({...config, backgroundColor: e.target.value});
+                                    updateConfigLocal({backgroundColor: e.target.value});
+                                }}
+                                className="flex-1 text-xs border border-gray-300 rounded px-2"
+                                placeholder="#f9fafb"
+                              />
+                            </div>
+                         </div>
+
+                         <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Cor dos Cartões (Box)</label>
+                            <div className="flex gap-2">
+                              <input 
+                                type="color" 
+                                value={config.cardColor || '#ffffff'} 
+                                onChange={(e) => {
+                                    setConfig({...config, cardColor: e.target.value});
+                                    updateConfigLocal({cardColor: e.target.value});
+                                }}
+                                className="h-8 w-8 rounded cursor-pointer border border-gray-300"
+                              />
+                              <input 
+                                type="text" 
+                                value={config.cardColor || ''}
+                                onChange={(e) => {
+                                    setConfig({...config, cardColor: e.target.value});
+                                    updateConfigLocal({cardColor: e.target.value});
+                                }}
+                                className="flex-1 text-xs border border-gray-300 rounded px-2"
+                                placeholder="#ffffff"
+                              />
+                            </div>
+                         </div>
+
+                         <div>
+                            <label className="block text-xs font-medium text-gray-600 mb-1">Cor do Texto Principal</label>
+                            <div className="flex gap-2">
+                              <input 
+                                type="color" 
+                                value={config.textColor || '#111827'} 
+                                onChange={(e) => {
+                                    setConfig({...config, textColor: e.target.value});
+                                    updateConfigLocal({textColor: e.target.value});
+                                }}
+                                className="h-8 w-8 rounded cursor-pointer border border-gray-300"
+                              />
+                              <input 
+                                type="text" 
+                                value={config.textColor || ''}
+                                onChange={(e) => {
+                                    setConfig({...config, textColor: e.target.value});
+                                    updateConfigLocal({textColor: e.target.value});
+                                }}
+                                className="flex-1 text-xs border border-gray-300 rounded px-2"
+                                placeholder="#111827"
+                              />
+                            </div>
+                         </div>
+                      </div>
+                   )}
+                </div>
+              </div>
+            );
+            const corCategoria = (
+              <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <label className="block text-sm font-bold text-gray-800">Cor da Categoria nos Modais</label>
+                    <p className="text-xs text-gray-500 mt-1 max-w-sm">
+                      Quando ativado, os modais de produto usarão a cor definida para cada categoria (no painel Admin) em vez da cor tema do site.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      const val = !config.useCategoryColorInModals;
+                      setConfig({ ...config, useCategoryColorInModals: val });
+                      updateConfigLocal({ useCategoryColorInModals: val });
+                    }}
+                    className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 ${
+                      config.useCategoryColorInModals ? 'bg-green-500' : 'bg-gray-300'
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
+                        config.useCategoryColorInModals ? 'translate-x-6' : 'translate-x-1'
+                      }`}
+                    />
+                  </button>
+                </div>
+                <div className={`mt-2 text-xs font-semibold ${config.useCategoryColorInModals ? 'text-green-600' : 'text-gray-400'}`}>
+                  {config.useCategoryColorInModals ? '✅ Ativado — cada categoria usa sua própria cor nos modais' : '❌ Desativado — todos os modais usam a cor tema do site'}
+                </div>
+              </div>
+            );
+            const efeitoCabecalho = (
+              <div className="p-5 bg-blue-50/50 rounded-xl border border-blue-100">
+                <div className="flex items-center gap-2 mb-4">
+                  <Sparkles className="w-5 h-5 text-blue-600" />
+                  <label className="text-sm font-bold text-gray-800">Efeito Animado no Cabeçalho</label>
+                </div>
+
+                {/* Seletor de Formato do Efeito */}
+                <div className="mb-6">
+                  <p className="text-xs text-gray-600 mb-3 font-medium">Formato do Efeito:</p>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+                    {[
+                      { id: 'star', label: 'Estrela', icon: Star },
+                      { id: 'heart', label: 'Coração', icon: Heart },
+                      { id: 'sparkles', label: 'Brilho', icon: Sparkles },
+                      { id: 'zap', label: 'Raio', icon: Zap },
+                      { id: 'flame', label: 'Fogo', icon: Flame },
+                      { id: 'snowflake', label: 'Neve', icon: Snowflake },
+                      { id: 'music', label: 'Música', icon: Music },
+                      { id: 'sun', label: 'Sol', icon: Sun },
+                      { id: 'moon', label: 'Lua', icon: Moon },
+                      { id: 'circle', label: 'Círculo', icon: Circle },
+                      { id: 'cloud', label: 'Nuvem', icon: Cloud },
+                    ].map((effect) => {
+                      const EffectIcon = effect.icon;
+                      const isSelected = (config.headerEffectShape || 'star') === effect.id;
+
+                      return (
+                        <button
+                          key={effect.id}
+                          onClick={() => {
+                            setConfig({ ...config, headerEffectShape: effect.id });
+                            updateConfigLocal({ headerEffectShape: effect.id });
+                          }}
+                          className={`
+                            flex flex-col items-center justify-center p-3 rounded-lg border transition-all bg-white
+                            ${isSelected 
+                              ? 'border-blue-500 text-blue-700 ring-2 ring-blue-200 shadow-md transform scale-105' 
+                              : 'border-gray-200 hover:border-blue-300 hover:shadow-sm text-gray-600'}
+                          `}
+                        >
+                          <EffectIcon className={`w-6 h-6 mb-2 ${isSelected ? 'fill-current' : ''}`} />
+                          <span className="text-xs font-medium">{effect.label}</span>
+                        </button>
                       );
                     })}
                   </div>
                 </div>
-              </div>
 
-              {/* 🔥 IMAGENS E TEXTOS DO ESTILO PRIME */}
-              {config.designStyle === 'prime' && (() => {
-                const setPrime = (updates: Record<string, string>) => {
-                  setConfig({ ...config, ...updates });
-                  updateConfigLocal(updates);
-                };
-                const imageFields: Array<{ key: string; label: string; help: string }> = [
-                  { key: 'primeHeroUrl', label: '// 01 Hero — Desktop', help: 'Foto de tela cheia do topo (horizontal, 1920x1080+). Deixe o lanche mais à direita: o título fica à esquerda.' },
-                  { key: 'primeHeroMobileUrl', label: '// 01 Hero — Mobile', help: 'Vertical (1080x1920). Se vazio, usa a do desktop.' },
-                  { key: 'primeSearUrl', label: '// 02 A Chapa — Desktop', help: 'Carne na chapa/grelha, fogo, cozinha. Fica presa na tela enquanto o contador de temperatura sobe.' },
-                  { key: 'primeSearMobileUrl', label: '// 02 A Chapa — Mobile', help: 'Vertical. Se vazio, usa a do desktop.' },
-                  { key: 'primeBuilderUrl', label: '// 04 Montador — Reserva', help: 'Usada na prévia do montador quando o produto escolhido não tem foto.' },
-                ];
-                const textFields: Array<{ key: string; label: string; placeholder: string }> = [
-                  { key: 'primeHeroTitle', label: 'Título do hero', placeholder: (config.siteName || 'NewBurguer').split(' ')[0].toUpperCase() },
-                  { key: 'primeHeroTagline', label: 'Linha "//" do hero', placeholder: 'The Stack' },
-                  { key: 'primeSearTitle', label: 'Título da seção da chapa', placeholder: 'Selado na chapa' },
-                ];
-                return (
-                  <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                    <h3 className="text-lg font-bold text-gray-800 mb-1 flex items-center gap-2">🔥 Imagens do estilo Prime</h3>
-                    <p className="text-xs text-gray-500 mb-5">
-                      O Prime depende de fotos boas de ponta a ponta. Sem imagem, o hero usa o fundo do site ou a foto do produto mais caro, e a chapa é desenhada.
-                      O montador usa os produtos que têm <b>adicionais</b> cadastrados. Clique em <b>Salvar</b> no fim.
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      {imageFields.map((f) => (
-                        <div key={f.key}>
-                          <ImageConfig
-                            label={f.label}
-                            value={(config as any)[f.key] || ''}
-                            onChange={(url: string) => setPrime({ [f.key]: url })}
-                            placeholder="https://..."
-                            helpText={f.help}
-                            token={token}
-                          />
-                          {(config as any)[f.key] && (
-                            <button onClick={() => setPrime({ [f.key]: '' })} className="mt-2 text-xs text-red-500 hover:text-red-700 font-bold">✕ Remover</button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6 pt-5 border-t border-gray-100">
-                      {textFields.map((f) => (
-                        <label key={f.key} className="block">
-                          <span className="block text-sm font-bold text-gray-800 mb-1">{f.label}</span>
-                          <input
-                            value={(config as any)[f.key] || ''}
-                            onChange={(e) => setPrime({ [f.key]: e.target.value })}
-                            placeholder={f.placeholder}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-300"
-                          />
-                        </label>
-                      ))}
-                    </div>
+                {/* Controle de Quantidade de Efeitos */}
+                <div className="mb-6 p-4 bg-white rounded-lg border border-gray-200">
+                  <label className="block text-xs font-bold text-gray-800 mb-2">Quantidade de Efeitos Pulsantes</label>
+                  <div className="flex items-center gap-4">
+                    <input
+                      type="range"
+                      min="0"
+                      max="15"
+                      step="1"
+                      value={config.headerEffectCount ?? 3}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        setConfig({ ...config, headerEffectCount: val });
+                        updateConfigLocal({ headerEffectCount: val });
+                      }}
+                      className="flex-1 h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-600 hover:accent-blue-700"
+                    />
+                    <span className="text-sm font-bold bg-blue-100 text-blue-700 px-3 py-1 rounded border border-blue-200 min-w-[3rem] text-center">
+                      {config.headerEffectCount ?? 3}
+                    </span>
                   </div>
-                );
-              })()}
+                  <p className="text-xs text-gray-500 mt-2">
+                    Controle quantos ícones pulsantes aparecem no cabeçalho (0 a 15).
+                  </p>
+                </div>
 
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                  <Palette className="w-5 h-5 text-purple-600" />
-                  Cores e Identidade
-                </h3>
-                
-                {/* SELEÇÃO DE MODO (CLARO / ESCURO) */}
-                <div className="mb-8 p-6 bg-gray-50 rounded-xl border border-gray-200">
-                  <label className="block text-sm font-bold text-gray-800 mb-4">Modo de Exibição (Tema)</label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Toggle de Posição Aleatória com Botão Refresh */}
+                <div className="p-4 bg-white rounded-lg border border-gray-200">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex-1">
+                      <label className="block text-xs font-bold text-gray-800 mb-1">Posições Aleatórias</label>
+                      <p className="text-xs text-gray-500">
+                        Ativa posicionamento aleatório dos efeitos ao invés de posições pré-definidas.
+                      </p>
+                    </div>
                     <button
                       onClick={() => {
-                        const updates = { 
-                          backgroundColor: '#f9fafb', // Gray-50
-                          cardColor: '#ffffff', // White
-                          textColor: '#111827', // Gray-900
-                          forceDarkMode: false // 🌓 Forçar Modo Claro
-                        };
-                        setConfig({ ...config, ...updates });
-                        updateConfigLocal(updates);
+                        const newValue = !(config.headerEffectRandomPosition ?? false);
+                        setConfig({ ...config, headerEffectRandomPosition: newValue });
+                        updateConfigLocal({ headerEffectRandomPosition: newValue });
                       }}
-                      className={`flex items-center justify-center gap-3 p-4 border-2 rounded-xl transition-all group ${config.forceDarkMode === false ? 'border-blue-500 bg-white' : 'border-gray-200 hover:border-blue-500 hover:bg-white'}`}
+                      className={`
+                        ml-4 relative inline-flex h-6 w-11 items-center rounded-full transition-colors
+                        ${config.headerEffectRandomPosition ? 'bg-blue-600' : 'bg-gray-300'}
+                      `}
                     >
-                      <div className="w-8 h-8 rounded-full bg-white border border-gray-200 shadow-sm flex items-center justify-center">
-                        <Sun className="w-5 h-5 text-yellow-500" />
-                      </div>
-                      <div className="text-left">
-                        <span className="block font-bold text-gray-800">Modo Claro</span>
-                        <span className="text-xs text-gray-500">Fundo branco, visual padrão.</span>
-                      </div>
+                      <span
+                        className={`
+                          inline-block h-4 w-4 transform rounded-full bg-white transition-transform
+                          ${config.headerEffectRandomPosition ? 'translate-x-6' : 'translate-x-1'}
+                        `}
+                      />
                     </button>
+                  </div>
 
+                  {/* Botão de Refresh - Só aparece quando modo aleatório está ativado */}
+                  {config.headerEffectRandomPosition && (
                     <button
                       onClick={() => {
-                         const updates = { 
-                          backgroundColor: '#202124', // Chrome Dark
-                          cardColor: '#292A2D', // Chrome Card
-                          textColor: '#E8EAED', // Chrome Text
-                          forceDarkMode: true // 🌓 Forçar Modo Escuro
-                        };
-                        setConfig({ ...config, ...updates });
-                        updateConfigLocal(updates);
+                        const newSeed = Math.floor(Math.random() * 1000000);
+                        setConfig({ ...config, headerEffectRandomSeed: newSeed });
+                        updateConfigLocal({ headerEffectRandomSeed: newSeed });
                       }}
-                      className={`flex items-center justify-center gap-3 p-4 border-2 rounded-xl transition-all group ${config.forceDarkMode === true ? 'border-blue-500 bg-[#202124]' : 'border-gray-600 bg-[#202124] hover:border-blue-500'}`}
+                      className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium text-sm rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg active:scale-95"
                     >
-                      <div className="w-8 h-8 rounded-full bg-[#303134] border border-gray-600 flex items-center justify-center">
-                        <Moon className="w-5 h-5 text-blue-300" />
-                      </div>
-                      <div className="text-left">
-                        <span className="block font-bold text-white">Modo Escuro</span>
-                        <span className="text-xs text-gray-400">Estilo Google Chrome Dark.</span>
-                      </div>
+                      <RefreshCw className="w-4 h-4" />
+                      Gerar Novas Posições Aleatórias
                     </button>
-                  </div>
-
-                  {/* CUSTOMIZAÇÃO AVANÇADA DE CORES */}
-                  <div className="mt-6 pt-6 border-t border-gray-200">
-                     <button 
-                        onClick={() => setShowAdvancedColors(!showAdvancedColors)}
-                        className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
-                     >
-                        <Settings className="w-3 h-3" />
-                        Customizar Cores de Fundo Manualmente
-                     </button>
-                     
-                     {showAdvancedColors && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4 animate-in fade-in slide-in-from-top-2">
-                           <div>
-                              <label className="block text-xs font-medium text-gray-600 mb-1">Cor do Fundo da Página</label>
-                              <div className="flex gap-2">
-                                <input 
-                                  type="color" 
-                                  value={config.backgroundColor || '#f9fafb'} 
-                                  onChange={(e) => {
-                                      setConfig({...config, backgroundColor: e.target.value});
-                                      updateConfigLocal({backgroundColor: e.target.value});
-                                  }}
-                                  className="h-8 w-8 rounded cursor-pointer border border-gray-300"
-                                />
-                                <input 
-                                  type="text" 
-                                  value={config.backgroundColor || ''}
-                                  onChange={(e) => {
-                                      setConfig({...config, backgroundColor: e.target.value});
-                                      updateConfigLocal({backgroundColor: e.target.value});
-                                  }}
-                                  className="flex-1 text-xs border border-gray-300 rounded px-2"
-                                  placeholder="#f9fafb"
-                                />
-                              </div>
-                           </div>
-                           
-                           <div>
-                              <label className="block text-xs font-medium text-gray-600 mb-1">Cor dos Cartões (Box)</label>
-                              <div className="flex gap-2">
-                                <input 
-                                  type="color" 
-                                  value={config.cardColor || '#ffffff'} 
-                                  onChange={(e) => {
-                                      setConfig({...config, cardColor: e.target.value});
-                                      updateConfigLocal({cardColor: e.target.value});
-                                  }}
-                                  className="h-8 w-8 rounded cursor-pointer border border-gray-300"
-                                />
-                                <input 
-                                  type="text" 
-                                  value={config.cardColor || ''}
-                                  onChange={(e) => {
-                                      setConfig({...config, cardColor: e.target.value});
-                                      updateConfigLocal({cardColor: e.target.value});
-                                  }}
-                                  className="flex-1 text-xs border border-gray-300 rounded px-2"
-                                  placeholder="#ffffff"
-                                />
-                              </div>
-                           </div>
-                           
-                           <div>
-                              <label className="block text-xs font-medium text-gray-600 mb-1">Cor do Texto Principal</label>
-                              <div className="flex gap-2">
-                                <input 
-                                  type="color" 
-                                  value={config.textColor || '#111827'} 
-                                  onChange={(e) => {
-                                      setConfig({...config, textColor: e.target.value});
-                                      updateConfigLocal({textColor: e.target.value});
-                                  }}
-                                  className="h-8 w-8 rounded cursor-pointer border border-gray-300"
-                                />
-                                <input 
-                                  type="text" 
-                                  value={config.textColor || ''}
-                                  onChange={(e) => {
-                                      setConfig({...config, textColor: e.target.value});
-                                      updateConfigLocal({textColor: e.target.value});
-                                  }}
-                                  className="flex-1 text-xs border border-gray-300 rounded px-2"
-                                  placeholder="#111827"
-                                />
-                              </div>
-                           </div>
-                        </div>
-                     )}
-                  </div>
+                  )}
                 </div>
-                
-                <div className="flex flex-col md:flex-row gap-8">
-                  <div className="flex-1 space-y-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Cor Base do Tema</label>
-                      <div className="flex gap-4 items-center mb-6">
-                        <input
-                          type="color"
-                          value={config.themeColor || '#d97706'}
-                          onChange={(e) => handleColorChange(e.target.value)}
-                          className="w-16 h-16 rounded-lg border-2 border-gray-200 cursor-pointer p-1 shadow-sm"
-                        />
-                        <div>
-                          <p className="text-sm font-bold text-gray-800">Selecione a cor principal</p>
-                          <p className="text-xs text-gray-500 mt-1 max-w-xs">
-                            Define a cor de botões, destaques e ícones em todo o site.
-                          </p>
-                        </div>
-                      </div>
 
-                      {/* Controle de Opacidade da UI — Glass Effect */}
-                      <div className="mb-8 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                        <label className="block text-sm font-bold text-gray-800 mb-2">Efeito Glass — Transparência das Caixas</label>
-                        <div className="flex items-center gap-4">
-                          <span className="text-xs font-medium text-gray-500">🪟 Vidro</span>
-                          <input
-                            type="range"
-                            min="5"
-                            max="100"
-                            step="5"
-                            value={config.uiOpacity ?? 35}
-                            onChange={(e) => {
-                              const val = parseInt(e.target.value);
-                              setConfig({ ...config, uiOpacity: val });
-                              updateConfigLocal({ uiOpacity: val });
-                            }}
-                            className="flex-1 h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-600 hover:accent-blue-700"
-                          />
-                          <span className="text-xs font-medium text-gray-500">🎨 Sólido</span>
-                        </div>
-                        <div className="flex justify-between items-center mt-2">
-                          <p className="text-xs text-gray-500">
-                            Valores baixos = efeito vidro/glass. Valores altos = cor sólida. O texto permanece sempre legível.
-                          </p>
-                          <span className="text-sm font-bold bg-white px-2 py-1 rounded border border-gray-200 min-w-[3rem] text-center">
-                            {config.uiOpacity ?? 35}%
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Toggle: Usar cor da categoria nos modais */}
-                      <div className="mb-8 p-4 bg-gray-50 rounded-xl border border-gray-200">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <label className="block text-sm font-bold text-gray-800">Cor da Categoria nos Modais</label>
-                            <p className="text-xs text-gray-500 mt-1 max-w-sm">
-                              Quando ativado, os modais de produto usarão a cor definida para cada categoria (no painel Admin) em vez da cor tema do site.
-                            </p>
-                          </div>
-                          <button
-                            onClick={() => {
-                              const val = !config.useCategoryColorInModals;
-                              setConfig({ ...config, useCategoryColorInModals: val });
-                              updateConfigLocal({ useCategoryColorInModals: val });
-                            }}
-                            className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors duration-200 ${
-                              config.useCategoryColorInModals ? 'bg-green-500' : 'bg-gray-300'
-                            }`}
-                          >
-                            <span
-                              className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-md transition-transform duration-200 ${
-                                config.useCategoryColorInModals ? 'translate-x-6' : 'translate-x-1'
-                              }`}
-                            />
-                          </button>
-                        </div>
-                        <div className={`mt-2 text-xs font-semibold ${config.useCategoryColorInModals ? 'text-green-600' : 'text-gray-400'}`}>
-                          {config.useCategoryColorInModals ? '✅ Ativado — cada categoria usa sua própria cor nos modais' : '❌ Desativado — todos os modais usam a cor tema do site'}
-                        </div>
-                      </div>
-
-                      <div className="space-y-4">
-                        <ImageConfig 
-                          label="Logo do Site (Header e Footer)"
-                          value={config.logoUrl}
-                          onChange={(val: string) => setConfig({ ...config, logoUrl: val })}
-                          placeholder="https://exemplo.com/logo.png"
-                          helpText="Aparece no topo e no rodapé. Recomendado: PNG Transparente."
-                          token={token}
-                        />
-
-                        <ImageConfig 
-                          label="Imagem de Fundo do Cabeçalho (Desktop)"
-                          value={config.headerBackgroundUrl}
-                          onChange={(val: string) => setConfig({ ...config, headerBackgroundUrl: val })}
-                          placeholder="https://exemplo.com/fundo.jpg"
-                          helpText="Imagem para telas grandes (desktop). Recomendado: 1920x600+."
-                          token={token}
-                        />
-                        <ImageConfig 
-                          label="Imagem de Fundo do Cabeçalho (Mobile)"
-                          value={config.headerBackgroundMobileUrl}
-                          onChange={(val: string) => setConfig({ ...config, headerBackgroundMobileUrl: val })}
-                          placeholder="https://exemplo.com/fundo-mobile.jpg"
-                          helpText="Imagem para celulares. Recomendado: 750x900 (vertical). Se vazio, usa a do desktop."
-                          token={token}
-                        />
-                      </div>
-
-                      {/* Seção de Efeitos do Cabeçalho - Separada para garantir visibilidade */}
-                      <div className="mt-8 p-5 bg-blue-50/50 rounded-xl border border-blue-100">
-                        <div className="flex items-center gap-2 mb-4">
-                          <Sparkles className="w-5 h-5 text-blue-600" />
-                          <label className="text-sm font-bold text-gray-800">Efeito Animado no Cabeçalho</label>
-                        </div>
-                        
-                        {/* Seletor de Formato do Efeito */}
-                        <div className="mb-6">
-                          <p className="text-xs text-gray-600 mb-3 font-medium">Formato do Efeito:</p>
-                          <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                            {[
-                              { id: 'star', label: 'Estrela', icon: Star },
-                              { id: 'heart', label: 'Coração', icon: Heart },
-                              { id: 'sparkles', label: 'Brilho', icon: Sparkles },
-                              { id: 'zap', label: 'Raio', icon: Zap },
-                              { id: 'flame', label: 'Fogo', icon: Flame },
-                              { id: 'snowflake', label: 'Neve', icon: Snowflake },
-                              { id: 'music', label: 'Música', icon: Music },
-                              { id: 'sun', label: 'Sol', icon: Sun },
-                              { id: 'moon', label: 'Lua', icon: Moon },
-                              { id: 'circle', label: 'Círculo', icon: Circle },
-                              { id: 'cloud', label: 'Nuvem', icon: Cloud },
-                            ].map((effect) => {
-                              const EffectIcon = effect.icon;
-                              const isSelected = (config.headerEffectShape || 'star') === effect.id;
-                              
-                              return (
-                                <button
-                                  key={effect.id}
-                                  onClick={() => {
-                                    setConfig({ ...config, headerEffectShape: effect.id });
-                                    updateConfigLocal({ headerEffectShape: effect.id });
-                                  }}
-                                  className={`
-                                    flex flex-col items-center justify-center p-3 rounded-lg border transition-all bg-white
-                                    ${isSelected 
-                                      ? 'border-blue-500 text-blue-700 ring-2 ring-blue-200 shadow-md transform scale-105' 
-                                      : 'border-gray-200 hover:border-blue-300 hover:shadow-sm text-gray-600'}
-                                  `}
-                                >
-                                  <EffectIcon className={`w-6 h-6 mb-2 ${isSelected ? 'fill-current' : ''}`} />
-                                  <span className="text-xs font-medium">{effect.label}</span>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-
-                        {/* Controle de Quantidade de Efeitos */}
-                        <div className="mb-6 p-4 bg-white rounded-lg border border-gray-200">
-                          <label className="block text-xs font-bold text-gray-800 mb-2">Quantidade de Efeitos Pulsantes</label>
-                          <div className="flex items-center gap-4">
-                            <input
-                              type="range"
-                              min="0"
-                              max="15"
-                              step="1"
-                              value={config.headerEffectCount ?? 3}
-                              onChange={(e) => {
-                                const val = parseInt(e.target.value);
-                                setConfig({ ...config, headerEffectCount: val });
-                                updateConfigLocal({ headerEffectCount: val });
-                              }}
-                              className="flex-1 h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-blue-600 hover:accent-blue-700"
-                            />
-                            <span className="text-sm font-bold bg-blue-100 text-blue-700 px-3 py-1 rounded border border-blue-200 min-w-[3rem] text-center">
-                              {config.headerEffectCount ?? 3}
-                            </span>
-                          </div>
-                          <p className="text-xs text-gray-500 mt-2">
-                            Controle quantos ícones pulsantes aparecem no cabeçalho (0 a 15).
-                          </p>
-                        </div>
-
-                        {/* Toggle de Posição Aleatória com Botão Refresh */}
-                        <div className="p-4 bg-white rounded-lg border border-gray-200">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex-1">
-                              <label className="block text-xs font-bold text-gray-800 mb-1">Posições Aleatórias</label>
-                              <p className="text-xs text-gray-500">
-                                Ativa posicionamento aleatório dos efeitos ao invés de posições pré-definidas.
-                              </p>
-                            </div>
-                            <button
-                              onClick={() => {
-                                const newValue = !(config.headerEffectRandomPosition ?? false);
-                                setConfig({ ...config, headerEffectRandomPosition: newValue });
-                                updateConfigLocal({ headerEffectRandomPosition: newValue });
-                              }}
-                              className={`
-                                ml-4 relative inline-flex h-6 w-11 items-center rounded-full transition-colors
-                                ${config.headerEffectRandomPosition ? 'bg-blue-600' : 'bg-gray-300'}
-                              `}
-                            >
-                              <span
-                                className={`
-                                  inline-block h-4 w-4 transform rounded-full bg-white transition-transform
-                                  ${config.headerEffectRandomPosition ? 'translate-x-6' : 'translate-x-1'}
-                                `}
-                              />
-                            </button>
-                          </div>
-
-                          {/* Botão de Refresh - Só aparece quando modo aleatório está ativado */}
-                          {config.headerEffectRandomPosition && (
-                            <button
-                              onClick={() => {
-                                const newSeed = Math.floor(Math.random() * 1000000);
-                                setConfig({ ...config, headerEffectRandomSeed: newSeed });
-                                updateConfigLocal({ headerEffectRandomSeed: newSeed });
-                              }}
-                              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium text-sm rounded-lg hover:from-blue-600 hover:to-blue-700 transition-all shadow-md hover:shadow-lg active:scale-95"
-                            >
-                              <RefreshCw className="w-4 h-4" />
-                              Gerar Novas Posições Aleatórias
-                            </button>
-                          )}
-                        </div>
-
-                        <p className="text-xs text-gray-500 mt-4 flex items-center gap-1">
-                          <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
-                          Esses elementos ficarão pulsando no fundo do cabeçalho do site.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Preview Box */}
-                  <div className="flex-1">
-                    <div className="sticky top-24 p-6 rounded-2xl border border-gray-200 bg-white shadow-xl">
-                      <h4 className="text-sm font-bold text-gray-500 uppercase mb-4 flex items-center gap-2">
-                        <Eye className="w-4 h-4" />
-                        Preview em Tempo Real
-                      </h4>
-                      
-                      <div className="space-y-6">
-                        {/* Botão */}
-                        <div>
-                          <p className="text-xs text-gray-400 mb-2">Botões Principais</p>
-                          <button 
-                            className="w-full py-3 rounded-lg text-white font-bold shadow-lg transition-colors flex items-center justify-center gap-2"
-                            style={{ backgroundColor: config.themeColor || '#d97706' }}
-                          >
-                            Adicionar ao Carrinho
-                          </button>
-                        </div>
-                        
-                        {/* Destaque / Info */}
-                        <div>
-                          <p className="text-xs text-gray-400 mb-2">Caixas de Informação — Glass Effect</p>
-                          <div 
-                            className="p-3 rounded-xl shadow-lg flex items-center justify-center gap-3 transition-all duration-300 border border-white/20"
-                            style={{ 
-                              background: `linear-gradient(135deg, ${hexToRgba(config.themeColor || '#d97706', ((config.uiOpacity ?? 35) / 100) * 0.5)} 0%, ${hexToRgba(config.themeColor || '#d97706', ((config.uiOpacity ?? 35) / 100) * 0.3)} 100%)`,
-                              backdropFilter: 'blur(16px)',
-                              WebkitBackdropFilter: 'blur(16px)',
-                            }}
-                          >
-                            <div className="p-2 rounded-lg bg-white/15 backdrop-blur-sm">
-                              <Smartphone className="w-4 h-4 text-white drop-shadow-[0_1px_2px_rgba(0,0,0,0.5)]" />
-                            </div>
-                            <span className="font-bold text-sm text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.9)]">
-                              (00) 00000-0000
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Input Focus */}
-                        <div>
-                          <p className="text-xs text-gray-400 mb-2">Campos de Texto</p>
-                          <input 
-                            type="text" 
-                            value="Exemplo de texto digitado..."
-                            readOnly
-                            className="w-full px-4 py-2 border rounded-lg outline-none shadow-sm" 
-                            style={{ 
-                              borderColor: config.themeColor || '#d97706',
-                              boxShadow: `0 0 0 3px ${config.themeColor || '#d97706'}20`
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                <p className="text-xs text-gray-500 mt-4 flex items-center gap-1">
+                  <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                  Esses elementos ficarão pulsando no fundo do cabeçalho do site.
+                </p>
               </div>
-
-              {/* FUNDO DA ÁREA DE CONTEÚDO */}
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                  🖼️ Imagem de Fundo do Site
-                </h3>
-                <p className="text-xs text-gray-500 mb-4">Imagem que aparece como fundo de todo o site. Até 15MB. Para máxima qualidade, use PNG ou JPEG de alta resolução sem compressão.</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <ImageConfig
-                      label="Fundo Desktop"
-                      value={config.contentBackgroundUrl || ''}
-                      onChange={(url: string) => setConfig({ ...config, contentBackgroundUrl: url })}
-                      placeholder="https://..."
-                      helpText="Recomendado: 1920x1080+ (PNG ou JPEG máx. qualidade, até 15MB)."
-                      token={token}
-                    />
-                    {config.contentBackgroundUrl && (
-                      <button
-                        onClick={() => setConfig({ ...config, contentBackgroundUrl: '' })}
-                        className="mt-2 text-xs text-red-500 hover:text-red-700 font-bold"
-                      >✕ Remover</button>
-                    )}
-                  </div>
-                  <div>
-                    <ImageConfig
-                      label="Fundo Mobile"
-                      value={config.contentBackgroundMobileUrl || ''}
-                      onChange={(url: string) => setConfig({ ...config, contentBackgroundMobileUrl: url })}
-                      placeholder="https://..."
-                      helpText="Recomendado: 1080x1920+ (vertical, até 15MB). Se vazio, usa a do desktop."
-                      token={token}
-                    />
-                    {config.contentBackgroundMobileUrl && (
-                      <button
-                        onClick={() => setConfig({ ...config, contentBackgroundMobileUrl: '' })}
-                        className="mt-2 text-xs text-red-500 hover:text-red-700 font-bold"
-                      >✕ Remover</button>
-                    )}
-                  </div>
-                </div>
-                {/* Toggle animação */}
-                {(config.contentBackgroundUrl || config.contentBackgroundMobileUrl) && (
-                  <div className="mt-4 flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
-                    <div>
-                      <span className="text-sm font-bold text-gray-800">🎬 Animação de Zoom (Ken Burns)</span>
-                      <p className="text-xs text-gray-500">A imagem de fundo amplia e retorna suavemente.</p>
-                    </div>
-                    <button
-                      onClick={() => setConfig({ ...config, bgAnimationEnabled: !(config.bgAnimationEnabled !== false) })}
-                      className={`relative w-12 h-6 rounded-full transition-colors ${config.bgAnimationEnabled !== false ? 'bg-green-500' : 'bg-gray-300'}`}
-                    >
-                      <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${config.bgAnimationEnabled !== false ? 'translate-x-6' : 'translate-x-0.5'}`} />
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* BANNERS ENTRE BOAS-VINDAS E PROMOÇÕES */}
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                  🏷️ Banners Principais (entre Boas-vindas e Promoções)
-                </h3>
-                <p className="text-xs text-gray-500 mb-4">Imagens que aparecem na home entre o cartão de boas-vindas e a seção de promoções. Recomendado: 1200x400 (paisagem).</p>
-
-                {/* Compatibilidade: migrar banner antigo para array */}
+            );
+            const bannersHome = caixa(
+              `🏷️ Banners principais (${(config.homeBanners || []).length})`,
+              <>
                 {config.homeBannerUrl && !(config.homeBanners && config.homeBanners.length > 0) && (
                   <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                     <p className="text-xs text-yellow-700 mb-2">⚠️ Você tem um banner antigo. Clique para migrar para o novo sistema multi-banner:</p>
@@ -1815,139 +1394,480 @@ export function MasterDashboard() {
                     >Migrar Banner</button>
                   </div>
                 )}
-
-                {/* Lista de banners */}
-                <div>
-                  <label className="block text-sm font-bold text-gray-800 mb-3">Banners ({(config.homeBanners || []).length})</label>
-                  <div className="space-y-4">
-                    {(config.homeBanners || []).map((banner: any, i: number) => (
-                      <div key={i} className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-sm font-bold text-gray-700">Banner {i + 1}</span>
-                          <button
-                            onClick={() => {
-                              const banners = [...(config.homeBanners || [])];
-                              banners.splice(i, 1);
-                              setConfig({ ...config, homeBanners: banners });
-                            }}
-                            className="text-red-500 hover:text-red-700 text-sm font-bold"
-                          >✕ Remover</button>
-                        </div>
-                        <ImageConfig
-                          label="Imagem do Banner"
-                          value={banner.imageUrl || ''}
-                          onChange={(url: string) => {
-                            const banners = [...(config.homeBanners || [])];
-                            banners[i] = { ...banners[i], imageUrl: url };
-                            setConfig({ ...config, homeBanners: banners });
+                {listaBanners('homeBanners', config.homeBanners || [], 'Recomendado: 1200x400 (paisagem). Aceita JPG e PNG.')}
+              </>,
+              'Aparecem na home entre o cartão de boas-vindas e as promoções.',
+            );
+            const bannersRodape = caixa(
+              `🎯 Banners antes do rodapé (${(config.bannerCards || []).length})`,
+              listaBanners('bannerCards', config.bannerCards || [], 'PNG com fundo transparente recomendado.'),
+              'Cards com imagens entre os produtos e o rodapé. Use PNG para transparência.',
+            );
+            const primeLista = config.primeBanners ?? config.bannerCards ?? [];
+            const abas: Array<[string, string]> = [['classic', 'Clássico'], ['clean', 'Clean'], ['rustic', 'Rústico'], ['threed', '3D'], ['prime', 'Prime']];
+            return (
+              <div className="space-y-6 animate-in fade-in">
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                  <h3 className="text-lg font-bold text-gray-800 mb-1 flex items-center gap-2">
+                    <Palette className="w-5 h-5 text-purple-600" />
+                    Estilo de Design do Site
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Escolha o visual do site. A cor do tema e a logo valem para todos; o resto fica na configuração de cada design, logo abaixo.
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {/* Design Clássico */}
+                    {(() => {
+                      const isActive = (config.designStyle || 'classic') === 'classic';
+                      return (
+                        <button
+                          onClick={() => {
+                            setConfig({ ...config, designStyle: 'classic' });
+                            updateConfigLocal({ designStyle: 'classic' });
+                            setDesignAba(null);
                           }}
-                          placeholder="https://..."
-                          helpText="Recomendado: 1200x400 (paisagem). Aceita JPG e PNG."
-                          token={token}
-                        />
-                        <div className="mt-3">
-                          <label className="block text-xs font-medium text-gray-600 mb-1">Link (opcional)</label>
-                          <input
-                            type="text"
-                            value={banner.link || ''}
-                            onChange={(e) => {
-                              const banners = [...(config.homeBanners || [])];
-                              banners[i] = { ...banners[i], link: e.target.value };
-                              setConfig({ ...config, homeBanners: banners });
-                            }}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                            placeholder="https://... (clique no banner abre este link)"
-                          />
-                        </div>
-                        {banner.imageUrl && (
-                          <div className="mt-3 bg-zinc-900 rounded-lg p-3 flex justify-center">
-                            <img src={banner.imageUrl} alt={`Preview ${i+1}`} className="max-h-32 object-contain" />
+                          className={`text-left border-2 rounded-xl overflow-hidden transition-all ${isActive ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200 hover:border-purple-300'}`}
+                        >
+                          {/* Miniatura Clássico */}
+                          <div className="h-32 relative" style={{ background: `linear-gradient(135deg, ${config.themeColor || '#d97706'}, #1a1a1a)` }}>
+                            <div className="absolute inset-0 bg-black/30" />
+                            <div className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full bg-white/90 shadow" />
+                            <div className="absolute bottom-3 left-3 right-3 flex gap-2">
+                              <div className="flex-1 h-8 rounded-lg bg-white/90 shadow" />
+                              <div className="flex-1 h-8 rounded-lg bg-white/90 shadow" />
+                            </div>
                           </div>
-                        )}
+                          <div className="p-3 flex items-center justify-between">
+                            <div>
+                              <span className="block font-bold text-gray-800">Clássico</span>
+                              <span className="text-xs text-gray-500">Imersivo, imagem de fundo, cards escuros</span>
+                            </div>
+                            {isActive && <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />}
+                          </div>
+                        </button>
+                      );
+                    })()}
+
+                    {/* Design Clean */}
+                    {(() => {
+                      const isActive = config.designStyle === 'clean';
+                      return (
+                        <button
+                          onClick={() => {
+                            setConfig({ ...config, designStyle: 'clean' });
+                            updateConfigLocal({ designStyle: 'clean' });
+                            setDesignAba(null);
+                          }}
+                          className={`text-left border-2 rounded-xl overflow-hidden transition-all ${isActive ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200 hover:border-purple-300'}`}
+                        >
+                          {/* Miniatura Clean */}
+                          <div className="h-32 relative bg-zinc-50 border-b border-zinc-200">
+                            <div className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full shadow" style={{ backgroundColor: config.themeColor || '#d97706' }} />
+                            <div className="absolute top-14 left-1/2 -translate-x-1/2 w-16 h-1.5 rounded-full bg-zinc-300" />
+                            <div className="absolute bottom-3 left-3 right-3 flex gap-2">
+                              <div className="flex-1 h-8 rounded-lg bg-white border border-zinc-200 shadow-sm" />
+                              <div className="flex-1 h-8 rounded-lg bg-white border border-zinc-200 shadow-sm" />
+                            </div>
+                          </div>
+                          <div className="p-3 flex items-center justify-between">
+                            <div>
+                              <span className="block font-bold text-gray-800">Clean</span>
+                              <span className="text-xs text-gray-500">Minimalista, fundo claro, cantos suaves</span>
+                            </div>
+                            {isActive && <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />}
+                          </div>
+                        </button>
+                      );
+                    })()}
+
+                    {/* Design Rústico */}
+                    {(() => {
+                      const isActive = config.designStyle === 'rustic';
+                      return (
+                        <button
+                          onClick={() => {
+                            setConfig({ ...config, designStyle: 'rustic' });
+                            updateConfigLocal({ designStyle: 'rustic' });
+                            setDesignAba(null);
+                          }}
+                          className={`text-left border-2 rounded-xl overflow-hidden transition-all ${isActive ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200 hover:border-purple-300'}`}
+                        >
+                          {/* Miniatura Rústico */}
+                          <div className="h-32 relative" style={{ background: 'linear-gradient(135deg, #2a1f16, #140f0c)' }}>
+                            <div className="absolute top-3 left-1/2 -translate-x-1/2 w-10 h-10 rounded-full shadow" style={{ backgroundColor: config.themeColor || '#d97706' }} />
+                            <div className="absolute top-14 left-0 right-0 flex justify-center gap-2">
+                              {[0, 1, 2].map((i) => (
+                                <div key={i} className="w-6 h-6 rounded-full border-2" style={{ borderColor: `${config.themeColor || '#d97706'}88`, backgroundColor: 'rgba(40,30,22,0.9)' }} />
+                              ))}
+                            </div>
+                            <div className="absolute bottom-3 left-3 right-3 flex gap-2">
+                              <div className="flex-1 h-8 rounded-lg border" style={{ backgroundColor: 'rgba(28,22,18,0.9)', borderColor: `${config.themeColor || '#d97706'}55` }} />
+                              <div className="flex-1 h-8 rounded-lg border" style={{ backgroundColor: 'rgba(28,22,18,0.9)', borderColor: `${config.themeColor || '#d97706'}55` }} />
+                            </div>
+                          </div>
+                          <div className="p-3 flex items-center justify-between">
+                            <div>
+                              <span className="block font-bold text-gray-800">Rústico</span>
+                              <span className="text-xs text-gray-500">Dark dourado, textura madeira, categorias em círculos</span>
+                            </div>
+                            {isActive && <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />}
+                          </div>
+                        </button>
+                      );
+                    })()}
+
+                    {/* Design 3D */}
+                    {(() => {
+                      const isActive = config.designStyle === 'threed';
+                      const g = config.themeColor || '#fbbf24';
+                      return (
+                        <button
+                          onClick={() => {
+                            setConfig({ ...config, designStyle: 'threed' });
+                            updateConfigLocal({ designStyle: 'threed' });
+                            setDesignAba(null);
+                          }}
+                          className={`text-left border-2 rounded-xl overflow-hidden transition-all ${isActive ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200 hover:border-purple-300'}`}
+                        >
+                          {/* Miniatura 3D */}
+                          <div className="h-32 relative overflow-hidden" style={{ background: 'radial-gradient(circle at 50% 40%, #241a12, #0d0b0a 70%)' }}>
+                            {/* "modelo" 3D estilizado */}
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full" style={{ background: `radial-gradient(circle at 35% 30%, ${g}, ${g}55 60%, transparent)`, boxShadow: `0 0 24px ${g}88` }} />
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-4 w-16 h-2 rounded-full bg-black/50 blur-sm" />
+                            <span className="absolute top-3 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-[0.3em]" style={{ color: g }}>3D</span>
+                          </div>
+                          <div className="p-3 flex items-center justify-between">
+                            <div>
+                              <span className="block font-bold text-gray-800">3D</span>
+                              <span className="text-xs text-gray-500">Hero imersivo com modelo 3D girando ao scroll (usa o .glb)</span>
+                            </div>
+                            {isActive && <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />}
+                          </div>
+                        </button>
+                      );
+                    })()}
+
+                    {/* Design PRIME */}
+                    {(() => {
+                      const isActive = config.designStyle === 'prime';
+                      const a = config.themeColor || '#f5a524';
+                      return (
+                        <button
+                          onClick={() => {
+                            setConfig({ ...config, designStyle: 'prime' });
+                            updateConfigLocal({ designStyle: 'prime' });
+                            setDesignAba(null);
+                          }}
+                          className={`text-left border-2 rounded-xl overflow-hidden transition-all ${isActive ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200 hover:border-purple-300'}`}
+                        >
+                          {/* Miniatura PRIME */}
+                          <div className="h-32 relative overflow-hidden" style={{ background: config.primeHeroUrl ? `linear-gradient(90deg, #0a0a0bdd, #0a0a0b22), url(${config.primeHeroUrl}) center/cover` : `radial-gradient(ellipse at 70% 60%, ${a}55, #0a0a0b 60%)` }}>
+                            {/* cantoneiras */}
+                            <span className="absolute top-2 left-2 w-3 h-3 border-t border-l border-white/70" />
+                            <span className="absolute top-2 right-2 w-3 h-3 border-t border-r border-white/70" />
+                            <span className="absolute bottom-2 left-2 w-3 h-3 border-b border-l border-white/70" />
+                            <span className="absolute bottom-2 right-2 w-3 h-3 border-b border-r border-white/70" />
+                            <div className="absolute top-4 left-4 text-[8px] font-mono uppercase tracking-widest" style={{ color: a }}>// 01</div>
+                            <span className="absolute top-8 left-4 text-2xl font-extrabold uppercase text-white leading-none" style={{ fontStretch: 'condensed' }}>PRIME</span>
+                            <span className="absolute top-[54px] left-4 text-[11px] font-extrabold uppercase text-white"><span style={{ color: a }}>//</span> THE STACK</span>
+                            <div className="absolute bottom-5 left-4 h-4 w-16" style={{ backgroundColor: a }} />
+                            <div className="absolute bottom-3 left-6 right-6 h-1.5" style={{ backgroundImage: 'repeating-linear-gradient(90deg, rgba(255,255,255,.4) 0 1px, transparent 1px 5px)' }} />
+                          </div>
+                          <div className="p-3 flex items-center justify-between">
+                            <div>
+                              <span className="block font-bold text-gray-800">Prime</span>
+                              <span className="text-xs text-gray-500">Abertura animada do lanche se montando, cardápio escuro e sacola própria</span>
+                            </div>
+                            {isActive && <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />}
+                          </div>
+                        </button>
+                      );
+                    })()}
+                  </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                  <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <Palette className="w-5 h-5 text-purple-600" />
+                    Identidade (vale para todos os designs)
+                  </h3>
+                  <div className="flex flex-col md:flex-row gap-8">
+                    <div className="flex-1 space-y-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Cor Base do Tema</label>
+                        <div className="flex gap-4 items-center mb-6">
+                          <input
+                            type="color"
+                            value={config.themeColor || '#d97706'}
+                            onChange={(e) => handleColorChange(e.target.value)}
+                            className="w-16 h-16 rounded-lg border-2 border-gray-200 cursor-pointer p-1 shadow-sm"
+                          />
+                          <div>
+                            <p className="text-sm font-bold text-gray-800">Selecione a cor principal</p>
+                            <p className="text-xs text-gray-500 mt-1 max-w-xs">
+                              Define a cor de botões, destaques e ícones em todo o site.
+                            </p>
+                          </div>
+                        </div>
                       </div>
+                      <ImageConfig 
+                        label="Logo do Site (Header e Footer)"
+                        value={config.logoUrl}
+                        onChange={(val: string) => setConfig({ ...config, logoUrl: val })}
+                        placeholder="https://exemplo.com/logo.png"
+                        helpText="Aparece no topo e no rodapé. Recomendado: PNG Transparente."
+                        token={token}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <div className="sticky top-24 p-6 rounded-2xl border border-gray-200 bg-white shadow-xl">
+                        <h4 className="text-sm font-bold text-gray-500 uppercase mb-4 flex items-center gap-2">
+                          <Eye className="w-4 h-4" />
+                          Preview em Tempo Real
+                        </h4>
+
+                        <div className="space-y-6">
+                          {/* Botão */}
+                          <div>
+                            <p className="text-xs text-gray-400 mb-2">Botões Principais</p>
+                            <button 
+                              className="w-full py-3 rounded-lg text-white font-bold shadow-lg transition-colors flex items-center justify-center gap-2"
+                              style={{ backgroundColor: config.themeColor || '#d97706' }}
+                            >
+                              Adicionar ao Carrinho
+                            </button>
+                          </div>
+
+
+                          {/* Input Focus */}
+                          <div>
+                            <p className="text-xs text-gray-400 mb-2">Campos de Texto</p>
+                            <input 
+                              type="text" 
+                              value="Exemplo de texto digitado..."
+                              readOnly
+                              className="w-full px-4 py-2 border rounded-lg outline-none shadow-sm" 
+                              style={{ 
+                                borderColor: config.themeColor || '#d97706',
+                                boxShadow: `0 0 0 3px ${config.themeColor || '#d97706'}20`
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+                  <h3 className="text-lg font-bold text-gray-800 mb-1 flex items-center gap-2">
+                    <LayoutTemplate className="w-5 h-5 text-purple-600" />
+                    Configuração de cada design
+                  </h3>
+                  <p className="text-sm text-gray-500 mb-4">Cada design tem as próprias opções. Dá para deixar um design pronto antes de colocá-lo em uso.</p>
+                  <div className="flex flex-wrap gap-2 mb-6">
+                    {abas.map(([id, nome]) => (
+                      <button
+                        key={id}
+                        onClick={() => setDesignAba(id)}
+                        className={`px-4 py-2 rounded-lg text-sm font-bold border-2 transition-all ${aba === id ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-gray-200 text-gray-600 hover:border-purple-300'}`}
+                      >
+                        {nome}
+                        {designAtivo === id && <span className="ml-2 text-[10px] uppercase tracking-wide text-green-600">em uso</span>}
+                      </button>
                     ))}
                   </div>
-                  <button
-                    onClick={() => {
-                      const banners = [...(config.homeBanners || [])];
-                      banners.push({ imageUrl: '', link: '' });
-                      setConfig({ ...config, homeBanners: banners });
-                    }}
-                    className="mt-4 text-sm text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1"
-                  >+ Adicionar Banner</button>
-                </div>
-              </div>
-
-              {/* BANNER CARDS ANTES DO FOOTER */}
-              <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                  🎯 Banners antes do Footer
-                </h3>
-                <p className="text-xs text-gray-500 mb-4">Cards com imagens que aparecem entre os produtos e o rodapé. Usam o mesmo fundo da área de produtos. Use PNG para transparência.</p>
-
-                {/* Lista de banners */}
-                <div>
-                  <label className="block text-sm font-bold text-gray-800 mb-3">Banners ({(config.bannerCards || []).length})</label>
-                  <div className="space-y-4">
-                    {(config.bannerCards || []).map((card: any, i: number) => (
-                      <div key={i} className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-                        <div className="flex items-center justify-between mb-3">
-                          <span className="text-sm font-bold text-gray-700">Banner {i + 1}</span>
-                          <button
-                            onClick={() => {
-                              const cards = [...(config.bannerCards || [])];
-                              cards.splice(i, 1);
-                              setConfig({ ...config, bannerCards: cards });
-                            }}
-                            className="text-red-500 hover:text-red-700 text-sm font-bold"
-                          >✕ Remover</button>
+                  <div className="space-y-6">
+                    {aba === 'classic' && (
+                      <>
+                        {modoTema}
+                        {corCategoria}
+                        {caixa('🖼️ Fundo do cabeçalho', (
+                          <div className="space-y-4">
+                              <ImageConfig 
+                                label="Imagem de Fundo do Cabeçalho (Desktop)"
+                                value={config.headerBackgroundUrl}
+                                onChange={(val: string) => setConfig({ ...config, headerBackgroundUrl: val })}
+                                placeholder="https://exemplo.com/fundo.jpg"
+                                helpText="Imagem para telas grandes (desktop). Recomendado: 1920x600+."
+                                token={token}
+                              />
+                              <ImageConfig 
+                                label="Imagem de Fundo do Cabeçalho (Mobile)"
+                                value={config.headerBackgroundMobileUrl}
+                                onChange={(val: string) => setConfig({ ...config, headerBackgroundMobileUrl: val })}
+                                placeholder="https://exemplo.com/fundo-mobile.jpg"
+                                helpText="Imagem para celulares. Recomendado: 750x900 (vertical). Se vazio, usa a do desktop."
+                                token={token}
+                              />
+                          </div>
+                        ))}
+                        {efeitoCabecalho}
+                        <div className="p-5 bg-gray-50 rounded-xl border border-gray-200">
+                          <h3 className="text-sm font-bold text-gray-800 mb-2 flex items-center gap-2">
+                            🖼️ Imagem de Fundo do Site
+                          </h3>
+                          <p className="text-xs text-gray-500 mb-4">Imagem que aparece como fundo de todo o site. Até 15MB. Para máxima qualidade, use PNG ou JPEG de alta resolução sem compressão.</p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <ImageConfig
+                                label="Fundo Desktop"
+                                value={config.contentBackgroundUrl || ''}
+                                onChange={(url: string) => setConfig({ ...config, contentBackgroundUrl: url })}
+                                placeholder="https://..."
+                                helpText="Recomendado: 1920x1080+ (PNG ou JPEG máx. qualidade, até 15MB)."
+                                token={token}
+                              />
+                              {config.contentBackgroundUrl && (
+                                <button
+                                  onClick={() => setConfig({ ...config, contentBackgroundUrl: '' })}
+                                  className="mt-2 text-xs text-red-500 hover:text-red-700 font-bold"
+                                >✕ Remover</button>
+                              )}
+                            </div>
+                            <div>
+                              <ImageConfig
+                                label="Fundo Mobile"
+                                value={config.contentBackgroundMobileUrl || ''}
+                                onChange={(url: string) => setConfig({ ...config, contentBackgroundMobileUrl: url })}
+                                placeholder="https://..."
+                                helpText="Recomendado: 1080x1920+ (vertical, até 15MB). Se vazio, usa a do desktop."
+                                token={token}
+                              />
+                              {config.contentBackgroundMobileUrl && (
+                                <button
+                                  onClick={() => setConfig({ ...config, contentBackgroundMobileUrl: '' })}
+                                  className="mt-2 text-xs text-red-500 hover:text-red-700 font-bold"
+                                >✕ Remover</button>
+                              )}
+                            </div>
+                          </div>
+                          {/* Toggle animação */}
+                          {(config.contentBackgroundUrl || config.contentBackgroundMobileUrl) && (
+                            <div className="mt-4 flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
+                              <div>
+                                <span className="text-sm font-bold text-gray-800">🎬 Animação de Zoom (Ken Burns)</span>
+                                <p className="text-xs text-gray-500">A imagem de fundo amplia e retorna suavemente.</p>
+                              </div>
+                              <button
+                                onClick={() => setConfig({ ...config, bgAnimationEnabled: !(config.bgAnimationEnabled !== false) })}
+                                className={`relative w-12 h-6 rounded-full transition-colors ${config.bgAnimationEnabled !== false ? 'bg-green-500' : 'bg-gray-300'}`}
+                              >
+                                <div className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${config.bgAnimationEnabled !== false ? 'translate-x-6' : 'translate-x-0.5'}`} />
+                              </button>
+                            </div>
+                          )}
                         </div>
-                        <ImageConfig
-                          label="Imagem do Banner"
-                          value={card.imageUrl || ''}
-                          onChange={(url: string) => {
-                            const cards = [...(config.bannerCards || [])];
-                            cards[i] = { ...cards[i], imageUrl: url };
-                            setConfig({ ...config, bannerCards: cards });
-                          }}
-                          placeholder="https://..."
-                          helpText="PNG com fundo transparente recomendado."
-                          token={token}
-                        />
-                        <div className="mt-3">
-                          <label className="block text-xs font-medium text-gray-600 mb-1">Link (opcional)</label>
-                          <input
-                            type="text"
-                            value={card.link || ''}
-                            onChange={(e) => {
-                              const cards = [...(config.bannerCards || [])];
-                              cards[i] = { ...cards[i], link: e.target.value };
-                              setConfig({ ...config, bannerCards: cards });
+                        {bannersHome}
+                        {bannersRodape}
+                      </>
+                    )}
+                    {aba === 'threed' && (
+                      <>
+                        <div className="p-5 bg-gray-50 rounded-xl border border-gray-200">
+                          <ModelConfig
+                            value={config.heroModelUrl}
+                            onChange={(val: string) => {
+                              setConfig({ ...config, heroModelUrl: val });
+                              updateConfigLocal({ heroModelUrl: val });
                             }}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-                            placeholder="https://... (clique no banner abre este link)"
+                            token={token}
                           />
                         </div>
-                        {card.imageUrl && (
-                          <div className="mt-3 bg-zinc-900 rounded-lg p-3 flex justify-center">
-                            <img src={card.imageUrl} alt={`Preview ${i+1}`} className="max-h-32 object-contain" />
+                        <div className="p-5 bg-gray-50 rounded-xl border border-gray-200">
+                          <label className="block text-sm font-bold text-gray-800 mb-1">✨ Efeitos 3D do Hero</label>
+                          <p className="text-xs text-gray-500 mb-3">
+                            Efeitos extras na cena 3D, na cor do tema. Sem nenhum marcado, usa o padrão (partículas douradas).
+                          </p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {[
+                              { id: 'sparkles', label: 'Partículas douradas', desc: 'Brilhos flutuando ao redor do modelo' },
+                              { id: 'ring', label: 'Anel de luz', desc: 'Anel dourado girando sob o modelo' },
+                              { id: 'orbiters', label: 'Esferas em órbita', desc: 'Pontos de luz orbitando o modelo' },
+                              { id: 'stars', label: 'Céu estrelado', desc: 'Campo de estrelas ao fundo' },
+                            ].map((fx) => {
+                              const current = config.heroEffects || [];
+                              const checked = current.includes(fx.id);
+                              return (
+                                <label
+                                  key={fx.id}
+                                  className={`flex items-start gap-3 p-3 border-2 rounded-xl cursor-pointer transition-all ${checked ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300'}`}
+                                >
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={() => {
+                                      const next = checked
+                                        ? current.filter((id) => id !== fx.id)
+                                        : [...current, fx.id];
+                                      setConfig({ ...config, heroEffects: next });
+                                      updateConfigLocal({ heroEffects: next });
+                                    }}
+                                    className="mt-0.5 w-4 h-4 accent-purple-600"
+                                  />
+                                  <span>
+                                    <span className="block text-sm font-bold text-gray-800">{fx.label}</span>
+                                    <span className="block text-xs text-gray-500">{fx.desc}</span>
+                                  </span>
+                                </label>
+                              );
+                            })}
                           </div>
-                        )}
-                      </div>
-                    ))}
+                        </div>
+                        <p className="text-xs text-gray-500">O 3D mostra o cabeçalho, os banners e as cores do Clássico por cima da cena 3D. As opções abaixo valem também para o Clássico.</p>
+                        {modoTema}
+                        {corCategoria}
+                        {efeitoCabecalho}
+                        {bannersHome}
+                        {bannersRodape}
+                      </>
+                    )}
+                    {aba === 'clean' && caixa('🖼️ Foto do topo', fotosTopo('cleanHero', 'Horizontal (1920x1080+). Se vazio, usa a imagem de fundo do Clássico.'), 'Imagem grande no topo do Clean.')}
+                    {aba === 'rustic' && (
+                      <>
+                        {caixa('🪵 Textura de fundo', foto('rusticFundoUrl', 'Textura (madeira, pedra...)', 'Aparece escurecida atrás do site. Se vazio, usa o fundo do cabeçalho do Clássico.'))}
+                        {caixa('🖼️ Foto do topo', fotosTopo('rusticHero', 'Horizontal (1920x1080+). Se vazio, usa a imagem de fundo do Clássico.'), 'Foto do lanche no topo do Rústico.')}
+                      </>
+                    )}
+                    {aba === 'prime' && (
+                      <>
+                        {caixa('🔥 Capa', fotosTopo('primeHero', 'Horizontal (1920x1080+), com o lanche mais à direita.'), 'Sem capa, o Prime abre com a animação do lanche se montando. Com capa, ela entra no lugar da animação.')}
+                        {caixa('✍️ Textos da abertura', (
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {([['primeHeroTitle', 'Título', config.siteName || 'NewBurguer Lanches'], ['primeHeroTagline', 'Frase', config.siteSubtitle || 'Cada camada feita na hora.']] as const).map(([key, label, padrao]) => (
+                              <label key={key} className="block">
+                                <span className="block text-sm font-bold text-gray-800 mb-1">{label}</span>
+                                <input
+                                  value={config[key] || ''}
+                                  onChange={(e) => setCampos({ [key]: e.target.value })}
+                                  placeholder={padrao}
+                                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                                />
+                              </label>
+                            ))}
+                          </div>
+                        ), 'Vazios, usam o nome e o subtítulo da loja.')}
+                        {caixa('🎨 Cor do rodapé', (
+                          <div className="flex items-center gap-3">
+                            <input
+                              type="color"
+                              value={config.primeFundo || config.backgroundColor || '#161617'}
+                              onChange={(e) => setCampos({ primeFundo: e.target.value })}
+                              className="h-10 w-10 rounded cursor-pointer border border-gray-300"
+                            />
+                            {config.primeFundo && (
+                              <button onClick={() => setCampos({ primeFundo: '' })} className="text-xs text-red-500 hover:text-red-700 font-bold">✕ Voltar ao padrão</button>
+                            )}
+                          </div>
+                        ), 'Misturada com a cor do tema no fundo do rodapé.')}
+                        {caixa(`🏷️ Banners do carrossel (${primeLista.length})`, listaBanners('primeBanners', primeLista, 'Horizontal. Aceita JPG e PNG.'), 'Aparecem no carrossel do topo do cardápio, antes das promoções automáticas.')}
+                      </>
+                    )}
                   </div>
-                  <button
-                    onClick={() => {
-                      const cards = [...(config.bannerCards || [])];
-                      cards.push({ imageUrl: '', link: '' });
-                      setConfig({ ...config, bannerCards: cards });
-                    }}
-                    className="mt-4 text-sm text-blue-600 hover:text-blue-800 font-bold flex items-center gap-1"
-                  >+ Adicionar Banner</button>
                 </div>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* TAB: INTEGRAÇÕES */}
           {activeTab === 'integrations' && (
@@ -3171,7 +3091,7 @@ export function MasterDashboard() {
                               <input type="text" value={editingSector.name} onChange={(e) => setEditingSector({ ...editingSector, name: e.target.value })} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none mb-6" placeholder="Nome do Setor" />
                               <div className="flex gap-3">
                                 <button onClick={() => setEditingSector(null)} className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-lg font-bold">Cancelar</button>
-                                <button onClick={() => { handleUpdateSector(editingSector.id, editingSector.name); setEditingSector(null); }} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2"><Save className="w-5 h-5" />Salvar</button>
+                                <button onClick={handleSaveEditSector} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-bold flex items-center justify-center gap-2"><Save className="w-5 h-5" />Salvar</button>
                               </div>
                             </div>
                           </div>

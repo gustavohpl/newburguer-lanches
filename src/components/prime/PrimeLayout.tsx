@@ -59,7 +59,7 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
   const telefone = unitOverrides.phone || config.phone || '';
   const taxa = unitOverrides.deliveryFee ?? config.deliveryFee;
   const whats = (config.whatsappNumber || telefone || '').replace(/\D/g, '');
-  const fundoSite = config.backgroundColor || '#161617';
+  const fundoSite = cfg.primeFundo || config.backgroundColor || '#161617';
   const verdeEscuro = misturarHex(cor, fundoSite, 0.5); // papel de parede: verde do site escurecido
   const redes = Object.entries((cfg.socialMedia || {}) as Record<string, string>).filter(([, url]) => url && url.trim())
     .map(([rede, url]) => ({ rede, url, cor: cfg.socialMediaColors?.[rede] || SocialBrandColors[rede] || cor }));
@@ -100,10 +100,10 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
   }, [busca, products]);
 
   const banners = useMemo(() => {
-    const doMaster = ((cfg.bannerCards as any[]) || []).map((b) => ({ img: b.imageUrl, link: b.link || '', titulo: '', acao: '', alvo: null as RegExp | null }));
+    const doMaster = ((cfg.primeBanners ?? cfg.bannerCards) as any[] || []).map((b) => ({ img: b.imageUrl, link: b.link || '', titulo: '', acao: '', alvo: null as RegExp | null }));
     const nossos = ARTE.promos.map((p) => ({ img: p.img, link: '', titulo: p.titulo, acao: p.acao, alvo: p.alvo }));
     return [...doMaster, ...nossos.filter((p) => secoes.some((s) => p.alvo?.test(`${s.id} ${s.titulo}`)))];
-  }, [cfg.bannerCards, secoes]);
+  }, [cfg.primeBanners, cfg.bannerCards, secoes]);
 
   useEffect(() => {
     const r = () => setCelular(window.innerWidth < 768);

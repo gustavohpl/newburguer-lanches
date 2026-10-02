@@ -41,10 +41,11 @@ export function RusticLayout({ products, onAddToCart, cartCount, onOpenCart, isS
   const whatsappNumber = (config.whatsappNumber || '5564993392970').replace(/\D/g, '');
 
   // Imagem de fundo escura (textura madeira) e imagem do hero (produto)
-  const bgImage = (config as any).headerBackgroundUrl || (config as any).contentBackgroundUrl;
-  const heroImage = (isMobile && (config as any).contentBackgroundMobileUrl)
-    ? (config as any).contentBackgroundMobileUrl
-    : (config as any).contentBackgroundUrl;
+  const cfg = config as any;
+  const bgImage = cfg.rusticFundoUrl || cfg.headerBackgroundUrl || cfg.contentBackgroundUrl;
+  const heroImage = cfg.rusticHeroUrl || cfg.rusticHeroMobileUrl
+    ? (isMobile && cfg.rusticHeroMobileUrl) || cfg.rusticHeroUrl || cfg.rusticHeroMobileUrl
+    : (isMobile && cfg.contentBackgroundMobileUrl) || cfg.contentBackgroundUrl;
 
   useEffect(() => {
     const handleResize = () => {

@@ -8,15 +8,18 @@ export interface SystemConfig {
   designStyle?: 'classic' | 'clean' | 'rustic' | 'threed' | 'prime'; // 🎨 Estilo de design do site (extensível)
   heroModelUrl?: string; // 🍔 Modelo 3D (.glb) do Hero Awwwards
   heroEffects?: string[]; // ✨ Efeitos extras da cena 3D ('sparkles' | 'ring' | 'orbiters' | 'stars')
-  // 🔥 Estilo PRIME — imagens e textos por seção
+  // opções próprias de cada design (vazias = usam as do Clássico)
   primeHeroUrl?: string;
   primeHeroMobileUrl?: string;
   primeHeroTitle?: string;
   primeHeroTagline?: string;
-  primeSearUrl?: string;
-  primeSearMobileUrl?: string;
-  primeSearTitle?: string;
-  primeBuilderUrl?: string;
+  primeBanners?: Array<{ imageUrl: string; link?: string }>;
+  primeFundo?: string;
+  cleanHeroUrl?: string;
+  cleanHeroMobileUrl?: string;
+  rusticFundoUrl?: string;
+  rusticHeroUrl?: string;
+  rusticHeroMobileUrl?: string;
   phone: string;
   address: string;
   logoUrl?: string;

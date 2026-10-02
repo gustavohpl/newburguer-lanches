@@ -40,10 +40,11 @@ export function CleanLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
   const effectiveMapsUrl = unitOverrides.googleMapsUrl || (config as any).googleMapsUrl;
   const whatsappNumber = (config.whatsappNumber || '5564993392970').replace(/\D/g, '');
 
-  // Imagem do hero: reaproveita a imagem de fundo do conteúdo já configurada
-  const heroImage = (isMobile && (config as any).contentBackgroundMobileUrl)
-    ? (config as any).contentBackgroundMobileUrl
-    : (config as any).contentBackgroundUrl;
+  // foto própria do Clean; sem ela, reaproveita a imagem de fundo do Clássico
+  const cfg = config as any;
+  const heroImage = cfg.cleanHeroUrl || cfg.cleanHeroMobileUrl
+    ? (isMobile && cfg.cleanHeroMobileUrl) || cfg.cleanHeroUrl || cfg.cleanHeroMobileUrl
+    : (isMobile && cfg.contentBackgroundMobileUrl) || cfg.contentBackgroundUrl;
 
   useEffect(() => {
     const handleResize = () => {
