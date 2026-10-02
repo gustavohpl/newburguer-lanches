@@ -247,14 +247,13 @@
 .ab-tela { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; color: #fff; }
 .ab-tela canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .ab-sombra { position: absolute; inset: 0; pointer-events: none;
-  background: radial-gradient(125% 85% at 50% 50%, transparent 58%, color-mix(in oklab, var(--ab-fundo) 70%, transparent) 100%),
-              linear-gradient(0deg, color-mix(in oklab, transparent 0%, var(--ab-fundo)) 0%, color-mix(in oklab, transparent 3%, var(--ab-fundo)) 10%, color-mix(in oklab, transparent 10%, var(--ab-fundo)) 20%, color-mix(in oklab, transparent 20%, var(--ab-fundo)) 30%, color-mix(in oklab, transparent 33%, var(--ab-fundo)) 40%, color-mix(in oklab, transparent 48%, var(--ab-fundo)) 50%, color-mix(in oklab, transparent 63%, var(--ab-fundo)) 60%, color-mix(in oklab, transparent 77%, var(--ab-fundo)) 70%, color-mix(in oklab, transparent 88%, var(--ab-fundo)) 80%, color-mix(in oklab, transparent 96%, var(--ab-fundo)) 90%, color-mix(in oklab, transparent 100%, var(--ab-fundo)) 100%) bottom / 100% 18% no-repeat; }
-.ab-intro { position: absolute; left: 0; right: 0; top: clamp(44px, 6vh, 90px); text-align: center; padding: 0 20px; display: grid; justify-items: center; }
-.ab-logo { position: relative; margin-bottom: 12px; }
+  background: linear-gradient(0deg, var(--ab-escuro) 0%, color-mix(in oklab, var(--ab-escuro) 82%, transparent) 20%, color-mix(in oklab, var(--ab-escuro) 42%, transparent) 55%, transparent 100%) bottom / 100% 22% no-repeat; }
+.ab-intro { position: absolute; left: 0; right: 0; top: clamp(12px, 2vh, 40px); text-align: center; padding: 0 20px; display: grid; justify-items: center; }
+.ab-logo { position: relative; margin-bottom: 6px; }
 .ab-logo i { position: absolute; inset: 0; border-radius: 50%; filter: blur(40px); transform: scale(1.25); animation: ab-pulso 2s cubic-bezier(.4,0,.6,1) infinite; }
-.ab-logo img { position: relative; height: clamp(170px, 27vh, 360px); width: auto; object-fit: contain; filter: drop-shadow(0 0 25px rgba(251,191,36,.5)); }
+.ab-logo img { position: relative; height: clamp(195px, 31vh, 410px); width: auto; object-fit: contain; filter: drop-shadow(0 0 25px rgba(251,191,36,.5)); }
 @keyframes ab-pulso { 50% { opacity: .5; } }
-.ab-classico { display: grid; justify-items: center; gap: 12px; margin-bottom: 16px; font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif); }
+.ab-classico { display: grid; justify-items: center; gap: 8px; margin-bottom: 8px; font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif); }
 .ab-redes { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .ab-redes a { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; color: #fff; font-size: 12px; font-weight: 700;
   transition: transform .15s, box-shadow .15s; }
@@ -284,7 +283,7 @@
 @keyframes ab-pula { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, 8px); } }
 @media (min-width: 900px) {
   .ab-intro { left: 6vw; right: auto; top: 0; bottom: 0; align-content: center; justify-items: start; text-align: left; max-width: 34vw; padding: 0; }
-  .ab-logo img { height: clamp(200px, 36vh, 420px); }
+  .ab-logo img { height: clamp(225px, 40vh, 470px); }
   .ab-classico { justify-items: start; }
   .ab-redes { justify-content: flex-start; }
     .ab-final { left: 6vw; right: auto; top: 40vh; bottom: auto; text-align: left; justify-items: start; max-width: 28vw; }

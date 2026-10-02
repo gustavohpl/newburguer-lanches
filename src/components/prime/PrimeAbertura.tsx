@@ -115,12 +115,20 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       g.imageSmoothingQuality = 'high';
       const p = Math.min(1, f / ((n - 1) * 0.45));
       const y = caixa.y + desce * (1 - p * p * (3 - 2 * p));
-      // parede verde escura ao fundo + zona ESCURA atrás do lanche (p/ o lighten não esverdear o modelo)
-      const cx = caixa.x + caixa.w / 2, cy = y + caixa.h / 2;
-      const grad = g.createRadialGradient(cx, cy, 0, cx, cy, Math.hypot(W, H) * 0.6);
-      grad.addColorStop(0, esc(1));
-      grad.addColorStop(0.5, esc(1));
-      grad.addColorStop(1, vrd(1));
+      // papel de parede VERDE do lado do header -> ESCURO do lado do lanche (degradê direcional):
+      // o lanche fica todo no escuro (lighten não encosta no verde = sem borda verde)
+      const cx = caixa.x + caixa.w / 2;
+      const largo = W / H > 0.9 && W >= 900;
+      let grad: CanvasGradient;
+      if (largo) {
+        const xEsc = cx - caixa.w * 0.22;            // borda esquerda do lanche (com folga)
+        grad = g.createLinearGradient(Math.max(0, xEsc - W * 0.12), 0, xEsc, 0);
+      } else {
+        const yEsc = y + caixa.h * 0.08;             // topo do lanche
+        grad = g.createLinearGradient(0, Math.max(0, yEsc - H * 0.16), 0, yEsc);
+      }
+      grad.addColorStop(0, vrd(1));
+      grad.addColorStop(1, esc(1));
       g.fillStyle = grad;
       g.fillRect(0, 0, W, H);
       if (quadro.width !== a.naturalWidth) { quadro.width = a.naturalWidth; quadro.height = a.naturalHeight; }
@@ -136,7 +144,7 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       g.globalCompositeOperation = 'source-over';
     };
     const laco = () => {
-      atual += (alvo - atual) * 0.14;
+      atual += (alvo - atual) * 0.26;
       desenhar(atual);
       raf = requestAnimationFrame(laco);
     };
@@ -164,7 +172,7 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
 
   if (!n) return null;
   return (
-    <section ref={secao} className="ab" style={{ height: reduzido ? '100vh' : '150vh', background: parede, ['--ab-fundo' as string]: parede } as React.CSSProperties} aria-label={`Abertura ${nome}`}>
+    <section ref={secao} className="ab" style={{ height: reduzido ? '100vh' : '150vh', background: parede, ['--ab-fundo' as string]: parede, ['--ab-escuro' as string]: fundo } as React.CSSProperties} aria-label={`Abertura ${nome}`}>
       <div className="ab-tela">
         <canvas ref={tela} aria-hidden />
         <div className="ab-sombra" />

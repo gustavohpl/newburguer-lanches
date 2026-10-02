@@ -294,7 +294,7 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
       {!capaPropria && abertura !== false && (
         <div ref={abertura ? capa : undefined}>
           <PrimeAbertura nome={titulo} logo={config.logoUrl || logoPadrao} aberta={isStoreOpen} horario={horario} cor={cor} redes={redes} fundo={fundoSite} parede={verdeEscuro} aoPronta={setAbertura} onCardapio={() => secoes[0] && irPara(secoes[0].id)} />
-          <div className="pr-degrade" style={{ ['--fundo-site' as string]: verdeEscuro } as React.CSSProperties} />
+          <div className="pr-degrade" style={{ ['--fundo-site' as string]: fundoSite } as React.CSSProperties} />
         </div>
       )}
       {(capaPropria || abertura === false) && (
