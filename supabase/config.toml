@@ -1,0 +1,5 @@
+# o webhook do Mercado Pago chega sem o JWT do Supabase: a função faz o próprio controle de acesso em cada rota
+project_id = "newburguer-lanches"
+
+[functions.make-server-dfe23da2]
+verify_jwt = false
