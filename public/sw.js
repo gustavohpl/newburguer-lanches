@@ -1,5 +1,5 @@
 // app instalável: página sempre da rede (cai na última cópia se offline); arquivos estáticos do cache; API nunca passa por aqui
-const CACHE = 'nb-v1';
+const CACHE = 'nb-v2';
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (e) => e.waitUntil(
   caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim()),
@@ -22,6 +22,7 @@ self.addEventListener('fetch', (e) => {
     })));
     return;
   }
+  if (url.pathname.endsWith('.json')) return;
   if (/^\/(prime|icons)\//.test(url.pathname)) {
     e.respondWith(caches.open(CACHE).then((k) => k.match(req).then((hit) => {
       const rede = fetch(req).then((r) => { if (r.ok) k.put(req, r.clone()); return r; });

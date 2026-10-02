@@ -33,15 +33,15 @@ interface Props {
 export function PrimeAbertura({ nome, logo, logoOriginal, aberta, horario, cor, redes, fundo, parede, onCardapio, aoPronta }: Props) {
   const secao = useRef<HTMLElement>(null);
   const tela = useRef<HTMLCanvasElement>(null);
-  const [info, setInfo] = useState<{ n: number; corteCel?: [number, number]; tam: number[]; util: number[] }>({ n: 0, tam: [], util: [] });
+  const [info, setInfo] = useState<{ n: number; v?: string; corteCel?: [number, number]; tam: number[]; util: number[] }>({ n: 0, tam: [], util: [] });
   const reduzido = semMovimento();
   const n = info.n;
 
   // sem quadros.json (com área útil) não há abertura e o Prime usa a capa
   useEffect(() => {
-    fetch(`${BASE}/quadros.json`).then((r) => (r.ok ? r.json() : null)).then((d) => {
+    fetch(`${BASE}/quadros.json`, { cache: 'no-cache' }).then((r) => (r.ok ? r.json() : null)).then((d) => {
       const ok = d?.n > 0 && d.tam && d.util;
-      setInfo(ok ? { n: d.n, corteCel: d.corteCel, tam: d.tam, util: d.util } : { n: 0, tam: [], util: [] });
+      setInfo(ok ? { n: d.n, v: d.v, corteCel: d.corteCel, tam: d.tam, util: d.util } : { n: 0, tam: [], util: [] });
       aoPronta?.(!!ok);
     }).catch(() => aoPronta?.(false));
   }, [aoPronta]);
@@ -72,7 +72,8 @@ export function PrimeAbertura({ nome, logo, logoOriginal, aberta, horario, cor, 
       imgs[i] = q; ultimo = -1; desenhar(atual);
     };
     const carregar = (i: number) => {
-      const src = `${pasta}/${String(i + 1).padStart(3, '0')}.webp`;
+      // ?v= muda a cada vídeo novo: o cache do app nunca mistura quadros de versões diferentes
+      const src = `${pasta}/${String(i + 1).padStart(3, '0')}.webp${info.v ? `?v=${info.v}` : ''}`;
       fetch(src).then((r) => r.blob())
         .then((b) => createImageBitmap(b, ux - ox, uy, uw, uh, memPouca ? { resizeWidth: Math.round(uw * 0.7), resizeHeight: Math.round(uh * 0.7), resizeQuality: 'high' } : {}))
         .then((q) => chegou(i, q))
