@@ -30,7 +30,7 @@ export function CreateCouponAdModal({ isOpen, onClose, onSuccess }: CreateCoupon
         const mappedCoupons = response.coupons.map((c: any) => ({
           id: c.id,
           code: c.code,
-          discount: c.type === "percentage" ? `${c.value}%` : `R$ ${c.value.toFixed(2)}`,
+          discount: c.type === "percentage" ? `${c.value}%` : `R$ ${c.value.toFixed(2).replace('.', ',')}`,
           type: c.type,
           available: c.maxUses === -1 ? "Ilimitado" : ((c.maxUses || 0) - (c.currentUses || 0)),
           total: c.maxUses,

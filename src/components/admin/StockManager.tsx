@@ -618,10 +618,10 @@ export function StockManager() {
                             </span>
                           )}
                           {ing.type === 'kg' && ing.pricePerKg && (
-                            <span className="text-green-600">R$ {ing.pricePerKg.toFixed(2)}/kg</span>
+                            <span className="text-green-600">R$ {ing.pricePerKg.toFixed(2).replace('.', ',')}/kg</span>
                           )}
                           {ing.type === 'unit' && ing.pricePerUnit && (
-                            <span className="text-green-600">R$ {ing.pricePerUnit.toFixed(2)}/un</span>
+                            <span className="text-green-600">R$ {ing.pricePerUnit.toFixed(2).replace('.', ',')}/un</span>
                           )}
                         </div>
                       </div>
@@ -688,12 +688,12 @@ export function StockManager() {
                                 </div>
                                 <div className="flex items-center gap-3">
                                   <span className="font-bold text-green-700">
-                                    R$ {entry.price.toFixed(2)}
+                                    R$ {entry.price.toFixed(2).replace('.', ',')}
                                   </span>
                                   <span className="text-xs text-gray-500">
                                     ({ing.type === 'kg'
-                                      ? `R$ ${(entry.price / entry.quantity).toFixed(2)}/kg`
-                                      : `R$ ${(entry.price / entry.quantity).toFixed(2)}/un`
+                                      ? `R$ ${(entry.price / entry.quantity).toFixed(2).replace('.', ',')}/kg`
+                                      : `R$ ${(entry.price / entry.quantity).toFixed(2).replace('.', ',')}/un`
                                     })
                                   </span>
                                 </div>
@@ -742,7 +742,7 @@ export function StockManager() {
             </div>
             {report && (
               <div className="text-4xl font-bold">
-                R$ {report.totalDayCost?.toFixed(2) || '0.00'}
+                R$ {report.totalDayCost?.toFixed(2).replace('.', ',') || '0.00'}
               </div>
             )}
           </div>
@@ -783,7 +783,7 @@ export function StockManager() {
                         }
                       </td>
                       <td className="p-3 text-right text-red-600 font-bold">
-                        R$ {r.cost.toFixed(2)}
+                        R$ {r.cost.toFixed(2).replace('.', ',')}
                       </td>
                       <td className="p-3 text-right">
                         <span className={`font-semibold ${r.remaining <= 0 ? 'text-red-600' : 'text-gray-800'}`}>
@@ -1402,7 +1402,7 @@ export function StockManager() {
                   />
                   {restockForm.quantity && restockForm.price && (
                     <p className="text-xs text-green-600 mt-1 font-medium">
-                      = R$ {(parseFloat(restockForm.price) / parseFloat(restockForm.quantity)).toFixed(2)}/
+                      = R$ {(parseFloat(restockForm.price) / parseFloat(restockForm.quantity)).toFixed(2).replace('.', ',')}/
                       {restockTarget.type === 'kg' ? 'kg' : 'un'}
                     </p>
                   )}

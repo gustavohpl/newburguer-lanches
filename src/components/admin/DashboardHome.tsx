@@ -316,7 +316,7 @@ export function DashboardHome() {
             <div>
               <p className="text-sm text-gray-600 mb-1">Vendas Hoje</p>
               <p className="text-2xl font-bold text-gray-800">
-                R$ {stats.todaySales.toFixed(2)}
+                R$ {stats.todaySales.toFixed(2).replace('.', ',')}
               </p>
               <p className="text-xs text-gray-500 mt-1">
                 {stats.completedOrders} pedido{stats.completedOrders !== 1 ? 's' : ''} concluído{stats.completedOrders !== 1 ? 's' : ''}
@@ -334,7 +334,7 @@ export function DashboardHome() {
             <div>
               <p className="text-sm text-gray-600 mb-1">Vendas do Mês</p>
               <p className="text-2xl font-bold text-gray-800">
-                R$ {stats.monthSales.toFixed(2)}
+                R$ {stats.monthSales.toFixed(2).replace('.', ',')}
               </p>
               <p className="text-xs text-gray-500 mt-1">
                 {new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}

@@ -152,7 +152,7 @@ export function ProductPerformance() {
                 </div>
                 <div>
                   <p className="font-medium text-gray-800">{product.name}</p>
-                  <p className="text-xs text-gray-500">R$ {product.revenue.toFixed(2)} receita</p>
+                  <p className="text-xs text-gray-500">R$ {product.revenue.toFixed(2).replace('.', ',')} receita</p>
                 </div>
               </div>
               <div className="text-right">
@@ -184,7 +184,7 @@ export function ProductPerformance() {
                   </div>
                   <div>
                     <p className="font-medium text-gray-800">{product.name}</p>
-                    <p className="text-xs text-gray-500">R$ {product.revenue.toFixed(2)} receita</p>
+                    <p className="text-xs text-gray-500">R$ {product.revenue.toFixed(2).replace('.', ',')} receita</p>
                   </div>
                 </div>
                 <div className="text-right">

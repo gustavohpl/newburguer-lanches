@@ -613,7 +613,7 @@ export function DeliveryArea() {
                                   
                                   <div className="text-right">
                                     <div className="text-lg font-bold text-gray-800">
-                                      R$ {order.total.toFixed(2)}
+                                      R$ {order.total.toFixed(2).replace('.', ',')}
                                     </div>
                                     <div className="text-xs text-gray-500">
                                       {formatTime(order.createdAt)}
@@ -636,7 +636,7 @@ export function DeliveryArea() {
                                     {order.items.map((item, idx) => (
                                       <div key={idx} className="text-sm text-gray-700 flex justify-between">
                                         <span>{item.quantity}x {item.name}</span>
-                                        <span className="font-medium">R$ {(item.price * item.quantity).toFixed(2)}</span>
+                                        <span className="font-medium">R$ {(item.price * item.quantity).toFixed(2).replace('.', ',')}</span>
                                       </div>
                                     ))}
                                   </div>
@@ -804,7 +804,7 @@ export function DeliveryArea() {
                                 
                                 <div className="text-right">
                                   <div className="text-lg font-bold text-gray-800">
-                                    R$ {order.total.toFixed(2)}
+                                    R$ {order.total.toFixed(2).replace('.', ',')}
                                   </div>
                                   <div className="text-xs text-gray-500">
                                     {formatTime(order.createdAt)}
@@ -819,7 +819,7 @@ export function DeliveryArea() {
                                   {order.items.map((item, idx) => (
                                     <div key={idx} className="text-xs text-gray-700 flex justify-between">
                                       <span>{item.quantity}x {item.name}</span>
-                                      <span className="font-medium">R$ {(item.price * item.quantity).toFixed(2)}</span>
+                                      <span className="font-medium">R$ {(item.price * item.quantity).toFixed(2).replace('.', ',')}</span>
                                     </div>
                                   ))}
                                 </div>
@@ -834,11 +834,11 @@ export function DeliveryArea() {
                                     <div className="space-y-0.5 text-[10px]">
                                       <div className="flex justify-between">
                                         <span className="text-gray-700">Pagar com:</span>
-                                        <span className="font-bold">R$ {((order as any).changeFor).toFixed(2)}</span>
+                                        <span className="font-bold">R$ {((order as any).changeFor).toFixed(2).replace('.', ',')}</span>
                                       </div>
                                       <div className="flex justify-between text-green-800">
                                         <span className="font-bold">Devolver:</span>
-                                        <span className="font-bold text-sm">R$ {((order as any).changeFor - order.total).toFixed(2)}</span>
+                                        <span className="font-bold text-sm">R$ {((order as any).changeFor - order.total).toFixed(2).replace('.', ',')}</span>
                                       </div>
                                     </div>
                                   </div>
@@ -926,7 +926,7 @@ export function DeliveryArea() {
                       
                       <div className="text-right">
                         <div className="text-lg font-bold text-gray-800">
-                          R$ {order.total.toFixed(2)}
+                          R$ {order.total.toFixed(2).replace('.', ',')}
                         </div>
                         <div className="text-xs text-gray-500">
                           Pedido: {formatTime(order.createdAt)}

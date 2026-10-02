@@ -81,19 +81,19 @@ export function CampaignCard({ campaign, onPause, onResume, onUpdateBudget }: Ca
               onClick={() => setIsEditingBudget(true)}
               title="Clique para editar"
             >
-              R$ {(campaign.daily_budget / 100).toFixed(2)} 
+              R$ {(campaign.daily_budget / 100).toFixed(2).replace('.', ',')} 
               <Edit2 size={12} className="opacity-50" />
             </div>
           )}
         </div>
         <div>
           <p className="text-xs text-gray-500 mb-1">Gasto Total</p>
-          <p className="font-semibold text-gray-900">R$ {campaign.spend.toFixed(2)}</p>
+          <p className="font-semibold text-gray-900">R$ {campaign.spend.toFixed(2).replace('.', ',')}</p>
         </div>
         <div>
           <p className="text-xs text-gray-500 mb-1">Vendas / Custo por Venda</p>
           <p className="font-semibold text-gray-900">
-            {campaign.purchases} <span className="text-gray-400 text-xs">({campaign.purchases > 0 ? `R$ ${(campaign.spend / campaign.purchases).toFixed(2)}` : '-'})</span>
+            {campaign.purchases} <span className="text-gray-400 text-xs">({campaign.purchases > 0 ? `R$ ${(campaign.spend / campaign.purchases).toFixed(2).replace('.', ',')}` : '-'})</span>
           </p>
         </div>
         <div>
@@ -113,7 +113,7 @@ export function CampaignCard({ campaign, onPause, onResume, onUpdateBudget }: Ca
             <span>👆 {campaign.clicks} cliques ({(campaign.clicks / (campaign.impressions || 1) * 100).toFixed(1)}%)</span>
         </div>
         <span className="font-medium text-green-700">
-            Receita: R$ {campaign.revenue.toFixed(2)}
+            Receita: R$ {campaign.revenue.toFixed(2).replace('.', ',')}
         </span>
       </div>
     </div>

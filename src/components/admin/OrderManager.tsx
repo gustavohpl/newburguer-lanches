@@ -729,17 +729,20 @@ export function OrderManager() {
                             <div key={idx}>
                               <div className="flex justify-between text-sm">
                                 <span className="text-gray-700">{item.quantity}x {item.name}</span>
-                                <span className="text-gray-600">R$ {((item.price + addonsTotal) * item.quantity).toFixed(2)}</span>
+                                <span className="text-gray-600">R$ {((item.price + addonsTotal) * item.quantity).toFixed(2).replace('.', ',')}</span>
                               </div>
                               {item.selectedAddons && item.selectedAddons.length > 0 && (
                                 <div className="ml-6 space-y-0.5">
                                   {item.selectedAddons.map((addon: any, aIdx: number) => (
                                     <div key={aIdx} className="flex justify-between text-xs text-purple-600">
                                       <span>+ {addon.name}</span>
-                                      <span>{addon.price > 0 ? `+R$ ${addon.price.toFixed(2)}` : 'Grátis'}</span>
+                                      <span>{addon.price > 0 ? `+R$ ${addon.price.toFixed(2).replace('.', ',')}` : 'Grátis'}</span>
                                     </div>
                                   ))}
                                 </div>
+                              )}
+                              {item.notes && (
+                                <div className="ml-6 mt-0.5 text-xs font-semibold text-orange-700 bg-orange-50 rounded px-2 py-0.5">📝 Obs: {item.notes}</div>
                               )}
                             </div>
                           );
@@ -762,7 +765,7 @@ export function OrderManager() {
 
                       <div className="border-t border-gray-300 pt-2 flex justify-between font-bold">
                         <span className="text-gray-800">Total</span>
-                        <span className="text-green-600 text-lg">R$ {order.total.toFixed(2)}</span>
+                        <span className="text-green-600 text-lg">R$ {order.total.toFixed(2).replace('.', ',')}</span>
                       </div>
 
                       {/* Informação de Cartão */}
@@ -793,15 +796,15 @@ export function OrderManager() {
                           <div className="space-y-1 text-xs">
                             <div className="flex justify-between">
                               <span className="text-gray-700">Cliente vai pagar com:</span>
-                              <span className="font-bold text-gray-900">R$ {((order as any).changeFor).toFixed(2)}</span>
+                              <span className="font-bold text-gray-900">R$ {((order as any).changeFor).toFixed(2).replace('.', ',')}</span>
                             </div>
                             <div className="flex justify-between">
                               <span className="text-gray-700">Total do pedido:</span>
-                              <span className="font-bold text-gray-900">R$ {order.total.toFixed(2)}</span>
+                              <span className="font-bold text-gray-900">R$ {order.total.toFixed(2).replace('.', ',')}</span>
                             </div>
                             <div className="border-t-2 border-green-300 pt-2 flex justify-between">
                               <span className="text-green-800 font-bold">Troco a devolver:</span>
-                              <span className="font-bold text-green-800 text-base">R$ {((order as any).changeFor - order.total).toFixed(2)}</span>
+                              <span className="font-bold text-green-800 text-base">R$ {((order as any).changeFor - order.total).toFixed(2).replace('.', ',')}</span>
                             </div>
                           </div>
                         </div>
@@ -936,7 +939,7 @@ export function OrderManager() {
                                 <span className="font-bold text-green-700">{item.quantity}x</span> {item.name}
                               </span>
                               <span className="text-gray-600 font-medium">
-                                R$ {item.price.toFixed(2)}
+                                R$ {item.price.toFixed(2).replace('.', ',')}
                               </span>
                             </div>
                             {item.selectedAddons && item.selectedAddons.length > 0 && (
@@ -944,10 +947,13 @@ export function OrderManager() {
                                 {item.selectedAddons.map((addon: any, aIdx: number) => (
                                   <div key={aIdx} className="flex justify-between text-[10px] text-purple-600">
                                     <span>+ {addon.name}</span>
-                                    <span>{addon.price > 0 ? `+R$ ${addon.price.toFixed(2)}` : 'Grátis'}</span>
+                                    <span>{addon.price > 0 ? `+R$ ${addon.price.toFixed(2).replace('.', ',')}` : 'Grátis'}</span>
                                   </div>
                                 ))}
                               </div>
+                            )}
+                            {item.notes && (
+                              <div className="ml-6 mt-0.5 text-[11px] font-semibold text-orange-700 bg-orange-50 rounded px-2 py-0.5">📝 Obs: {item.notes}</div>
                             )}
                           </div>
                         ))}
@@ -1000,7 +1006,7 @@ export function OrderManager() {
                     </div>
                   )}
 
-                  <p className="font-bold text-green-600">R$ {order.total.toFixed(2)}</p>
+                  <p className="font-bold text-green-600">R$ {order.total.toFixed(2).replace('.', ',')}</p>
                   
                   {/* Cancelar pedido concluído */}
                   <button
@@ -1054,7 +1060,7 @@ export function OrderManager() {
                       {order.items.map((item: any, idx: number) => (
                         <div key={idx} className="flex justify-between text-xs text-gray-600">
                           <span>{item.quantity}x {item.name}</span>
-                          <span>R$ {item.price.toFixed(2)}</span>
+                          <span>R$ {item.price.toFixed(2).replace('.', ',')}</span>
                         </div>
                       ))}
                     </div>
@@ -1070,7 +1076,7 @@ export function OrderManager() {
                 )}
 
                 <div className="flex items-center justify-between">
-                  <p className="font-bold text-red-600 line-through">R$ {order.total.toFixed(2)}</p>
+                  <p className="font-bold text-red-600 line-through">R$ {order.total.toFixed(2).replace('.', ',')}</p>
                   <span className="text-xs text-gray-400">{order.paymentMethod}</span>
                 </div>
               </div>

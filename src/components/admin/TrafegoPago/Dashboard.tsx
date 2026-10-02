@@ -111,14 +111,14 @@ export function Dashboard() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <MetricCard 
               title="Investimento (7 dias)"
-              value={`R$ ${totalInvestido.toFixed(2)}`}
+              value={`R$ ${totalInvestido.toFixed(2).replace('.', ',')}`}
               icon={<DollarSign size={20} />}
               trend={totalInvestido > 0 ? undefined : "0%"}
               trendUp={false}
             />
             <MetricCard 
               title="Receita Gerada"
-              value={`R$ ${totalReceita.toFixed(2)}`}
+              value={`R$ ${totalReceita.toFixed(2).replace('.', ',')}`}
               icon={<TrendingUp size={20} />}
               trend={totalReceita > 0 ? undefined : "0%"}
               trendUp={true}

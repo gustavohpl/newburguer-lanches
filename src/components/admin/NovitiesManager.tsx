@@ -125,7 +125,7 @@ export function NovitiesManager() {
 
               <div className="flex-1 min-w-0">
                 <p className="font-bold text-sm truncate text-gray-800">{product.name}</p>
-                <p className="text-xs text-gray-500">R$ {product.price?.toFixed(2)}</p>
+                <p className="text-xs text-gray-500">R$ {product.price?.toFixed(2).replace('.', ',')}</p>
               </div>
 
               <button
@@ -194,7 +194,7 @@ export function NovitiesManager() {
                   )}
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium truncate text-gray-800">{product.name}</p>
-                    <p className="text-xs text-gray-500">R$ {product.price?.toFixed(2)} • {product.category}</p>
+                    <p className="text-xs text-gray-500">R$ {product.price?.toFixed(2).replace('.', ',')} • {product.category}</p>
                   </div>
                   <Plus className="w-4 h-4 text-purple-500 flex-shrink-0" />
                 </button>

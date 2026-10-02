@@ -594,7 +594,7 @@ export function ProductsManagement({ onProductsChange }: ProductsManagementProps
                 
                 <div className="flex items-center gap-4">
                   <span className="text-lg font-bold text-green-600">
-                    R$ {product.price.toFixed(2)}
+                    R$ {product.price.toFixed(2).replace('.', ',')}
                   </span>
                   <span className={`px-2 py-1 rounded text-xs font-medium ${
                     product.available 

@@ -202,7 +202,7 @@ export function CouponAdsDashboard() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right text-gray-600">
-                    R$ {camp.spent.toFixed(2)}
+                    R$ {camp.spent.toFixed(2).replace('.', ',')}
                   </td>
                   <td className="px-6 py-4 text-center">
                     <div className="flex flex-col items-center">
@@ -220,7 +220,7 @@ export function CouponAdsDashboard() {
                     </div>
                   </td>
                   <td className="px-6 py-4 text-right font-medium text-gray-800">
-                    R$ {camp.revenue.toFixed(2)}
+                    R$ {camp.revenue.toFixed(2).replace('.', ',')}
                   </td>
                   <td className="px-6 py-4 text-right">
                     <span className={`font-bold px-2 py-1 rounded ${

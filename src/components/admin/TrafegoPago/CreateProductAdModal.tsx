@@ -147,7 +147,7 @@ export function CreateProductAdModal({ isOpen, onClose, onSuccess }: CreateProdu
       } else if (adTone === 'premium') {
         setAdCopy(`✨ UMA EXPERIÊNCIA GASTRONÔMICA ✨\n\n${selectedProduct.name}. Feito com ingredientes selecionados para quem exige qualidade.\n\n⭐ Avaliado em ${selectedProduct.rating}/5.0 por nossos clientes.\n\nPermita-se. Peça o seu hoje.`);
       } else {
-        setAdCopy(`🔥 OFERTA DO DIA: ${selectedProduct.name} 🔥\n\nO burger mais pedido da casa por apenas R$ ${selectedProduct.price.toFixed(2)}!\n\n🚀 Entrega Grátis acima de R$ 60\n💳 Aceitamos VR e Pix\n\nClique e peça já! 👇`);
+        setAdCopy(`🔥 OFERTA DO DIA: ${selectedProduct.name} 🔥\n\nO burger mais pedido da casa por apenas R$ ${selectedProduct.price.toFixed(2).replace('.', ',')}!\n\n🚀 Entrega Grátis acima de R$ 60\n💳 Aceitamos VR e Pix\n\nClique e peça já! 👇`);
       }
     }
   }, [selectedProduct, adTone]);
@@ -336,7 +336,7 @@ export function CreateProductAdModal({ isOpen, onClose, onSuccess }: CreateProdu
                         <p className="text-xs text-gray-500 line-clamp-2 mt-1">{product.description || 'Sem descrição definida.'}</p>
                         
                         <div className="flex items-center justify-between mt-3">
-                          <span className="font-bold text-red-600">R$ {product.price.toFixed(2)}</span>
+                          <span className="font-bold text-red-600">R$ {product.price.toFixed(2).replace('.', ',')}</span>
                           {product.category === 'mais-pedidos' && (
                             <span className="bg-yellow-100 text-yellow-700 text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                               <Flame className="w-3 h-3" /> Popular

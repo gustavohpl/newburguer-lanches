@@ -198,7 +198,7 @@ export function CreateAnuncioCupomModal({ isOpen, onClose, onSuccess, coupons = 
                         />
                     </div>
                     <div className="mt-4 pt-4 border-t border-gray-200 text-sm text-gray-500 text-center">
-                        Isso equivale a <strong>R$ {(formData.totalBudget / formData.days).toFixed(2)} por dia</strong>
+                        Isso equivale a <strong>R$ {(formData.totalBudget / formData.days).toFixed(2).replace('.', ',')} por dia</strong>
                     </div>
                 </div>
             </div>

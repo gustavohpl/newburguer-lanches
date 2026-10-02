@@ -291,12 +291,12 @@ export function CustomerList() {
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Total Gasto</p>
-                    <p className="text-xl font-bold text-green-600">R$ {selectedCustomer.totalSpent.toFixed(2)}</p>
+                    <p className="text-xl font-bold text-green-600">R$ {selectedCustomer.totalSpent.toFixed(2).replace('.', ',')}</p>
                   </div>
                   <div>
                     <p className="text-sm text-gray-600">Ticket Médio</p>
                     <p className="text-xl font-bold text-green-600">
-                      R$ {(selectedCustomer.totalSpent / selectedCustomer.totalOrders).toFixed(2)}
+                      R$ {(selectedCustomer.totalSpent / selectedCustomer.totalOrders).toFixed(2).replace('.', ',')}
                     </p>
                   </div>
                   <div>

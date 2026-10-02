@@ -102,7 +102,7 @@ export function ProductAdsDashboard() {
               </div>
               <div className="flex justify-between items-end">
                 <div>
-                  <div className="text-2xl font-bold">R$ {topPerformer.revenue.toFixed(2)}</div>
+                  <div className="text-2xl font-bold">R$ {topPerformer.revenue.toFixed(2).replace('.', ',')}</div>
                   <div className="text-xs text-red-200">em vendas diretas</div>
                 </div>
                 <div className="text-right">
@@ -151,13 +151,13 @@ export function ProductAdsDashboard() {
                 <div className="text-xs text-gray-500 mb-1 flex items-center gap-1">
                   <DollarSign className="w-3 h-3" /> Gasto
                 </div>
-                <div className="font-semibold text-gray-900">R$ {ad.spent.toFixed(2)}</div>
+                <div className="font-semibold text-gray-900">R$ {ad.spent.toFixed(2).replace('.', ',')}</div>
               </div>
               <div>
                 <div className="text-xs text-gray-500 mb-1 flex items-center gap-1">
                   <TrendingUp className="w-3 h-3" /> Receita
                 </div>
-                <div className="font-semibold text-gray-900">R$ {ad.revenue.toFixed(2)}</div>
+                <div className="font-semibold text-gray-900">R$ {ad.revenue.toFixed(2).replace('.', ',')}</div>
               </div>
               <div>
                 <div className="text-xs text-gray-500 mb-1 flex items-center gap-1">

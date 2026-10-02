@@ -237,7 +237,7 @@ export function CouponsManager() {
   const formatDiscount = (coupon: Coupon) => {
     return coupon.type === 'percentage' 
       ? `${coupon.value}%` 
-      : `R$ ${coupon.value.toFixed(2)}`;
+      : `R$ ${coupon.value.toFixed(2).replace('.', ',')}`;
   };
 
   const getUsageText = (coupon: Coupon) => {
