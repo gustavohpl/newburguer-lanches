@@ -151,8 +151,9 @@
 .pr-item.off { opacity: .55; filter: grayscale(.8); }
 .pr-tag { position: absolute; top: 10px; left: 10px; padding: 4px 9px; border-radius: 999px; font-size: 11px; font-weight: 800;
   background: var(--ink); color: #fff; }
-.pr-carrega { position: absolute; inset: 0; background: linear-gradient(100deg, transparent 20%, rgba(255,255,255,.55) 50%, transparent 80%) var(--chip);
-  background-size: 220% 100%; animation: pr-brilho 1.2s linear infinite; }
+.pr-carrega { position: absolute; inset: 0; background: var(--chip); overflow: hidden; content-visibility: auto; } /* fora da tela o brilho não roda */
+.pr-carrega::after { content: ''; position: absolute; inset: 0; background: linear-gradient(100deg, transparent 20%, rgba(255,255,255,.55) 50%, transparent 80%);
+  animation: pr-brilho 1.2s linear infinite; }
 
 .pr-vazio { text-align: center; padding: 40px 10px; color: var(--muted); }
 .pr-vazio img { width: 140px; margin: 0 auto 10px; }
@@ -233,7 +234,7 @@
 
 @keyframes pr-pulso { 0% { box-shadow: 0 0 0 0 rgba(62,230,111,.6); } 100% { box-shadow: 0 0 0 10px rgba(62,230,111,0); } }
 @keyframes pr-respira { 0%, 100% { opacity: .55; transform: scale(1); } 50% { opacity: .9; transform: scale(1.08); } }
-@keyframes pr-brilho { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+@keyframes pr-brilho { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
 
 @media (prefers-reduced-motion: reduce) {
   .prime *, .prime *::before, .prime *::after { animation: none !important; transition: none !important; }
@@ -250,7 +251,7 @@
 .ab-tela canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .ab-sombra { position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(0deg, var(--ab-escuro) 0%, color-mix(in oklab, var(--ab-escuro) 82%, transparent) 20%, color-mix(in oklab, var(--ab-escuro) 42%, transparent) 55%, transparent 100%) bottom / 100% 22% no-repeat; }
-.ab-intro { position: absolute; left: 0; right: 0; top: clamp(12px, 2vh, 40px); text-align: center; padding: 0 20px; display: grid; justify-items: center; }
+.ab-intro { position: absolute; left: 0; right: 0; top: clamp(12px, 2vh, 40px); text-align: center; padding: 0 20px; display: grid; justify-items: center; will-change: transform, opacity; }
 .ab-logo { position: relative; margin-bottom: 6px; }
 .ab-logo i { position: absolute; inset: 0; border-radius: 50%; filter: blur(40px); transform: scale(1.25); animation: ab-pulso 2s cubic-bezier(.4,0,.6,1) infinite; }
 .ab-logo img { position: relative; height: clamp(220px, 35vh, 460px); width: auto; object-fit: contain; filter: drop-shadow(0 0 25px rgba(251,191,36,.5)); }
@@ -275,7 +276,7 @@
   transform: translateX(-100%); transition: transform .7s; }
 .ab-horario:hover::after { transform: translateX(100%); }
 .ab-intro p { margin: 0; color: rgba(255,255,255,.75); font-size: clamp(15px, 1.6vw, 19px); }
-.ab-final { position: absolute; left: 0; right: 0; bottom: clamp(40px, 9vh, 90px); text-align: center; display: grid; justify-items: center; gap: 14px; }
+.ab-final { position: absolute; left: 0; right: 0; bottom: clamp(40px, 9vh, 90px); text-align: center; display: grid; justify-items: center; gap: 14px; will-change: transform, opacity; }
 .ab-final b { font-size: clamp(26px, 3.6vw, 46px); font-weight: 800; letter-spacing: -0.03em; text-shadow: 0 6px 30px rgba(0,0,0,.6); }
 .ab-final button { background: var(--ac); color: var(--ac-ink); font-weight: 800; padding: 15px 26px; border-radius: 16px; font-size: 16px;
   box-shadow: 0 14px 40px color-mix(in srgb, var(--ac) 50%, transparent); transition: transform .3s var(--mola); }

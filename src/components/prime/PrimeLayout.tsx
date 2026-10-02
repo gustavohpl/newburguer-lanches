@@ -108,7 +108,8 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
   }, []);
 
   useEffect(() => {
-    if (reduzido) return;
+    // toque já rola nativo (smoothWheel só age na roda); sem Lenis o ticker não força quadro na thread principal todo vsync
+    if (reduzido || !matchMedia('(hover: hover) and (pointer: fine)').matches) return;
     const l = new Lenis({
       lerp: 0.1,
       smoothWheel: true,
@@ -251,6 +252,8 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
     t?.addEventListener('touchstart', parar, { passive: true });
     const id = window.setInterval(() => {
       if (parado || !t) return;
+      const r = t.getBoundingClientRect();
+      if (r.bottom < 0 || r.top > innerHeight) return;
       const prox = (Math.round(t.scrollLeft / (t.firstElementChild as HTMLElement).offsetWidth) + 1) % banners.length;
       t.scrollTo({ left: prox * ((t.firstElementChild as HTMLElement).offsetWidth + 14), behavior: 'smooth' });
     }, 4500);

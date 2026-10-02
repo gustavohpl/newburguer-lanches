@@ -32,15 +32,16 @@ interface Props {
 export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, parede, onCardapio, aoPronta }: Props) {
   const secao = useRef<HTMLElement>(null);
   const tela = useRef<HTMLCanvasElement>(null);
-  const [info, setInfo] = useState<{ n: number; corteCel?: [number, number] }>({ n: 0 });
+  const [info, setInfo] = useState<{ n: number; corteCel?: [number, number]; tam: number[]; util: number[] }>({ n: 0, tam: [], util: [] });
   const reduzido = semMovimento();
   const n = info.n;
 
-  // sem quadros.json não há abertura e o Prime usa a capa
+  // sem quadros.json (com área útil) não há abertura e o Prime usa a capa
   useEffect(() => {
     fetch(`${BASE}/quadros.json`).then((r) => (r.ok ? r.json() : null)).then((d) => {
-      setInfo({ n: d?.n || 0, corteCel: d?.corteCel });
-      aoPronta?.((d?.n || 0) > 0);
+      const ok = d?.n > 0 && d.tam && d.util;
+      setInfo(ok ? { n: d.n, corteCel: d.corteCel, tam: d.tam, util: d.util } : { n: 0, tam: [], util: [] });
+      aoPronta?.(!!ok);
     }).catch(() => aoPronta?.(false));
   }, [aoPronta]);
 
@@ -57,18 +58,25 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
     const emPe = window.innerWidth < 768 && window.innerHeight > window.innerWidth;
     const corte = emPe && info.corteCel ? info.corteCel : null;
     const pasta = `${BASE}/${corte ? 'cel' : 'pc'}`;
-    const imgs: HTMLImageElement[] = new Array(n);
-    const carregar = (i: number) => {
-      if (imgs[i]) return;
-      const im = new Image();
-      im.decoding = 'async';
-      im.src = `${pasta}/${String(i + 1).padStart(3, '0')}.webp`;
-      imgs[i] = im;
+    // só a área útil do quadro (o resto é preto puro); cel = recorte central do quadro do pc
+    const [tw, th] = info.tam;
+    const [ux, uy, uw, uh] = info.util;
+    const ox = corte ? Math.round(corte[0] * tw) : 0;
+    const memPouca = ((navigator as { deviceMemory?: number }).deviceMemory ?? 8) <= 2;
+    // decodificar 1× fora da thread principal: drawImage de <img> redecodifica o webp ao rolar (~1 GB não cabe no cache) = trava
+    const imgs: Array<ImageBitmap | HTMLImageElement | undefined> = new Array(n);
+    let vivo = true;
+    const chegou = (i: number, q: ImageBitmap | HTMLImageElement) => {
+      if (!vivo) { if (q instanceof ImageBitmap) q.close(); return; }
+      imgs[i] = q; ultimo = -1; desenhar(atual);
     };
-    // carrega TODOS já (grosso ao fino = prioridade), pra nunca travar por quadro faltando ao rolar
-    const ordem: number[] = [];
-    for (const passo of [8, 4, 2, 1]) for (let i = 0; i < n; i += passo) if (!ordem.includes(i)) ordem.push(i);
-    ordem.forEach(carregar);
+    const carregar = (i: number) => {
+      const src = `${pasta}/${String(i + 1).padStart(3, '0')}.webp`;
+      fetch(src).then((r) => r.blob())
+        .then((b) => createImageBitmap(b, ux - ox, uy, uw, uh, memPouca ? { resizeWidth: Math.round(uw * 0.7), resizeHeight: Math.round(uh * 0.7), resizeQuality: 'high' } : {}))
+        .then((q) => chegou(i, q))
+        .catch(() => { const im = new Image(); im.onload = () => chegou(i, im); im.src = src; });
+    };
 
     let dpr = 1, W = 0, H = 0, desce = 0, caixa = { x: 0, y: 0, w: 0, h: 0 };
     const medir = () => {
@@ -83,7 +91,6 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       const largo = W / H > 0.9 && W >= 900;
       if (largo) { w *= 1.08; h *= 1.08; }
       caixa = { x: (W - w) / 2 + (largo ? W * 0.13 : 0), y: (H - h) / 2 + (W / H <= 0.9 ? H * 0.05 : 0), w, h };
-      if (corte) caixa = { ...caixa, x: caixa.x + corte[0] * caixa.w, w: corte[1] * caixa.w };
       // em pé o lanche fechado começa abaixo da logo/status e sobe enquanto abre (fechado ocupa 16,5%–78% do quadro)
       const intro = secao.current?.querySelector<HTMLElement>('.ab-intro');
       desce = W / H <= 0.9 && intro ? Math.max(0, Math.min(intro.offsetTop + intro.offsetHeight + 10 - (caixa.y + 0.165 * caixa.h),
@@ -91,15 +98,11 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       ultimo = -1;
       desenhar(atual);
     };
-    const pronta = (im?: HTMLImageElement) => !!im && im.complete && im.naturalWidth > 0;
     let atual = 0, alvo = 0, raf = 0, ultimo = -1, rapido = false;
     const desenhar = (f: number) => {
       const i = Math.max(0, Math.min(n - 1, Math.floor(f)));
       let a = imgs[i];
-      if (!pronta(a)) {
-        a = undefined;
-        for (let d = 1; d < n && !a; d++) a = pronta(imgs[i - d]) ? imgs[i - d] : pronta(imgs[i + d]) ? imgs[i + d] : undefined;
-      }
+      for (let d = 1; d < n && !a; d++) a = imgs[i - d] || imgs[i + d];
       if (!a) return;
       const chave = Math.round(f * 50) * 2 + (rapido ? 1 : 0);
       if (chave === ultimo) return;
@@ -134,11 +137,15 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       g.fillRect(0, 0, W, H);
       // caminho único e leve: desenha o quadro direto com lighten (sem offscreen nem mistura) -> FPS máximo em qualquer velocidade
       g.globalCompositeOperation = clarear ? 'lighten' : 'source-over';
-      g.drawImage(a, caixa.x, y, caixa.w, caixa.h);
+      const X = caixa.x + caixa.w * ux / tw, Y = y + caixa.h * uy / th, DW = caixa.w * uw / tw, DH = caixa.h * uh / th;
+      if (a instanceof HTMLImageElement) g.drawImage(a, ux - ox, uy, uw, uh, X, Y, DW, DH);
+      else g.drawImage(a, X, Y, DW, DH);
       g.globalCompositeOperation = 'source-over';
     };
     const laco = () => {
       const d = alvo - atual;
+      // parado = laço dorme (rAF contínuo força a página toda a re-renderizar todo quadro)
+      if (Math.abs(d) < 0.02) { atual = alvo; rapido = false; desenhar(atual); raf = 0; return; }
       // amortecimento adaptativo: acompanha de perto no scroll rápido, suave no devagar
       atual += d * (0.45 + 0.5 * Math.min(1, Math.abs(d) / 14));
       rapido = Math.abs(d) > 4; // rolando rápido -> caminho leve
@@ -147,17 +154,21 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
     };
     medir();
     window.addEventListener('resize', medir);
-    imgs[0].onload = () => { ultimo = -1; desenhar(atual); };
+    // TODOS já (grosso ao fino = prioridade), pra nunca faltar quadro ao rolar
+    const ordem: number[] = [];
+    for (const passo of [8, 4, 2, 1]) for (let i = 0; i < n; i += passo) if (!ordem.includes(i)) ordem.push(i);
+    ordem.forEach(carregar);
+    const soltar = () => { vivo = false; window.removeEventListener('resize', medir); imgs.forEach((q) => q instanceof ImageBitmap && q.close()); };
 
     if (reduzido) {
       atual = alvo = n - 1;
-      imgs[n - 1].onload = () => { ultimo = -1; desenhar(n - 1); };
-      return () => window.removeEventListener('resize', medir);
+      return soltar;
     }
-    raf = requestAnimationFrame(laco);
+    const acordar = () => { if (!raf) raf = requestAnimationFrame(laco); };
+    acordar();
     const ctx = gsap.context(() => {
       const st = { trigger: secao.current, start: 'top top', end: 'bottom bottom', scrub: true };
-      ScrollTrigger.create({ ...st, onUpdate: (s) => { alvo = s.progress * (n - 1); } });
+      ScrollTrigger.create({ ...st, onUpdate: (s) => { alvo = s.progress * (n - 1); acordar(); } });
       const tl = gsap.timeline({ scrollTrigger: { ...st, scrub: 0.5 } });
       // posições = fração da ROLAGEM (padding força a duração total da timeline p/ 1.0)
       tl.to('.ab-dica', { opacity: 0, duration: 0.06 }, 0.02)
@@ -170,8 +181,8 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
         .to({}, { duration: 0.01 }, 1);
       gsap.from('.ab-intro > *', { y: 30, opacity: 0, duration: 1, stagger: 0.1, ease: 'power3.out', delay: 0.2 });
     }, secao);
-    return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', medir); ctx.revert(); };
-  }, [n, info.corteCel, fundo, reduzido]);
+    return () => { cancelAnimationFrame(raf); soltar(); ctx.revert(); };
+  }, [n, info, fundo, reduzido]);
 
   if (!n) return null;
   return (
