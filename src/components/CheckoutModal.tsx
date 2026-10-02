@@ -50,6 +50,9 @@ export function CheckoutModal({
   const [pergunta, setPergunta] = useState<{ texto: string; responder: (ok: boolean) => void } | null>(null);
   // no Prime, avisos e perguntas no visual do app em vez das caixas nativas do navegador
   const avisar = (texto: string) => (prime ? toast.error(texto) : alert(texto));
+  // automático só com o banco escolhido no Master realmente configurado no servidor
+  const pagamentoAutomatico = !!config.automaticPayment && config.features?.automaticPaymentAllowed !== false &&
+    (config.paymentGateway === 'mercadopago' ? !!config.mercadoPagoAtivo : !!config.hasPagSeguroToken);
   const perguntar = (texto: string) => (prime
     ? new Promise<boolean>((responder) => setPergunta({ texto, responder }))
     : Promise.resolve(window.confirm(texto)));
@@ -488,7 +491,7 @@ export function CheckoutModal({
       
       // 1. PIX (no pagamento misto, só a parte em Pix)
       if (splitPayment ? valorPix() > 0 : paymentMethod === 'pix') {
-        const isAutoPaymentEnabled = config.automaticPayment && config.features?.automaticPaymentAllowed !== false;
+        const isAutoPaymentEnabled = pagamentoAutomatico;
         
         if (isAutoPaymentEnabled) {
            console.log('💳 [CHECKOUT] Usando PIX Automático');
@@ -513,7 +516,7 @@ export function CheckoutModal({
 
       // 2. CARTÃO
       if (paymentMethod === 'card') {
-        const isAutoPaymentEnabled = config.automaticPayment && config.features?.automaticPaymentAllowed !== false;
+        const isAutoPaymentEnabled = pagamentoAutomatico;
 
         if (isAutoPaymentEnabled) {
           console.log('💳 [CHECKOUT] Cartão Automático - Abrindo opções');
@@ -644,16 +647,36 @@ export function CheckoutModal({
     console.log('✅ [CARTÃO] Pagamento Online Confirmado!');
     setShowCardPaymentOptions(false);
     
-    // Atualizar status do pedido para 'paid' (endpoint público com transição restrita)
-    try {
-      await api.confirmPayment(currentOrderId);
-    } catch (e) {
-      console.error('Erro ao confirmar pagamento:', e);
-    }
-
     // Mostrar modal de sucesso final (PaymentConfirmed)
     // Para simplificar, vamos usar o fluxo padrão de envio pro WhatsApp com status PAGO
     finishOrderAndNotify(currentOrderId, 'Cartão (PAGO ONLINE)');
+  };
+
+  // Mercado Pago: cartão na página do próprio MP; na volta o App lê ?pedido= e abre o acompanhamento
+  const pagarCartaoMercadoPago = async () => {
+    const r = await api.mpPagarCartao(currentOrderId);
+    if (r.status === 'paid') {
+      setShowCardPaymentOptions(false);
+      finishOrderAndNotify(currentOrderId, 'Cartão (PAGO ONLINE)');
+      return;
+    }
+    if (!r.success || !r.url) {
+      avisar(r.error || 'Não foi possível abrir o pagamento com cartão. Escolha outra forma.');
+      return;
+    }
+    saveOrderToLocalHistory({
+      orderId: currentOrderId,
+      customerName: name,
+      customerPhone: phone,
+      total: getTotalWithDiscount(),
+      deliveryType: deliveryType,
+      status: 'pending',
+      createdAt: new Date().toISOString(),
+      itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
+    });
+    onOrderComplete();
+    resetForm();
+    window.location.href = r.url;
   };
 
   const handleCardMachineChoice = () => {
@@ -941,6 +964,7 @@ export function CheckoutModal({
           onClose={() => setShowCardPaymentOptions(false)}
           onConfirmOnline={handleCardOnlineSuccess}
           onConfirmMachine={handleCardMachineChoice}
+          onPagarOnline={config.paymentGateway === 'mercadopago' ? pagarCartaoMercadoPago : undefined}
         />
       )}
 

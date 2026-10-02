@@ -9,6 +9,7 @@ import { success, error, getBrasiliaISOString, getBusinessDayStart } from "./ser
 import { requireAdmin, requireMaster, cleanupExpiredSessions, resetCleanupThrottle } from "./middleware.tsx";
 import { supabase } from "./supabase_client.tsx";
 import type { Coupon, StockIngredient, SystemConfig } from "./types.tsx";
+import { segredosMP } from "./mercadopago.tsx";
 
 const router = new Hono();
 
@@ -127,8 +128,9 @@ router.get('/config/public', async (c) => {
   const categories = await kv.get('categories') || [];
   const publicConfig = {
     ...config, categories,
-    pagSeguroToken: undefined, pagSeguroEmail: undefined,
+    pagSeguroToken: undefined, pagSeguroEmail: undefined, metaAccessToken: undefined,
     hasPagSeguroToken: !!(config.pagSeguroToken || Deno.env.get('PAGSEGURO_TOKEN')),
+    mercadoPagoAtivo: !!(await segredosMP()).accessToken,
     adminUsername: undefined
   };
   return success(c, { config: publicConfig });

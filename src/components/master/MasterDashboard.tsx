@@ -48,6 +48,7 @@ import { AuditLogs } from '../admin/AuditLogs';
 import { SecurityDashboard } from '../admin/SecurityDashboard';
 
 import { applyTheme } from '../../utils/themeUtils';
+import { MercadoPagoConfig } from './MercadoPagoConfig';
 import { projectId, publicAnonKey } from '../../utils/supabase/info';
 import { warmupWebRTCDetection } from '../../utils/webrtc-leak';
 
@@ -1935,99 +1936,112 @@ export function MasterDashboard() {
                   </div>
 
                   <div className="border-t border-gray-100 my-4 pt-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Token do PagSeguro (Modo Automático)</label>
-                    <input
-                      type="password"
-                      value={config.pagSeguroToken || ''}
-                      onChange={(e) => setConfig({ ...config, pagSeguroToken: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono text-sm"
-                      placeholder="Cole o token do PagSeguro aqui..."
-                    />
-                    
-                    {/* Campo de Email do PagSeguro - OBRIGATÓRIO para API funcionar */}
-                    <label className="block text-sm font-medium text-gray-700 mb-1 mt-4">
-                      📧 Email do PagSeguro (Obrigatório)
-                    </label>
-                    <input
-                      type="email"
-                      value={config.pagSeguroEmail || ''}
-                      onChange={(e) => setConfig({ ...config, pagSeguroEmail: e.target.value })}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
-                      placeholder="92978581gl@gmail.com"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      ⚠️ Use o mesmo email que você faz login no PagSeguro. Ambos (token + email) são necessários para a API funcionar.
-                    </p>
-                    
-                    {/* Botão para descobrir IP do servidor (Whitelist PagSeguro) */}
-                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                      <h4 className="text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
-                        <Globe className="w-4 h-4" />
-                        Configurar Whitelist do PagSeguro (Produção)
-                      </h4>
-                      <p className="text-xs text-gray-700 mb-3">
-                        Para usar o PagSeguro em <b>produção</b>, você precisa adicionar o IP do servidor Supabase na whitelist do PagSeguro. 
-                        Clique no botão abaixo para descobrir o IP.
-                      </p>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          setIsDiscoveringIP(true);
-                          try {
-                            const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-dfe23da2/server/ip`, {
-                              headers: {
-                                'Authorization': `Bearer ${publicAnonKey}`
-                              }
-                            });
-                            const data = await response.json();
-                            
-                            if (data.success && data.ip) {
-                              alert(
-                                `🌐 IP do Servidor Supabase:\n\n` +
-                                `${data.ip}\n\n` +
-                                `📋 PASSO A PASSO:\n\n` +
-                                `1. Acesse: https://pagseguro.uol.com.br/\n` +
-                                `2. Faça login\n` +
-                                `3. Vá em: Integração > Tokens > Configurações de Segurança\n` +
-                                `4. Adicione este IP: ${data.ip}\n` +
-                                `5. Aguarde até 24h para propagação\n\n` +
-                                `⚠️ Sem isso, você receberá erro: ACCESS_DENIED`
-                              );
-                            } else {
-                              alert('❌ Erro ao descobrir IP do servidor');
-                            }
-                          } catch (err) {
-                            console.error('Erro ao descobrir IP:', err);
-                            alert('❌ Erro ao descobrir IP do servidor. Verifique os logs do console (F12).');
-                          } finally {
-                            setIsDiscoveringIP(false);
-                          }
-                        }}
-                        disabled={isDiscoveringIP}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        {isDiscoveringIP ? (
-                          <>
-                            <RefreshCw className="w-4 h-4 animate-spin" />
-                            Descobrindo IP...
-                          </>
-                        ) : (
-                          <>
-                            <Globe className="w-4 h-4" />
-                            Descobrir IP do Servidor
-                          </>
-                        )}
-                      </button>
-                      
-                      <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs text-gray-700">
-                        <p className="font-semibold text-yellow-900 mb-1">💡 Alternativas:</p>
-                        <ul className="list-disc list-inside space-y-1">
-                          <li><b>Sandbox:</b> Use ambiente de testes (sem whitelist necessária)</li>
-                          <li><b>PIX Manual:</b> Desative "Pagamento Automático" e use sua chave PIX</li>
-                        </ul>
-                      </div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Banco do pagamento automático</label>
+                    <div className="grid grid-cols-2 gap-2 mb-4">
+                      {([['pagseguro', 'PagSeguro'], ['mercadopago', 'Mercado Pago']] as const).map(([id, nome]) => (
+                        <button key={id} type="button" onClick={() => setConfig({ ...config, paymentGateway: id })}
+                          className={`py-2 rounded-lg border-2 text-sm font-bold transition-colors ${(config.paymentGateway || 'pagseguro') === id ? 'border-green-600 bg-green-50 text-green-800' : 'border-gray-200 text-gray-600 hover:border-green-300'}`}>
+                          {nome}
+                        </button>
+                      ))}
                     </div>
+                    {config.paymentGateway === 'mercadopago' ? <MercadoPagoConfig /> : (
+                      <>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Token do PagSeguro (Modo Automático)</label>
+                      <input
+                        type="password"
+                        value={config.pagSeguroToken || ''}
+                        onChange={(e) => setConfig({ ...config, pagSeguroToken: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono text-sm"
+                        placeholder="Cole o token do PagSeguro aqui..."
+                      />
                     
+                      {/* Campo de Email do PagSeguro - OBRIGATÓRIO para API funcionar */}
+                      <label className="block text-sm font-medium text-gray-700 mb-1 mt-4">
+                        📧 Email do PagSeguro (Obrigatório)
+                      </label>
+                      <input
+                        type="email"
+                        value={config.pagSeguroEmail || ''}
+                        onChange={(e) => setConfig({ ...config, pagSeguroEmail: e.target.value })}
+                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm"
+                        placeholder="92978581gl@gmail.com"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">
+                        ⚠️ Use o mesmo email que você faz login no PagSeguro. Ambos (token + email) são necessários para a API funcionar.
+                      </p>
+                    
+                      {/* Botão para descobrir IP do servidor (Whitelist PagSeguro) */}
+                      <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                        <h4 className="text-sm font-semibold text-blue-900 mb-2 flex items-center gap-2">
+                          <Globe className="w-4 h-4" />
+                          Configurar Whitelist do PagSeguro (Produção)
+                        </h4>
+                        <p className="text-xs text-gray-700 mb-3">
+                          Para usar o PagSeguro em <b>produção</b>, você precisa adicionar o IP do servidor Supabase na whitelist do PagSeguro. 
+                          Clique no botão abaixo para descobrir o IP.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            setIsDiscoveringIP(true);
+                            try {
+                              const response = await fetch(`https://${projectId}.supabase.co/functions/v1/make-server-dfe23da2/server/ip`, {
+                                headers: {
+                                  'Authorization': `Bearer ${publicAnonKey}`
+                                }
+                              });
+                              const data = await response.json();
+                            
+                              if (data.success && data.ip) {
+                                alert(
+                                  `🌐 IP do Servidor Supabase:\n\n` +
+                                  `${data.ip}\n\n` +
+                                  `📋 PASSO A PASSO:\n\n` +
+                                  `1. Acesse: https://pagseguro.uol.com.br/\n` +
+                                  `2. Faça login\n` +
+                                  `3. Vá em: Integração > Tokens > Configurações de Segurança\n` +
+                                  `4. Adicione este IP: ${data.ip}\n` +
+                                  `5. Aguarde até 24h para propagação\n\n` +
+                                  `⚠️ Sem isso, você receberá erro: ACCESS_DENIED`
+                                );
+                              } else {
+                                alert('❌ Erro ao descobrir IP do servidor');
+                              }
+                            } catch (err) {
+                              console.error('Erro ao descobrir IP:', err);
+                              alert('❌ Erro ao descobrir IP do servidor. Verifique os logs do console (F12).');
+                            } finally {
+                              setIsDiscoveringIP(false);
+                            }
+                          }}
+                          disabled={isDiscoveringIP}
+                          className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isDiscoveringIP ? (
+                            <>
+                              <RefreshCw className="w-4 h-4 animate-spin" />
+                              Descobrindo IP...
+                            </>
+                          ) : (
+                            <>
+                              <Globe className="w-4 h-4" />
+                              Descobrir IP do Servidor
+                            </>
+                          )}
+                        </button>
+                      
+                        <div className="mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded text-xs text-gray-700">
+                          <p className="font-semibold text-yellow-900 mb-1">💡 Alternativas:</p>
+                          <ul className="list-disc list-inside space-y-1">
+                            <li><b>Sandbox:</b> Use ambiente de testes (sem whitelist necessária)</li>
+                            <li><b>PIX Manual:</b> Desative "Pagamento Automático" e use sua chave PIX</li>
+                          </ul>
+                        </div>
+                      </div>
+                      </>
+                    )}
+
                     <div className="mt-4 flex items-center gap-2">
                       <input
                         type="checkbox"
@@ -2125,7 +2139,7 @@ export function MasterDashboard() {
                     </label>
                   </div>
                   <p className="text-sm text-gray-600">
-                    Habilita o módulo de checkout transparente (API PagSeguro).
+                    Habilita o pagamento automático (Pix e cartão) pelo PagSeguro ou Mercado Pago.
                     <br />
                     <span className="text-xs font-semibold text-red-500 mt-2 block">
                       {config.features?.automaticPaymentAllowed === false 

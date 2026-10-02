@@ -712,6 +712,17 @@ export function OrderManager() {
                           <span className="px-2 py-1 rounded text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
                             💳 {order.paymentMethod} {order.cardType && `(${order.cardType === 'credit' ? 'Crédito' : 'Débito'})`}
                           </span>
+                          {(order as any).paymentStatus === 'paid' && (
+                            <span className="px-2 py-1 rounded text-xs font-bold bg-emerald-600 text-white">✅ PAGO ONLINE</span>
+                          )}
+                          {(order as any).paymentStatus === 'aguardando' && (
+                            <span className="px-2 py-1 rounded text-xs font-bold bg-amber-100 text-amber-800">⏳ Aguardando pagamento online</span>
+                          )}
+                          {['recusado', 'divergente', 'estornado'].includes((order as any).paymentStatus) && (
+                            <span title={(order as any).paymentNote} className="px-2 py-1 rounded text-xs font-bold bg-red-100 text-red-800">
+                              ⚠️ {(order as any).paymentStatus === 'recusado' ? 'Pagamento recusado' : (order as any).paymentStatus === 'estornado' ? 'Pagamento estornado' : 'Valor pago diferente — conferir'}
+                            </span>
+                          )}
                           {/* Badge do Setor (também na linha de badges) */}
                           {order.deliveryType === 'delivery' && getSectorName(order.deliverySector) && (
                             <span className="px-2 py-1 rounded text-xs font-bold bg-indigo-100 text-indigo-800">

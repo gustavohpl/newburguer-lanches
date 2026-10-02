@@ -9,6 +9,8 @@ export interface SystemConfig {
   heroModelUrl?: string; // 🍔 Modelo 3D (.glb) do Hero Awwwards
   heroEffects?: string[]; // ✨ Efeitos extras da cena 3D ('sparkles' | 'ring' | 'orbiters' | 'stars')
   // opções próprias de cada design (vazias = usam as do Clássico)
+  paymentGateway?: 'pagseguro' | 'mercadopago'; // banco do pagamento automático
+  mercadoPagoAtivo?: boolean;                    // só leitura: o servidor tem o token
   primeHeroUrl?: string;
   primeHeroMobileUrl?: string;
   primeHeroTitle?: string;

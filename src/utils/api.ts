@@ -842,6 +842,28 @@ export async function createPixPayment(paymentData: {
   }
 }
 
+// Mercado Pago: o servidor calcula o valor pelo pedido salvo e confirma consultando o próprio MP
+async function mpChamar(caminho: string, init: RequestInit = {}) {
+  try {
+    const response = await fetch(`${API_BASE_URL}${caminho}`, { ...init, headers });
+    return await response.json();
+  } catch {
+    return { success: false, error: 'Erro de conexão' };
+  }
+}
+export const mpCriarPix = (orderId: string) => mpChamar('/payment/mp/pix', { method: 'POST', body: JSON.stringify({ orderId }) });
+export const mpPagarCartao = (orderId: string) => mpChamar('/payment/mp/cartao', { method: 'POST', body: JSON.stringify({ orderId }) });
+export const mpStatusPagamento = (orderId: string, paymentId?: string) =>
+  mpChamar(`/payment/mp/status/${encodeURIComponent(orderId)}${paymentId ? `?payment_id=${encodeURIComponent(paymentId)}` : ''}`);
+export async function masterMercadoPago(testar = false) {
+  const r = await masterFetch(`/master/pagamento/mercadopago${testar ? '?testar=1' : ''}`);
+  return r.json();
+}
+export async function salvarMercadoPago(dados: { accessToken?: string; webhookSecret?: string; apagar?: boolean }) {
+  const r = await masterFetch('/master/pagamento/mercadopago', { method: 'POST', body: JSON.stringify(dados) });
+  return r.json();
+}
+
 export async function checkPaymentStatus(referenceId: string) {
   console.log('🔍 [API] Verificando status do pagamento:', referenceId);
   

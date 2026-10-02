@@ -18,6 +18,7 @@ import configRoutes from "./routes_config.tsx";
 import securityRoutes from "./routes_security.tsx";
 import testRoutes from "./routes_tests.tsx";
 import metaRoutes from "./meta_routes.tsx";
+import mercadoPagoRoutes from "./mercadopago.tsx";
 
 // ==========================================
 // 🔗 API — Monta todos os sub-routers
@@ -49,6 +50,7 @@ api.route('/', configRoutes);     // config, coupons, store, payment, upload, st
 api.route('/', securityRoutes);   // IP reputation, webhooks, analytics
 api.route('/', testRoutes);       // 80 unit tests + 3 E2E tests + history
 api.route('/', metaRoutes);       // tráfego pago (campanhas) — só Admin
+api.route('/', mercadoPagoRoutes); // pagamento automático Mercado Pago (Pix, cartão, webhook)
 
 // ==========================================
 // 🚀 APP — CORS, Logger, Mount

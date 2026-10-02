@@ -194,9 +194,12 @@ router.post('/orders', async (c) => {
     body.total = pricing.total;
     body.totalBeforeDiscount = Number((pricing.subtotal + pricing.deliveryFee).toFixed(2));
 
+    // número, status e pagamento são do servidor: o navegador não cria pedido "pago" nem reusa número de outro
+    for (const campo of ['paymentStatus', 'paymentConfirmed', 'paymentConfirmedAt', 'paidAt', 'paidAmount', 'paymentId', 'paymentGateway', 'stockDeducted', 'reviews', 'reviewedAt', 'driver']) delete body[campo];
     const timestamp = Date.now();
-    const id = body.id || `order_${timestamp}`;
-    const orderId = body.orderId || `FH-${timestamp.toString().slice(-6)}`;
+    const id = `order_${timestamp}`;
+    let orderId = `FH-${timestamp.toString().slice(-6)}`;
+    while (await kv.get(`order:${orderId}`) || await kv.get(`archive:${orderId}`)) orderId = `FH-${Math.floor(100000 + Math.random() * 900000)}`;
 
     // Incrementar uso de cupom
     if (body.couponCode) {
@@ -220,7 +223,7 @@ router.post('/orders', async (c) => {
 
     const order = {
       ...body, id, orderId,
-      status: body.status || 'pending',
+      status: 'pending',
       createdAt: new Date().toISOString()
     };
     await kv.set(`order:${orderId}`, order);
@@ -420,26 +423,17 @@ router.put('/orders/:id/assign', requireAdminOrDriver, async (c) => {
 });
 
 // Confirmar pagamento (cliente)
-router.post('/orders/:id/confirm-payment', async (c) => {
+// confirmação MANUAL (Admin conferiu o pagamento): marca pago e o pedido segue na cozinha
+router.post('/orders/:id/confirm-payment', requireAdmin, async (c) => {
   const id = c.req.param('id');
   console.log('💳 [PAYMENT] Confirmação de pagamento para pedido:', id);
   try {
     let order: any = await kv.get(`order:${id}`);
     if (!order) order = await kv.get(`archive:${id}`);
     if (!order) return error(c, 'Pedido não encontrado', 404);
-    const allowedFromStatuses = ['pending', 'pending_payment', 'confirmed'];
-    if (!allowedFromStatuses.includes(order.status)) {
-      console.warn(`⚠️ [PAYMENT] Transição inválida: ${order.status} → completed para pedido ${id}`);
-      return error(c, `Pedido não pode ser atualizado: status atual é "${order.status}"`, 400);
-    }
-    const updated = {
-      ...order, status: 'completed', paymentConfirmed: true,
-      paymentConfirmedAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-      completedAt: new Date().toISOString(),
-    };
-    await kv.set(`archive:${id}`, updated);
-    await kv.del(`order:${id}`);
+    const agora = new Date().toISOString();
+    const updated = { ...order, paymentStatus: 'paid', paymentConfirmed: true, paymentConfirmedAt: agora, paidAt: order.paidAt || agora, updatedAt: agora };
+    await kv.set((await kv.get(`order:${id}`)) ? `order:${id}` : `archive:${id}`, updated);
     return success(c, { order: updated });
   } catch (e) {
     console.error('❌ [PAYMENT] Erro:', e);

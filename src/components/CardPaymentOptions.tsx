@@ -12,6 +12,7 @@ interface CardPaymentOptionsProps {
   onClose: () => void;
   onConfirmOnline: () => void;
   onConfirmMachine: () => void;
+  onPagarOnline?: () => Promise<void>; // Mercado Pago: abre a página de pagamento dele (sem formulário de cartão aqui)
 }
 
 export function CardPaymentOptions({ 
@@ -23,7 +24,8 @@ export function CardPaymentOptions({
   address,
   onClose, 
   onConfirmOnline, 
-  onConfirmMachine 
+  onConfirmMachine,
+  onPagarOnline
 }: CardPaymentOptionsProps) {
   const [view, setView] = useState<'selection' | 'form'>('selection');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -166,7 +168,13 @@ export function CardPaymentOptions({
               <p className="text-gray-600 dark:text-gray-400 text-center mb-4">Como você deseja realizar o pagamento?</p>
               
               <button
-                onClick={() => setView('form')}
+                onClick={async () => {
+                  if (!onPagarOnline) return setView('form');
+                  setIsProcessing(true);
+                  await onPagarOnline();
+                  setIsProcessing(false);
+                }}
+                disabled={isProcessing}
                 className="w-full p-4 border-2 border-blue-100 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/10 hover:border-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-xl transition-all flex items-center gap-4 group"
               >
                 <div className="bg-blue-200 dark:bg-blue-800 p-3 rounded-full group-hover:bg-blue-500 group-hover:text-white transition-colors">
@@ -174,7 +182,7 @@ export function CardPaymentOptions({
                 </div>
                 <div className="text-left">
                   <h3 className="font-bold text-gray-800 dark:text-white">Pagar Online (Crédito/Débito)</h3>
-                  <p className="text-xs text-gray-600 dark:text-gray-400">Pagamento seguro e imediato</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">{onPagarOnline ? (isProcessing ? 'Abrindo o Mercado Pago...' : 'Na página segura do Mercado Pago') : 'Pagamento seguro e imediato'}</p>
                 </div>
               </button>
 

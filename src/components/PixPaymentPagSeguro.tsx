@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Copy, Check, Loader, CheckCircle, X, Clock } from 'lucide-react';
 import * as api from '../utils/api';
+import { useConfig } from '../ConfigContext';
 
 interface PixPaymentPagSeguroProps {
   amount: number;
@@ -27,6 +28,8 @@ export function PixPaymentPagSeguro({
   onPaymentConfirmed,
   onClose
 }: PixPaymentPagSeguroProps) {
+  const { config } = useConfig();
+  const mp = config.paymentGateway === 'mercadopago';
   const [qrCode, setQrCode] = useState('');
   const [copyPaste, setCopyPaste] = useState('');
   const [referenceId, setReferenceId] = useState('');
@@ -49,24 +52,24 @@ export function PixPaymentPagSeguro({
 
     const interval = setInterval(async () => {
       console.log('🔍 Verificando status do pagamento...');
-      const response = await api.checkPaymentStatus(referenceId);
+      const response = mp ? await api.mpStatusPagamento(referenceId) : await api.checkPaymentStatus(referenceId);
       
       if (response.success) {
-        if (response.status === 'paid' && response.orderId) {
-          console.log('✅ Pagamento confirmado! Pedido:', response.orderId);
+        if (response.status === 'paid' && (mp || response.orderId)) {
+          console.log('✅ Pagamento confirmado! Pedido:', response.orderId || referenceId);
           setPaymentStatus('paid');
           clearInterval(interval);
           
           // Chamar callback de confirmação
           setTimeout(() => {
-            onPaymentConfirmed(response.orderId);
+            onPaymentConfirmed(response.orderId || referenceId);
           }, 1500);
         }
       }
     }, 5000); // Verificar a cada 5 segundos
 
     return () => clearInterval(interval);
-  }, [referenceId, paymentStatus, onPaymentConfirmed]);
+  }, [referenceId, paymentStatus, onPaymentConfirmed, mp]);
 
   // Contador de tempo
   useEffect(() => {
@@ -92,7 +95,7 @@ export function PixPaymentPagSeguro({
 
       console.log('💳 Criando pagamento PIX...');
 
-      const response = await api.createPixPayment({
+      const response = mp && orderId ? await api.mpCriarPix(orderId) : await api.createPixPayment({
         amount,
         customerName,
         customerPhone,
@@ -117,11 +120,19 @@ export function PixPaymentPagSeguro({
         return;
       }
 
-      // Modo Automático (PagSeguro API)
+      if (mp && response.status === 'paid') {
+        setPaymentStatus('paid');
+        setIsLoading(false);
+        onPaymentConfirmed(orderId!);
+        return;
+      }
+
+      // Modo Automático (Mercado Pago: referência = número do pedido)
       setQrCode(response.qrCode);
       setCopyPaste(response.copyPaste);
-      setReferenceId(response.referenceId);
+      setReferenceId(mp ? orderId! : response.referenceId);
       setExpiresAt(response.expiresAt);
+      if (response.expiresAt) setTimeLeft(Math.max(60, Math.round((new Date(response.expiresAt).getTime() - Date.now()) / 1000)));
       setIsLoading(false);
 
     } catch (err: any) {

@@ -367,6 +367,18 @@ function AppContent() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const cupomURL = params.get('cupom');
+    // volta do cartão no Mercado Pago: confere o pagamento no servidor e abre o acompanhamento
+    const pedidoPago = params.get('pedido');
+    if (pedidoPago && params.get('pagamento')) {
+      api.mpStatusPagamento(pedidoPago, params.get('payment_id') || undefined).then((r) => {
+        if (r.status === 'paid') toast.success('Pagamento aprovado! Seu pedido já está com a loja. 🎉', { duration: 6000 });
+        else if (r.status === 'rejected' || params.get('pagamento') === 'recusado') toast.error('O pagamento não foi aprovado. Fale com a loja ou faça um novo pedido com outra forma de pagamento.', { duration: 8000 });
+        else toast('Pagamento em análise no Mercado Pago. Avisaremos aqui quando for confirmado.', { duration: 6000 });
+      });
+      setCurrentOrderId(pedidoPago);
+      setIsOrderTrackingOpen(true);
+      window.history.replaceState(null, '', window.location.pathname);
+    }
     const utmSource = params.get('utm_source');
     
     if (cupomURL) {
