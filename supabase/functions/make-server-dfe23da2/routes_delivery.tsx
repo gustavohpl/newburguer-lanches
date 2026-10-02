@@ -12,7 +12,7 @@ import {
   DELIVERY_RATE_LIMIT_MAX, DELIVERY_RATE_LIMIT_WINDOW_MS,
   DRIVER_SESSION_DURATION_MS,
 } from "./server_utils.tsx";
-import { requireAdmin, requireMaster } from "./middleware.tsx";
+import { requireAdmin, requireMaster, requireAdminOrDriver } from "./middleware.tsx";
 import { writeAuditLogWithGeo, checkIpBlacklist } from "./security_helpers.tsx";
 import type { DeliveryConfig, DeliverySector } from "./types.tsx";
 
@@ -248,7 +248,7 @@ router.get('/delivery/available-colors', async (c) => {
 // 🛵 LISTAR ENTREGADORES
 // ==========================================
 
-router.get('/delivery/drivers', async (c) => {
+router.get('/delivery/drivers', requireAdmin, async (c) => {
   try {
     const drivers = await kv.getByPrefix('driver:');
     const now = new Date();
@@ -271,8 +271,12 @@ router.get('/delivery/drivers', async (c) => {
 });
 
 // Histórico do entregador
-router.get('/delivery/history/:phone', async (c) => {
+router.get('/delivery/history/:phone', requireAdminOrDriver, async (c) => {
   const phone = c.req.param('phone');
+  const soDigitos = (t: unknown) => String(t || '').replace(/\D/g, '');
+  if (c.get('authType' as never) === 'driver' && soDigitos(c.get('driverPhone' as never)) !== soDigitos(phone)) {
+    return error(c, 'Entregador só pode ver o próprio histórico', 403);
+  }
   console.log('📋 [DELIVERYMAN] Buscando histórico do entregador:', phone);
   try {
     const activeOrders = await kv.getByPrefix('order:');

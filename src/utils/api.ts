@@ -1474,7 +1474,7 @@ export async function getDeliveryAvailableColors() {
 export async function getDeliveryDrivers() {
     console.log('🛵 [API] Buscando motoristas e ranking...');
     try {
-        const response = await fetchWithRetry(`${API_BASE_URL}/delivery/drivers?t=${Date.now()}`, { headers });
+        const response = await authFetch(`/delivery/drivers?t=${Date.now()}`);
         return response.json();
     } catch (error) {
         console.error('❌ [API] Erro ao buscar motoristas:', error);
@@ -1749,9 +1749,7 @@ export async function forceDriverLogout(phone: string) {
 
 export async function getDeliverymanHistory(phone: string) {
   try {
-    const response = await fetch(`${API_BASE_URL}/delivery/history/${phone.replace(/\D/g, '')}`, {
-      headers,
-    });
+    const response = await authFetch(`/delivery/history/${phone.replace(/\D/g, '')}`);
     return response.json();
   } catch (error) {
     console.error('❌ [API] Erro ao buscar histórico:', error);
