@@ -166,10 +166,12 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       ScrollTrigger.create({ ...st, onUpdate: (s) => { alvo = s.progress * (n - 1); } });
       const tl = gsap.timeline({ scrollTrigger: { ...st, scrub: 0.5 } });
       // posições = fração da ROLAGEM (padding força a duração total da timeline p/ 1.0)
-      tl.to('.ab-dica', { opacity: 0, duration: 0.05 }, 0.02)
-        .fromTo('.ab-final', { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.1, ease: 'power3.out' }, 0.1)
-        .to('.ab-intro', { opacity: 0, y: -50, duration: 0.1, ease: 'power2.in' }, 0.14)
-        .to('.ab-final', { opacity: 0, y: -24, duration: 0.1, ease: 'power2.in' }, 0.88) // sai antes do cardápio entrar
+      tl.to('.ab-dica', { opacity: 0, duration: 0.06 }, 0.02)
+        // logo + infos SOBEM (rolagem natural) e saem pelo topo
+        .fromTo('.ab-intro', { yPercent: 0 }, { yPercent: -165, ease: 'none', duration: 0.52 }, 0)
+        .to('.ab-intro', { opacity: 0, duration: 0.12, ease: 'power1.in' }, 0.4)
+        // "Montado do seu jeito" sobe de baixo quando a logo está ~na metade e assenta perto do fim
+        .fromTo('.ab-final', { yPercent: 130, opacity: 0 }, { yPercent: 0, opacity: 1, ease: 'power2.out', duration: 0.5 }, 0.3)
         .to({}, { duration: 0.01 }, 1);
       gsap.from('.ab-intro > *', { y: 30, opacity: 0, duration: 1, stagger: 0.1, ease: 'power3.out', delay: 0.2 });
     }, secao);
