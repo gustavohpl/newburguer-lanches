@@ -3,7 +3,7 @@ import { motion, AnimatePresence, useMotionValue, useTransform } from 'motion/re
 import { Minus, Plus, X, Check } from 'lucide-react';
 import type { Product } from '../../App';
 import { getVisibleIngredients } from '../../utils/ingredientUtils';
-import { dinheiro, semMovimento } from './primeArte';
+import { dinheiro, leve, original, semMovimento } from './primeArte';
 
 type Adicional = { id: string; name: string; price: number };
 
@@ -84,7 +84,7 @@ export function PrimeSheet({ product, ilustracao, lojaAberta, onClose, onAdd }: 
         <div className="rola" ref={rola} onScroll={(e) => rolagem.set((e.target as HTMLDivElement).scrollTop)}>
           <div className="imagem" ref={foto}>
             <motion.img
-              src={imagem || ilustracao || ''} alt="" className={imagem ? '' : 'ilustra'}
+              src={imagem ? leve(imagem, 1080) : ilustracao || ''} onError={original(imagem)} alt="" className={imagem ? '' : 'ilustra'}
               style={reduzido ? undefined : { y: fotoY, scale: fotoEscala }}
               initial={{ scale: 1.12, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
             />

@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ChevronDown } from 'lucide-react';
-import { semMovimento } from './primeArte';
+import { original, semMovimento } from './primeArte';
 import { SocialIcons } from '../Header';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -19,6 +19,7 @@ function rgb(hex: string) {
 interface Props {
   nome: string;
   logo: string;
+  logoOriginal?: string;
   aberta: boolean;
   horario: string;
   cor: string;
@@ -29,7 +30,7 @@ interface Props {
   aoPronta?: (ok: boolean) => void;
 }
 
-export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, parede, onCardapio, aoPronta }: Props) {
+export function PrimeAbertura({ nome, logo, logoOriginal, aberta, horario, cor, redes, fundo, parede, onCardapio, aoPronta }: Props) {
   const secao = useRef<HTMLElement>(null);
   const tela = useRef<HTMLCanvasElement>(null);
   const [info, setInfo] = useState<{ n: number; corteCel?: [number, number]; tam: number[]; util: number[] }>({ n: 0, tam: [], util: [] });
@@ -191,7 +192,7 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
         <canvas ref={tela} aria-hidden />
         <div className="ab-sombra" />
         <div className="ab-intro">
-          <div className="ab-logo"><i style={{ background: cor }} /><img src={logo} alt={nome} /></div>
+          <div className="ab-logo"><i style={{ background: cor }} /><img src={logo} onError={original(logoOriginal)} alt={nome} /></div>
           <div className="ab-classico">
             {redes.length > 0 && (
               <div className="ab-redes">

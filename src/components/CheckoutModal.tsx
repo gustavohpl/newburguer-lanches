@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { X, MapPin, Home, UtensilsCrossed, Copy, Check, CheckCircle, ChevronLeft, User, LogOut, Clock, RotateCcw, Trash2, Phone, CreditCard, Banknote, Ticket, ReceiptText, Droplets } from 'lucide-react';
 import type { CartItem } from '../App';
 import * as api from '../utils/api';
+import { toast } from 'sonner';
 import { sanitizeName, sanitizePhone, sanitizeText, sanitizeAddress } from '../utils/sanitize';
 import { PixPayment } from './PixPayment';
 import { PixPaymentPagSeguro } from './PixPaymentPagSeguro';
@@ -46,6 +47,13 @@ export function CheckoutModal({
   const [step, setStep] = useState(1);
   const miolo = useRef<HTMLDivElement>(null);
   useEffect(() => { miolo.current?.scrollTo({ top: 0 }); }, [step]);
+  const [pergunta, setPergunta] = useState<{ texto: string; responder: (ok: boolean) => void } | null>(null);
+  // no Prime, avisos e perguntas no visual do app em vez das caixas nativas do navegador
+  const avisar = (texto: string) => (prime ? toast.error(texto) : alert(texto));
+  const perguntar = (texto: string) => (prime
+    ? new Promise<boolean>((responder) => setPergunta({ texto, responder }))
+    : Promise.resolve(window.confirm(texto)));
+  const responder = (ok: boolean) => { pergunta?.responder(ok); setPergunta(null); };
   const [deliveryType, setDeliveryType] = useState<DeliveryType>('delivery');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
   
@@ -326,40 +334,40 @@ export function CheckoutModal({
 
     // Verificar se a loja está aberta
     if (!isStoreOpen) {
-      alert('🕒 Desculpe, a loja está fechada no momento!\n\n⏰ Horário de funcionamento: A partir das 18h30\n\nAguardamos você!');
+      avisar('🕒 Desculpe, a loja está fechada no momento!\n\n⏰ Horário de funcionamento: A partir das 18h30\n\nAguardamos você!');
       return;
     }
     
     // Validações
     if (!name.trim() || !phone.trim()) {
-      alert('Por favor, preencha nome e telefone');
+      avisar('Por favor, preencha nome e telefone');
       return;
     }
 
     if (deliveryType === 'delivery' && !street.trim()) {
-      alert('Por favor, preencha a rua');
+      avisar('Por favor, preencha a rua');
       return;
     }
 
     if (deliveryType === 'delivery' && !houseNumber.trim()) {
-      alert('Por favor, preencha o número');
+      avisar('Por favor, preencha o número');
       return;
     }
 
     if (deliveryType === 'delivery' && !neighborhood.trim()) {
-      alert('Por favor, preencha o bairro/setor');
+      avisar('Por favor, preencha o bairro/setor');
       return;
     }
 
     // 🆕 Validação de setor (obrigatório quando há setores disponíveis)
     if (deliveryType === 'delivery' && availableSectors.length > 0 && !deliverySector) {
-      alert('📍 Por favor, selecione o setor de entrega');
+      avisar('📍 Por favor, selecione o setor de entrega');
       return;
     }
 
     // 🆕 Validação de tipo de cartão
     if (!splitPayment && paymentMethod === 'card' && !cardType) {
-      alert('Por favor, selecione se o pagamento será no Crédito ou Débito');
+      avisar('Por favor, selecione se o pagamento será no Crédito ou Débito');
       return;
     }
 
@@ -369,11 +377,11 @@ export function CheckoutModal({
       const amt1 = parseFloat(splitAmount1) || 0;
       const amt2 = parseFloat((total - amt1).toFixed(2));
       if (amt1 <= 0 || amt2 <= 0) {
-        alert('Os valores do pagamento misto devem ser maiores que zero');
+        avisar('Os valores do pagamento misto devem ser maiores que zero');
         return;
       }
       if (splitMethod1 === splitMethod2) {
-        alert('Selecione duas formas de pagamento diferentes');
+        avisar('Selecione duas formas de pagamento diferentes');
         return;
       }
     }
@@ -441,7 +449,7 @@ export function CheckoutModal({
       
       if (!response.success) {
         console.error('❌ [CHECKOUT] Erro ao criar pedido:', response.error);
-        alert('Erro ao criar pedido. Tente novamente.');
+        avisar('Erro ao criar pedido. Tente novamente.');
         setIsSubmitting(false);
         return;
       }
@@ -498,7 +506,7 @@ export function CheckoutModal({
           console.log('💳 [CHECKOUT] Cartão Manual - Perguntar antes de enviar WhatsApp');
           
           // 🆕 PERGUNTAR ANTES DE ENVIAR WHATSAPP
-          const shouldSendWhatsApp = window.confirm(
+          const shouldSendWhatsApp = await perguntar(
             '✅ Pedido confirmado com sucesso!\n\n' +
             '💳 Pagamento: Cartão na Entrega\n\n' +
             'Deseja enviar os detalhes do pedido para o WhatsApp da loja?'
@@ -518,7 +526,7 @@ export function CheckoutModal({
         console.log('💵 [CHECKOUT] Dinheiro - Perguntar antes de enviar WhatsApp');
         
         // 🆕 PERGUNTAR ANTES DE ENVIAR WHATSAPP
-        const shouldSendWhatsApp = window.confirm(
+        const shouldSendWhatsApp = await perguntar(
           '✅ Pedido confirmado com sucesso!\n\n' +
           '💵 Pagamento: Dinheiro na Entrega\n\n' +
           'Deseja enviar os detalhes do pedido para o WhatsApp da loja?'
@@ -534,7 +542,7 @@ export function CheckoutModal({
 
     } catch (error) {
       console.error('❌ [CHECKOUT] Erro ao processar pedido:', error);
-      alert('Erro ao processar pedido. Tente novamente.');
+      avisar('Erro ao processar pedido. Tente novamente.');
       setIsSubmitting(false);
     }
   };
@@ -641,7 +649,7 @@ export function CheckoutModal({
     
     if (!orderId) {
       console.error('❌ [WHATSAPP] Erro: orderId está vazio!');
-      alert('Erro: ID do pedido não encontrado. Tente novamente.');
+      avisar('Erro: ID do pedido não encontrado. Tente novamente.');
       return;
     }
     
@@ -771,7 +779,7 @@ export function CheckoutModal({
       console.log('✅ [WHATSAPP] WhatsApp aberto com sucesso!');
     } catch (error) {
       console.error('❌ [WHATSAPP] Erro ao abrir WhatsApp:', error);
-      alert('Erro ao abrir WhatsApp. Por favor, tente novamente.');
+      avisar('Erro ao abrir WhatsApp. Por favor, tente novamente.');
     }
 
     // Salvar dados básicos no localStorage para auto-preenchimento futuro (backup)
@@ -813,7 +821,7 @@ export function CheckoutModal({
     // enviar a mensagem de confirmação do pedido
     if (!currentOrderId) {
       console.error('❌ [PIX] Erro: currentOrderId está vazio!');
-      alert('Erro: ID do pedido não encontrado. Por favor, entre em contato conosco.');
+      avisar('Erro: ID do pedido não encontrado. Por favor, entre em contato conosco.');
       return;
     }
     
@@ -1792,6 +1800,18 @@ export function CheckoutModal({
           </div>
         </div>
       </div>
+
+      {pergunta && (
+        <div className="ck-pergunta">
+          <div role="alertdialog" aria-modal="true">
+            <p>{pergunta.texto}</p>
+            <div className="acoes">
+              <button onClick={() => responder(false)}>Agora não</button>
+              <button className="ok" onClick={() => responder(true)}>Enviar no WhatsApp</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

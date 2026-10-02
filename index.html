@@ -14,6 +14,17 @@
     <meta name="description" content="NewBurguer Lanches - Delivery" />
     <meta name="google" content="notranslate" />
     <title>NewBurguer Lanches</title>
+    <style>
+      html[data-abre="escuro"], html[data-abre="escuro"] body, html[data-abre="escuro"] .carregando-inicial { background: #000; }
+      html[data-abre="escuro"] .carregando-inicial > div { border-color: #fff; }
+    </style>
+    <script>
+      // Prime e app instalado abrem no preto da abertura, sem piscar branco antes do JS
+      try {
+        var d = new URLSearchParams(location.search).get('design') || JSON.parse(localStorage.getItem('faroeste_system_config') || '{}').designStyle;
+        if (d === 'prime' || matchMedia('(display-mode: standalone)').matches) document.documentElement.dataset.abre = 'escuro';
+      } catch (e) {}
+    </script>
     <!-- Fonte display do tema 3D (Playfair Display SC) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

@@ -396,3 +396,14 @@
   font-size: 13px; font-weight: 800; white-space: nowrap; }
 .prime .pr-rodape .pr-instalar { margin-top: 14px; font-size: 14px; padding: 11px 18px; }
 @media (max-width: 420px) { .prime .pr-topo .pr-instalar { padding: 8px 10px; font-size: 0; gap: 0; } }
+.ck-pergunta { position: fixed; inset: 0; z-index: 90; display: grid; place-items: end center; background: rgba(12,12,13,.48); backdrop-filter: blur(3px); }
+.ck-pergunta > div { width: 100%; background: var(--card); border-radius: 26px 26px 0 0; padding: 26px 20px max(20px, env(safe-area-inset-bottom)); animation: ck-sobe .45s var(--suave) both; }
+.ck-pergunta p { margin: 0 0 22px; white-space: pre-line; font-size: 16px; line-height: 1.5; color: var(--ink); }
+.ck-pergunta .acoes { display: grid; grid-template-columns: 1fr 1.5fr; gap: 10px; }
+.ck-pergunta button { min-height: 52px; border-radius: 16px; font-weight: 800; background: var(--chip); color: var(--ink); }
+.ck-pergunta button.ok { background: var(--ac); color: var(--ac-ink); }
+@media (min-width: 860px) {
+  .ck-pergunta { place-items: center; }
+  .ck-pergunta > div { width: 440px; border-radius: 26px; animation: ck-surge .3s var(--suave) both; }
+}
+.ck-pergunta p::first-line { font-size: 19px; font-weight: 800; }

@@ -13,7 +13,7 @@ import { useFranchise } from '../../FranchiseContext';
 import { SocialBrandColors } from '../Header';
 import { PrimeSheet } from './PrimeSheet';
 import { PrimeAbertura } from './PrimeAbertura';
-import { ARTE, ilustracaoDaCategoria, dinheiro, legivelSobre, misturarHex, semMovimento } from './primeArte';
+import { ARTE, ilustracaoDaCategoria, dinheiro, legivelSobre, leve, misturarHex, original, semMovimento } from './primeArte';
 import './prime.css';
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
@@ -277,7 +277,7 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
           </span>
         </div>
         <div className="foto">
-          <ImagemComBrilho src={foto || ilustracaoDo(p)} ilustra={!foto} />
+          <ImagemComBrilho src={foto || ilustracaoDo(p)} ilustra={!foto} w={480} />
           {off ? <span className="pr-tag">Indisponível</span> : isStoreOpen && <span className="pr-mais" aria-hidden><Plus size={20} strokeWidth={3} /></span>}
         </div>
       </button>
@@ -288,7 +288,7 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
     <div className="prime" ref={raiz} style={{ ['--ac' as any]: cor, ['--ac-ink' as any]: legivelSobre(cor) }}>
       <div className={`pr-topo ${topo ? 'visivel' : ''}`} aria-hidden={!topo}>
         <div className="pr-topo-in">
-          {config.logoUrl && <img src={config.logoUrl} alt="" />}
+          {config.logoUrl && <img src={leve(config.logoUrl, 96)} onError={original(config.logoUrl)} alt="" />}
           <b>{nome}</b>
           <span className={`pr-selo ${isStoreOpen ? 'aberto' : ''}`} style={{ marginTop: 0, marginLeft: 'auto', background: 'var(--chip)', color: 'var(--ink)' }}>
             <i />{isStoreOpen ? 'Aberto' : 'Fechado'}
@@ -300,14 +300,14 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
       {/* sem quadros ou com capa própria no Master, vale a capa em camadas */}
       {!capaPropria && abertura !== false && (
         <div ref={abertura ? capa : undefined}>
-          <PrimeAbertura nome={titulo} logo={config.logoUrl || logoPadrao} aberta={isStoreOpen} horario={horario} cor={cor} redes={redes} fundo="#000000" parede={verdeEscuro} aoPronta={setAbertura} onCardapio={() => secoes[0] && irPara(secoes[0].id)} />
+          <PrimeAbertura nome={titulo} logo={leve(config.logoUrl, 828) || logoPadrao} logoOriginal={config.logoUrl} aberta={isStoreOpen} horario={horario} cor={cor} redes={redes} fundo="#000000" parede={verdeEscuro} aoPronta={setAbertura} onCardapio={() => secoes[0] && irPara(secoes[0].id)} />
           <div className="pr-degrade" style={{ ['--fundo-site' as string]: '#000000' } as React.CSSProperties} />
         </div>
       )}
       {(capaPropria || abertura === false) && (
       <header className="pr-capa" ref={capa}>
         {capaPropria ? (
-          <div className="camada fundo"><img src={capaPropria} alt="" /></div>
+          <div className="camada fundo"><img src={leve(capaPropria, 1080)} onError={original(capaPropria)} alt="" /></div>
         ) : (
           <>
             <div className="camada fundo"><img src={celular ? ARTE.capaCelular : ARTE.capa} alt="" /></div>
@@ -318,7 +318,7 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
         )}
         <div className="vinheta" />
         <div className="pr-capa-texto">
-          {config.logoUrl && <img className="pr-logo" src={config.logoUrl} alt={nome} />}
+          {config.logoUrl && <img className="pr-logo" src={leve(config.logoUrl, 480)} onError={original(config.logoUrl)} alt={nome} />}
           <h1 className="pr-titulo">{titulo}</h1>
           {frase && <p className="pr-subtitulo">{frase}</p>}
           <span className={`pr-selo ${isStoreOpen ? 'aberto' : ''}`}><i />{isStoreOpen ? 'Aberto agora' : 'Fechado agora'}{horario ? ` · ${horario}` : ''}</span>
@@ -382,7 +382,7 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
                     const destino = b.alvo ? secoes.find((s) => b.alvo!.test(`${s.id} ${s.titulo}`)) : null;
                     const conteudo = (
                       <>
-                        <img src={b.img} alt={b.titulo || `Promoção ${i + 1}`} loading={i ? 'lazy' : 'eager'} />
+                        <img src={leve(b.img, 1080)} onError={original(b.img)} alt={b.titulo || `Promoção ${i + 1}`} loading={i ? 'lazy' : 'eager'} />
                         {b.titulo && <div className="txt"><b>{b.titulo}</b><span>{b.acao} →</span></div>}
                       </>
                     );
@@ -405,7 +405,7 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
                     const foto = fotoDe(p);
                     return (
                       <button key={p.id} className="pr-dcard pr-revela" onClick={() => setAberto(p)} onPointerMove={inclinar} onPointerLeave={soltar}>
-                        <div className="foto"><ImagemComBrilho src={foto || ilustracaoDo(p)} ilustra={!foto} /></div>
+                        <div className="foto"><ImagemComBrilho src={foto || ilustracaoDo(p)} ilustra={!foto} w={828} /></div>
                         <div className="corpo"><b>{p.name}</b><span>{dinheiro(p.price)}</span></div>
                       </button>
                     );
@@ -430,7 +430,7 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
       <footer className="pr-rodape" style={{ ['--fundo-site' as string]: verdeEscuro } as React.CSSProperties}>
         <div>
           {typeof taxa === 'number' && <span className="taxa"><Truck size={20} />Taxa de Entrega: <em>{dinheiro(taxa)}</em></span>}
-          <img className="logo" src={config.logoUrl || logoPadrao} alt={nome} />
+          <img className="logo" src={leve(config.logoUrl, 256) || logoPadrao} onError={original(config.logoUrl)} alt={nome} />
           <b>{nome}</b>
           {endereco && <span className="linha"><MapPin size={15} />{endereco}</span>}
           {horario && <span className="linha"><Clock size={15} />{horario}</span>}
@@ -480,13 +480,14 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
 }
 
 /** Imagem com brilho de carregamento (skeleton) e entrada suave. */
-function ImagemComBrilho({ src, ilustra }: { src: string; ilustra?: boolean }) {
+function ImagemComBrilho({ src, ilustra, w }: { src: string; ilustra?: boolean; w: 480 | 828 }) {
   const [ok, setOk] = useState(false);
   return (
     <>
       {!ok && <span className="pr-carrega" aria-hidden />}
-      <img src={src} alt="" loading="lazy" decoding="async" className={ilustra ? 'ilustra' : ''}
-        style={{ opacity: ok ? 1 : 0 }} onLoad={() => setOk(true)} onError={() => setOk(true)} />
+      <img src={leve(src, w)} alt="" loading="lazy" decoding="async" className={ilustra ? 'ilustra' : ''}
+        style={{ opacity: ok ? 1 : 0 }} onLoad={() => setOk(true)}
+        onError={(e) => { if (!e.currentTarget.dataset.orig && leve(src, w) !== src) original(src)(e); else setOk(true); }} />
     </>
   );
 }

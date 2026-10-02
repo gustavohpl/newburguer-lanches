@@ -24,6 +24,18 @@ export function ilustracaoDaCategoria(...nomes: Array<string | undefined>): stri
   return null;
 }
 
+// logo/fotos do Supabase são PNG de até 3 MB: no ar a Vercel entrega webp do tamanho da tela (local = original)
+export function leve(url: string | null | undefined, w: 96 | 256 | 480 | 828 | 1080) {
+  if (!url || !/^https:\/\/[^/]+\.supabase\.co\/storage\//.test(url) || /^(localhost|127\.)/.test(location.hostname)) return url || '';
+  return `/_vercel/image?url=${encodeURIComponent(url)}&w=${w}&q=78`;
+}
+
+// se a otimização falhar, cai no arquivo original (uma vez só)
+export const original = (url: string | null | undefined) => (e: { currentTarget: HTMLImageElement }) => {
+  const im = e.currentTarget;
+  if (url && !im.dataset.orig) { im.dataset.orig = '1'; im.src = url; }
+};
+
 export const dinheiro = (v: number) => `R$ ${v.toFixed(2).replace('.', ',')}`;
 
 export function legivelSobre(hex: string) {

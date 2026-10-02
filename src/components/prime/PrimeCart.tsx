@@ -4,7 +4,7 @@ import { X, Minus, Plus, Trash2, ShoppingBag, ChevronRight } from 'lucide-react'
 import type { CartItem } from '../../App';
 import { getCategoryEmoji } from '../../utils/api';
 import { useConfig } from '../../ConfigContext';
-import { dinheiro, legivelSobre, semMovimento } from './primeArte';
+import { dinheiro, leve, legivelSobre, original, semMovimento } from './primeArte';
 import './prime.css';
 
 interface Props {
@@ -67,7 +67,7 @@ export function PrimeCart({ isOpen, onClose, items, onUpdateQuantity, onRemove, 
                   <motion.div key={item.id} className="pc-item" layout
                     initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0 }} transition={mola}>
                     <div className="pc-foto">
-                      {item.imageUrl ? <img src={item.imageUrl} alt="" /> : <span>{getCategoryEmoji(item.category) || '🍔'}</span>}
+                      {item.imageUrl ? <img src={leve(item.imageUrl, 256)} onError={original(item.imageUrl)} alt="" /> : <span>{getCategoryEmoji(item.category) || '🍔'}</span>}
                     </div>
                     <div className="pc-info">
                       <h3>{item.name}</h3>
