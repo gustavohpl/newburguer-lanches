@@ -43,6 +43,7 @@ export function ReviewModal({ isOpen, onClose, order, onReviewSubmitted }: Revie
 
     try {
       const reviews = order.items.map((item: any) => ({
+        productId: item.id || item.productId || item.name,
         productName: item.name,
         rating: ratings[item.name],
         comment: sanitizeText(comments[item.name] || '', 500)

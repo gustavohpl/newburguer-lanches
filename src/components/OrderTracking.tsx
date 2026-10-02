@@ -417,7 +417,7 @@ export function OrderTracking({ isOpen, onClose, orderId }: OrderTrackingProps) 
             <div className="mt-6">
               <button
                 onClick={() => setIsReviewModalOpen(true)}
-                className="w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 animate-bounce"
+                className="w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2"
               >
                 <Star className="w-5 h-5 fill-current" />
                 Avaliar Pedido

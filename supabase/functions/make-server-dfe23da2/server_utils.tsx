@@ -81,7 +81,7 @@ export function sanitizeReviews(reviews: unknown[]): Array<{ productId: string; 
     productName: typeof r.productName === 'string' ? sanitizeText(r.productName, 200) : '',
     rating: typeof r.rating === 'number' ? Math.max(1, Math.min(5, Math.round(r.rating))) : 5,
     comment: typeof r.comment === 'string' ? sanitizeText(r.comment, 500) : '',
-  })).filter(r => r.productId);
+  })).filter(r => r.productId || r.productName);
 }
 
 // ---- Helpers ----
