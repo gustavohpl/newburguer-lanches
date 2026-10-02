@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { X, MapPin, Home, UtensilsCrossed, Copy, Check, CheckCircle, ChevronLeft, User, LogOut, Clock, RotateCcw, Trash2, Phone, CreditCard, Banknote, Ticket, ReceiptText, Droplets } from 'lucide-react';
 import type { CartItem } from '../App';
 import * as api from '../utils/api';
@@ -23,12 +23,14 @@ interface CheckoutModalProps {
   isStoreOpen: boolean;
   deliveryFee: number;
   allProducts?: Array<{ id: string; recipe?: any; promoItems?: any[] }>;
+  prime?: boolean;
 }
 
 type DeliveryType = 'delivery' | 'pickup' | 'dine-in';
 type PaymentMethod = 'pix' | 'card' | 'cash';
 
 export function CheckoutModal({
+  prime,
   isOpen,
   onClose,
   items,
@@ -42,6 +44,8 @@ export function CheckoutModal({
   const { config } = useConfig();
   const { unitOverrides } = useFranchise();
   const [step, setStep] = useState(1);
+  const miolo = useRef<HTMLDivElement>(null);
+  useEffect(() => { miolo.current?.scrollTo({ top: 0 }); }, [step]);
   const [deliveryType, setDeliveryType] = useState<DeliveryType>('delivery');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
   
@@ -916,20 +920,22 @@ export function CheckoutModal({
 
       {/* Overlay */}
       <div
-        className="fixed inset-0 bg-black bg-opacity-50 z-40"
+        className={prime ? 'pr-veu' : 'fixed inset-0 bg-black bg-opacity-50 z-40'}
         onClick={handleClose}
       />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-start sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
-        <div className="bg-white dark:bg-zinc-900 rounded-none sm:rounded-lg shadow-2xl w-full sm:max-w-2xl min-h-screen sm:min-h-0 sm:max-h-[90vh] overflow-y-auto">
+      <div className={prime ? 'ck-palco' : 'fixed inset-0 z-50 flex items-start sm:items-center justify-center p-0 sm:p-4 overflow-y-auto'}>
+        <div className={prime ? 'pr-folha ck' : 'bg-white dark:bg-zinc-900 rounded-none sm:rounded-lg shadow-2xl w-full sm:max-w-2xl min-h-screen sm:min-h-0 sm:max-h-[90vh] overflow-y-auto'}
+          {...(prime ? { role: 'dialog', 'aria-modal': true, 'aria-label': 'Finalizar pedido' } : {})}>
+          {prime && <span className="pegador" aria-hidden />}
           {/* Header */}
-          <div className="bg-amber-600 text-white p-4 flex items-center justify-between sticky top-0">
+          <div className={prime ? 'ck-cab' : 'bg-amber-600 text-white p-4 flex items-center justify-between sticky top-0'}>
             <div className="flex items-center gap-2">
               {step > 1 && (
                 <button
                   onClick={() => setStep(step - 1)}
-                  className="hover:bg-amber-700 p-2 rounded transition-colors flex items-center gap-1"
+                  className={prime ? 'ck-voltar' : 'hover:bg-amber-700 p-2 rounded transition-colors flex items-center gap-1'}
                   title="Voltar"
                 >
                   <ChevronLeft className="w-5 h-5" />
@@ -940,15 +946,25 @@ export function CheckoutModal({
             </div>
             <button
               onClick={handleClose}
-              className="hover:bg-amber-700 p-1 rounded transition-colors"
+              className={prime ? 'pc-x' : 'hover:bg-amber-700 p-1 rounded transition-colors'}
+              aria-label="Fechar"
             >
               <X className="w-6 h-6" />
             </button>
           </div>
 
           {/* Content */}
-          <div className="px-4 py-5 sm:p-6">
+          <div ref={miolo} className={prime ? 'ck-miolo rola' : 'px-4 py-5 sm:p-6'}>
             {/* Progress Steps */}
+            {prime ? (
+              <ol className="ck-passos">
+                {['Seus dados', 'Entrega', 'Pagamento'].map((t, i) => (
+                  <li key={t} className={step > i + 1 ? 'feito' : step === i + 1 ? 'atual' : ''}>
+                    <i>{step > i + 1 ? <Check className="w-3.5 h-3.5" /> : i + 1}</i>{t}
+                  </li>
+                ))}
+              </ol>
+            ) : (
             <div className="flex items-center justify-center mb-8">
               <div className="flex items-center gap-2">
                 <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-amber-600 text-white' : 'bg-gray-300 dark:bg-zinc-700'}`}>
@@ -964,6 +980,7 @@ export function CheckoutModal({
                 </div>
               </div>
             </div>
+            )}
 
             {/* Step 1: Customer Info */}
             {step === 1 && (

@@ -132,7 +132,7 @@ export function OrderConfirmedModal({
             <div className="flex justify-between items-center pt-2 border-t border-gray-200 dark:border-zinc-700">
               <span className="text-gray-700 dark:text-gray-300 font-medium">Total</span>
               <span className="text-xl sm:text-2xl font-bold text-green-600 dark:text-green-500">
-                R$ {total.toFixed(2)}
+                R$ {total.toFixed(2).replace('.', ',')}
               </span>
             </div>
           </div>

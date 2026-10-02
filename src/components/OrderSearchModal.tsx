@@ -387,7 +387,7 @@ export function OrderSearchModal({ isOpen, onClose, onOrderFound }: OrderSearchM
                               )}
                             </>
                           )}
-                          <span className="font-bold text-green-600 dark:text-green-500">R$ {order.total.toFixed(2)}</span>
+                          <span className="font-bold text-green-600 dark:text-green-500">R$ {order.total.toFixed(2).replace('.', ',')}</span>
                         </div>
                      </div>
                    </div>

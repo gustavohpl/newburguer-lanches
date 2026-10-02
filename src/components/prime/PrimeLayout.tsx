@@ -4,7 +4,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SplitText } from 'gsap/SplitText';
 import Lenis from 'lenis';
-import { Search, ShoppingBag, MapPin, Clock, Phone, ChevronRight, Bike, Plus, Instagram, MessageCircle, Truck } from 'lucide-react';
+import { Search, ShoppingBag, MapPin, Clock, Phone, ChevronRight, Bike, Plus, Instagram, MessageCircle, Truck, ClipboardList } from 'lucide-react';
 import logoPadrao from 'figma:asset/2217307d23df7779a3757aa35c01d81549336b8b.png';
 import type { Product } from '../../App';
 import { useConfig } from '../../ConfigContext';
@@ -23,13 +23,14 @@ interface PrimeLayoutProps {
   cartCount: number;
   onOpenCart: () => void;
   isStoreOpen: boolean;
+  onMeusPedidos?: () => void;
 }
 
 type Secao = { id: string; titulo: string; ilustracao: string | null; emoji?: string; itens: Product[] };
 
 const fotoDe = (p: Product) => p.imageUrl || p.image || null;
 
-export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isStoreOpen }: PrimeLayoutProps) {
+export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isStoreOpen, onMeusPedidos }: PrimeLayoutProps) {
   const { config } = useConfig();
   const cfg = config as any;
   const { unitOverrides } = useFranchise();
@@ -434,6 +435,12 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
           <small>© {new Date().getFullYear()} {nome} · Todos os direitos reservados</small>
         </div>
       </footer>
+
+      {onMeusPedidos && (
+        <button className={`pr-meus ${cartCount > 0 ? 'sobe' : ''}`} onClick={onMeusPedidos} aria-label="Meus pedidos" title="Meus pedidos">
+          <ClipboardList size={24} />
+        </button>
+      )}
 
       <AnimatePresence>
         {cartCount > 0 && (

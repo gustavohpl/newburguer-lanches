@@ -3,7 +3,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Minus, Plus, Trash2, ShoppingBag, ChevronRight } from 'lucide-react';
 import type { CartItem } from '../../App';
 import { getCategoryEmoji } from '../../utils/api';
-import { dinheiro, semMovimento } from './primeArte';
+import { useConfig } from '../../ConfigContext';
+import { dinheiro, legivelSobre, semMovimento } from './primeArte';
+import './prime.css';
 
 interface Props {
   isOpen: boolean;
@@ -19,6 +21,8 @@ const mola = { type: 'spring' as const, stiffness: 380, damping: 34, mass: 0.9 }
 
 export function PrimeCart({ isOpen, onClose, items, onUpdateQuantity, onRemove, totalPrice, onCheckout }: Props) {
   const reduzido = semMovimento();
+  const { config } = useConfig();
+  const cor = config.themeColor || '#04af06';
   const desktop = typeof window !== 'undefined' && window.innerWidth >= 860;
 
   useEffect(() => {
@@ -36,7 +40,7 @@ export function PrimeCart({ isOpen, onClose, items, onUpdateQuantity, onRemove, 
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="prime-mod">
+        <div className="prime-mod" style={{ ['--ac' as string]: cor, ['--ac-ink' as string]: legivelSobre(cor) } as React.CSSProperties}>
           <motion.div className="pr-veu" onClick={onClose}
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.25 }} />
           <motion.div className="pr-folha pc" role="dialog" aria-modal="true" aria-label="Sua sacola" data-lenis-prevent

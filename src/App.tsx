@@ -7,6 +7,7 @@ import { HomePage } from './components/HomePage';
 import { Footer } from './components/Footer';
 import { Cart } from './components/Cart';
 import { PrimeCart } from './components/prime/PrimeCart';
+import { PrimeEscopo } from './components/prime/PrimeEscopo';
 import { MiniCart } from './components/MiniCart';
 import { CheckoutModal } from './components/CheckoutModal';
 import { OrderTracking } from './components/OrderTracking';
@@ -834,6 +835,7 @@ function AppContent() {
                   cartCount={cartItems.reduce((s, i) => s + (i.quantity || 1), 0)}
                   onOpenCart={() => setIsCartOpen(true)}
                   isStoreOpen={effectiveIsOpen}
+                  onMeusPedidos={() => setIsOrderSearchOpen(true)}
                 />
               ) : (
               <>
@@ -889,85 +891,103 @@ function AppContent() {
               </>
               )}
 
-              <Cart
-                isOpen={isCartOpen}
-                onClose={() => setIsCartOpen(false)}
-                items={cartItems}
-                onUpdateQuantity={updateQuantity}
-                onRemove={removeFromCart}
-                totalPrice={getTotalPrice()}
-                onCheckout={handleCheckout}
-              />
-
-              <MiniCart
-                items={cartItems}
-                totalPrice={getTotalPrice()}
-                onOpenFullCart={() => setIsCartOpen(true)}
-                onRemove={removeFromCart}
-                onUpdateQuantity={updateQuantity}
-              />
+              {isPrime ? (
+                <PrimeCart
+                  isOpen={isCartOpen}
+                  onClose={() => setIsCartOpen(false)}
+                  items={cartItems}
+                  onUpdateQuantity={updateQuantity}
+                  onRemove={removeFromCart}
+                  totalPrice={getTotalPrice()}
+                  onCheckout={handleCheckout}
+                />
+              ) : (
+                <>
+                  <Cart
+                    isOpen={isCartOpen}
+                    onClose={() => setIsCartOpen(false)}
+                    items={cartItems}
+                    onUpdateQuantity={updateQuantity}
+                    onRemove={removeFromCart}
+                    totalPrice={getTotalPrice()}
+                    onCheckout={handleCheckout}
+                  />
+                  <MiniCart
+                    items={cartItems}
+                    totalPrice={getTotalPrice()}
+                    onOpenFullCart={() => setIsCartOpen(true)}
+                    onRemove={removeFromCart}
+                    onUpdateQuantity={updateQuantity}
+                  />
+                </>
+              )}
 
               {/* 📋 Botão flutuante — Meus Pedidos (canto inferior esquerdo) */}
-              <button
-                onClick={() => setIsOrderSearchOpen(true)}
-                className="fixed bottom-6 left-4 z-40 w-16 h-16 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center text-white"
-                style={{ 
-                  background: `linear-gradient(135deg, ${config.themeColor || '#d97706'}, ${config.themeColor || '#d97706'}cc)`,
-                  boxShadow: `0 4px 20px ${config.themeColor || '#d97706'}66`
-                }}
-                title="Meus Pedidos"
-              >
-                <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-                </svg>
-              </button>
+              {!isPrime && (
+                <button
+                  onClick={() => setIsOrderSearchOpen(true)}
+                  className="fixed bottom-6 left-4 z-40 w-16 h-16 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all flex items-center justify-center text-white"
+                  style={{ 
+                    background: `linear-gradient(135deg, ${config.themeColor || '#d97706'}, ${config.themeColor || '#d97706'}cc)`,
+                    boxShadow: `0 4px 20px ${config.themeColor || '#d97706'}66`
+                  }}
+                  title="Meus Pedidos"
+                >
+                  <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                  </svg>
+                </button>
+              )}
 
-              <CheckoutModal
-                isOpen={isCheckoutOpen}
-                onClose={() => setIsCheckoutOpen(false)}
-                items={cartItems}
-                totalPrice={getTotalPrice()}
-                onOrderComplete={handleOrderComplete}
-                onOrderCreated={handleOrderCreated}
-                isStoreOpen={effectiveIsOpen}
-                deliveryFee={effectiveDeliveryFee}
-                allProducts={products}
-              />
+              <PrimeEscopo ativo={isPrime}>
+                <CheckoutModal
+                  prime={isPrime}
+                  isOpen={isCheckoutOpen}
+                  onClose={() => setIsCheckoutOpen(false)}
+                  items={cartItems}
+                  totalPrice={getTotalPrice()}
+                  onOrderComplete={handleOrderComplete}
+                  onOrderCreated={handleOrderCreated}
+                  isStoreOpen={effectiveIsOpen}
+                  deliveryFee={effectiveDeliveryFee}
+                  allProducts={products}
+                />
 
-              <OrderSearchModal
-                isOpen={isOrderSearchOpen}
-                onClose={() => setIsOrderSearchOpen(false)}
-                onOrderFound={(orderId) => {
-                  setCurrentOrderId(orderId);
-                  setIsOrderTrackingOpen(true);
-                }}
-              />
-
-              <OrderTracking
-                isOpen={isOrderTrackingOpen}
-                onClose={() => setIsOrderTrackingOpen(false)}
-                orderId={currentOrderId}
-              />
-              
-              {/* Modal de Pedido Confirmado - Aparece quando admin confirma o pagamento */}
-              {showSuccessModal && completedOrderData && (
-                <OrderConfirmedModal
-                  orderId={completedOrderData.orderId}
-                  customerName={completedOrderData.customerName || 'Cliente'}
-                  total={completedOrderData.total}
-                  estimatedTime={45} // Tempo padrão, pode ser dinâmico no futuro
-                  deliveryType={completedOrderData.deliveryType || 'delivery'}
-                  address={completedOrderData.address}
-                  enableTracking={config.features?.orderTracking !== false}
-                  onClose={() => {
-                    console.log('🚪 [MODAL] Usuário fechou o modal manualmente para pedido:', completedOrderData.orderId);
-                    // Marcar que o usuário fechou manualmente para não reabrir
-                    localStorage.setItem(`modal_shown_${completedOrderData.orderId}_closed`, 'true');
-                    setShowSuccessModal(false);
-                    setCompletedOrderData(null);
+                <OrderSearchModal
+                  isOpen={isOrderSearchOpen}
+                  onClose={() => setIsOrderSearchOpen(false)}
+                  onOrderFound={(orderId) => {
+                    setCurrentOrderId(orderId);
+                    setIsOrderTrackingOpen(true);
                   }}
                 />
-              )}
+
+                <OrderTracking
+                  isOpen={isOrderTrackingOpen}
+                  onClose={() => setIsOrderTrackingOpen(false)}
+                  orderId={currentOrderId}
+                />
+              
+                {/* Modal de Pedido Confirmado - Aparece quando admin confirma o pagamento */}
+                {showSuccessModal && completedOrderData && (
+                  <OrderConfirmedModal
+                    orderId={completedOrderData.orderId}
+                    customerName={completedOrderData.customerName || 'Cliente'}
+                    total={completedOrderData.total}
+                    estimatedTime={45} // Tempo padrão, pode ser dinâmico no futuro
+                    deliveryType={completedOrderData.deliveryType || 'delivery'}
+                    address={completedOrderData.address}
+                    enableTracking={config.features?.orderTracking !== false}
+                    onClose={() => {
+                      console.log('🚪 [MODAL] Usuário fechou o modal manualmente para pedido:', completedOrderData.orderId);
+                      // Marcar que o usuário fechou manualmente para não reabrir
+                      localStorage.setItem(`modal_shown_${completedOrderData.orderId}_closed`, 'true');
+                      setShowSuccessModal(false);
+                      setCompletedOrderData(null);
+                    }}
+                  />
+                )}
+              </PrimeEscopo>
             </div>
           )}
         </div>

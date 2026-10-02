@@ -279,10 +279,10 @@ export function OrderTracking({ isOpen, onClose, orderId }: OrderTrackingProps) 
               )}
               {order.paymentMethod === 'cash' && order.changeFor && (
                 <p className="text-gray-700 dark:text-gray-300">
-                  <span className="font-medium">Troco:</span> R$ {order.changeFor.toFixed(2)}
+                  <span className="font-medium">Troco:</span> R$ {order.changeFor.toFixed(2).replace('.', ',')}
                 </p>
               )}
-              <p className="text-gray-700 dark:text-gray-300"><span className="font-medium">Total:</span> R$ {order.total.toFixed(2)}</p>
+              <p className="text-gray-700 dark:text-gray-300"><span className="font-medium">Total:</span> R$ {order.total.toFixed(2).replace('.', ',')}</p>
             </div>
           </div>
 
@@ -383,14 +383,14 @@ export function OrderTracking({ isOpen, onClose, orderId }: OrderTrackingProps) 
                     {item.quantity}x {item.name}
                   </span>
                   <span className="text-gray-800 dark:text-gray-100 font-medium">
-                    R$ {(item.price * item.quantity).toFixed(2)}
+                    R$ {(item.price * item.quantity).toFixed(2).replace('.', ',')}
                   </span>
                 </div>
               ))}
               <div className="border-t border-gray-300 dark:border-zinc-700 pt-2 mt-2">
                 <div className="flex justify-between font-semibold">
                   <span className="text-gray-800 dark:text-gray-100">Total</span>
-                  <span className="text-green-600 dark:text-green-400">R$ {order.total.toFixed(2)}</span>
+                  <span className="text-green-600 dark:text-green-400">R$ {order.total.toFixed(2).replace('.', ',')}</span>
                 </div>
               </div>
             </div>
