@@ -260,7 +260,8 @@
 /* max-width: none = a logo ocupa a altura toda do espaço dela (laterais transparentes podem passar da coluna) */
 .ab-logo img { position: relative; height: clamp(250px, 40vh, 520px); width: auto; max-width: none; object-fit: contain; filter: drop-shadow(0 0 25px rgba(251,191,36,.5)); }
 @keyframes ab-pulso { 50% { opacity: .5; } }
-.ab-classico { display: grid; justify-items: center; gap: 8px; margin-bottom: 8px; font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif); }
+/* rede social e status sempre lado a lado; ::before quebra a linha antes do horário */
+.ab-classico { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; column-gap: 8px; margin-bottom: 8px; font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif); }
 .ab-redes { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
 .ab-redes a { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 999px; color: #fff; font-size: 12px; font-weight: 700;
   transition: transform .15s, box-shadow .15s; }
@@ -269,6 +270,8 @@
 .ab-selo { display: inline-flex; align-items: center; gap: 8px; padding: 6px 16px; border-radius: 999px; background: #dc2626; color: #fff;
   font-weight: 700; font-size: 12px; letter-spacing: .025em; box-shadow: 0 4px 6px -1px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.1); }
 .ab-selo.aberto { background: #16a34a; }
+.ab-classico::before { content: ''; flex-basis: 100%; order: 1; }
+.ab-classico .ab-horario { order: 2; margin-top: 8px; }
 .ab-selo i { position: relative; width: 10px; height: 10px; border-radius: 50%; background: #fff; }
 .ab-selo i::before { content: ''; position: absolute; inset: 0; border-radius: 50%; background: #fff; opacity: .75; animation: ab-ping 1s cubic-bezier(0,0,.2,1) infinite; }
 @keyframes ab-ping { 75%, 100% { transform: scale(2); opacity: 0; } }
@@ -292,7 +295,7 @@
   .ab-intro { left: 6vw; right: auto; top: 0; bottom: 0; align-content: center; justify-items: start; text-align: left; max-width: 34vw; padding: 0; }
   .ab-logo { justify-self: center; }
   .ab-logo img { height: clamp(290px, 51vh, 590px); }
-  .ab-classico { justify-items: start; }
+  .ab-classico { justify-content: flex-start; }
   .ab-redes { justify-content: flex-start; }
     .ab-final { left: 6vw; right: auto; top: 50vh; bottom: auto; text-align: left; justify-items: start; max-width: 28vw; }
 }
