@@ -4,10 +4,12 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SplitText } from 'gsap/SplitText';
 import Lenis from 'lenis';
-import { Search, ShoppingBag, MapPin, Clock, Phone, ChevronRight, Bike, Plus, Instagram, MessageCircle } from 'lucide-react';
+import { Search, ShoppingBag, MapPin, Clock, Phone, ChevronRight, Bike, Plus, Instagram, MessageCircle, Truck } from 'lucide-react';
+import logoPadrao from 'figma:asset/2217307d23df7779a3757aa35c01d81549336b8b.png';
 import type { Product } from '../../App';
 import { useConfig } from '../../ConfigContext';
 import { useFranchise } from '../../FranchiseContext';
+import { SocialBrandColors } from '../Header';
 import { PrimeSheet } from './PrimeSheet';
 import { PrimeAbertura } from './PrimeAbertura';
 import { ARTE, ilustracaoDaCategoria, dinheiro, legivelSobre, semMovimento } from './primeArte';
@@ -53,6 +55,9 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
   const telefone = unitOverrides.phone || config.phone || '';
   const taxa = unitOverrides.deliveryFee ?? config.deliveryFee;
   const whats = (config.whatsappNumber || telefone || '').replace(/\D/g, '');
+  const fundoSite = config.backgroundColor || '#161617';
+  const redes = Object.entries((cfg.socialMedia || {}) as Record<string, string>).filter(([, url]) => url && url.trim())
+    .map(([rede, url]) => ({ rede, url, cor: cfg.socialMediaColors?.[rede] || SocialBrandColors[rede] || cor }));
   const capaPropria = celular ? cfg.primeHeroMobileUrl || cfg.primeHeroUrl : cfg.primeHeroUrl;
 
   const secoes = useMemo<Secao[]>(() => {
@@ -287,8 +292,8 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
       {/* sem quadros ou com capa própria no Master, vale a capa em camadas */}
       {!capaPropria && abertura !== false && (
         <div ref={abertura ? capa : undefined}>
-          <PrimeAbertura nome={titulo} logo={config.logoUrl} aberta={isStoreOpen} horario={horario}
-            aoPronta={setAbertura} onCardapio={() => secoes[0] && irPara(secoes[0].id)} />
+          <PrimeAbertura nome={titulo} logo={config.logoUrl || logoPadrao} aberta={isStoreOpen} horario={horario} cor={cor} redes={redes} fundo={fundoSite} aoPronta={setAbertura} onCardapio={() => secoes[0] && irPara(secoes[0].id)} />
+          <div className="pr-degrade" style={{ ['--fundo-site' as string]: fundoSite } as React.CSSProperties} />
         </div>
       )}
       {(capaPropria || abertura === false) && (
@@ -312,6 +317,7 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
         </div>
       </header>
       )}
+
 
       <section className="pr-loja">
         <div className="pr-loja-card">
@@ -413,12 +419,16 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
         )}
       </main>
 
-      <footer className="pr-rodape">
-        <b>{nome}</b>
-        {endereco && <span>{endereco}</span>}
-        {horario && <span>{horario}</span>}
-        {telefone && <span>{telefone}</span>}
-        <span style={{ color: 'var(--soft)', fontSize: 12 }}>© {new Date().getFullYear()} {nome}</span>
+      <footer className="pr-rodape" style={{ ['--fundo-site' as string]: fundoSite } as React.CSSProperties}>
+        <div>
+          {typeof taxa === 'number' && <span className="taxa"><Truck size={20} />Taxa de Entrega: <em>{dinheiro(taxa)}</em></span>}
+          <img className="logo" src={config.logoUrl || logoPadrao} alt={nome} />
+          <b>{nome}</b>
+          {endereco && <span className="linha"><MapPin size={15} />{endereco}</span>}
+          {horario && <span className="linha"><Clock size={15} />{horario}</span>}
+          {telefone && <span className="linha"><Phone size={15} />{telefone}</span>}
+          <small>© {new Date().getFullYear()} {nome} · Todos os direitos reservados</small>
+        </div>
       </footer>
 
       <AnimatePresence>
