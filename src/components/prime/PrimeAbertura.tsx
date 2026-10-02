@@ -72,8 +72,8 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
     for (const passo of [8, 4, 2, 1]) for (let i = 0; i < n; i += passo) if (!ordem.includes(i)) ordem.push(i);
     carregar(0); carregar(n - 1);
     let k = 0;
-    const fila = () => { for (let j = 0; j < 6 && k < ordem.length; j++, k++) carregar(ordem[k]); if (k < ordem.length) setTimeout(fila, 50); };
-    setTimeout(fila, 150);
+    const fila = () => { for (let j = 0; j < 12 && k < ordem.length; j++, k++) carregar(ordem[k]); if (k < ordem.length) setTimeout(fila, 16); };
+    setTimeout(fila, 0);
 
     let dpr = 1, W = 0, H = 0, desce = 0, caixa = { x: 0, y: 0, w: 0, h: 0 };
     const medir = () => {
@@ -148,7 +148,7 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       g.globalCompositeOperation = 'source-over';
     };
     const laco = () => {
-      atual += (alvo - atual) * 0.34;
+      atual += (alvo - atual) * 0.4;
       desenhar(atual);
       raf = requestAnimationFrame(laco);
     };
@@ -164,11 +164,11 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
     raf = requestAnimationFrame(laco);
     const ctx = gsap.context(() => {
       const st = { trigger: secao.current, start: 'top top', end: 'bottom bottom', scrub: true };
-      ScrollTrigger.create({ ...st, onUpdate: (s) => { alvo = Math.min(1, s.progress / 0.65) * (n - 1); } });
+      ScrollTrigger.create({ ...st, onUpdate: (s) => { alvo = s.progress * (n - 1); } });
       const tl = gsap.timeline({ scrollTrigger: { ...st, scrub: 0.5 } });
       tl.to('.ab-intro', { opacity: 0, y: -60, duration: 0.14, ease: 'power2.in' }, 0.03)
         .to('.ab-dica', { opacity: 0, duration: 0.08 }, 0.02)
-        .fromTo('.ab-final', { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.14, ease: 'power3.out' }, 0.66);
+        .fromTo('.ab-final', { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.1, ease: 'power3.out' }, 0.86);
       gsap.from('.ab-intro > *', { y: 30, opacity: 0, duration: 1, stagger: 0.1, ease: 'power3.out', delay: 0.2 });
     }, secao);
     return () => { cancelAnimationFrame(raf); window.removeEventListener('resize', medir); ctx.revert(); };
@@ -176,7 +176,7 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
 
   if (!n) return null;
   return (
-    <section ref={secao} className="ab" style={{ height: reduzido ? '100vh' : '150vh', background: parede, ['--ab-fundo' as string]: parede, ['--ab-escuro' as string]: fundo } as React.CSSProperties} aria-label={`Abertura ${nome}`}>
+    <section ref={secao} className="ab" style={{ height: reduzido ? '100vh' : '134vh', background: parede, ['--ab-fundo' as string]: parede, ['--ab-escuro' as string]: fundo } as React.CSSProperties} aria-label={`Abertura ${nome}`}>
       <div className="ab-tela">
         <canvas ref={tela} aria-hidden />
         <div className="ab-sombra" />
