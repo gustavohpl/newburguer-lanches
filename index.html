@@ -25,6 +25,18 @@
         if (d === 'prime' || matchMedia('(display-mode: standalone)').matches) document.documentElement.dataset.abre = 'escuro';
       } catch (e) {}
     </script>
+    <script>
+      // CSS do build sem aplicar = cópia estragada no cache do app: limpa cache e service worker e recarrega uma vez
+      addEventListener('load', function () {
+        if (!document.querySelector('link[rel=stylesheet][href^="/assets/"]') || sessionStorage.getItem('reparo-css')) return;
+        if (getComputedStyle(document.documentElement).getPropertyValue('--css-ok')) return;
+        sessionStorage.setItem('reparo-css', '1');
+        Promise.all([
+          window.caches ? caches.keys().then(function (ks) { return Promise.all(ks.map(function (k) { return caches.delete(k); })); }) : 0,
+          navigator.serviceWorker ? navigator.serviceWorker.getRegistrations().then(function (rs) { return Promise.all(rs.map(function (r) { return r.unregister(); })); }) : 0
+        ]).finally(function () { location.reload(); });
+      });
+    </script>
     <!-- Fonte display do tema 3D (Playfair Display SC) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

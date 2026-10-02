@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* o index.html confere esta marca: sem ela o CSS veio estragado do cache do app */
+:root { --css-ok: 1; }
+
 @custom-variant dark (&:is(.dark *));
 
 :root {
