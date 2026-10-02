@@ -142,7 +142,8 @@ router.post("/payment/mp/pix", async (c) => {
     const expiraEm = new Date(Date.now() + 30 * 60_000);
     const mp = await chamar<PagamentoMP>("/v1/payments", {
       method: "POST",
-      headers: { "X-Idempotency-Key": `pix-${order.orderId}-${Date.now()}` },
+      // mesma chave em ~25 min: duas chamadas juntas (tela aberta duas vezes) devolvem o MESMO Pix
+      headers: { "X-Idempotency-Key": `pix-${order.orderId}-${valor}-${Math.floor(Date.now() / (25 * 60_000))}` },
       body: JSON.stringify({
         transaction_amount: valor,
         description: `Pedido ${order.orderId}`,
@@ -212,10 +213,15 @@ router.get("/payment/mp/status/:orderId", async (c) => {
     if (!order) return error(c, "Pedido não encontrado", 404);
     if (order.paymentStatus === "paid") return success(c, { status: "paid" });
     const reg = await kv.get(`pagamento:${orderId}`) as Registro | null;
-    const paymentId = (c.req.query("payment_id") || reg?.paymentId || "").replace(/\D/g, "");
-    if (!reg || !paymentId) return success(c, { status: "pending" });
-    const mp = await chamar<PagamentoMP>(`/v1/payments/${paymentId}`);
-    if (String(mp.external_reference) !== orderId) return error(c, "Pagamento não pertence a este pedido", 400);
+    if (!reg) return success(c, { status: "pending" });
+    const paymentId = (c.req.query("payment_id") || "").replace(/\D/g, "");
+    // sem id: procura no MP qualquer pagamento deste pedido (vários Pix, ou cartão antes do webhook chegar)
+    const candidatos = paymentId
+      ? [await chamar<PagamentoMP>(`/v1/payments/${paymentId}`)]
+      : (await chamar<{ results: PagamentoMP[] }>(`/v1/payments/search?external_reference=${encodeURIComponent(orderId)}&sort=date_created&criteria=desc`)).results || [];
+    const doPedido = candidatos.filter((p) => String(p.external_reference) === orderId);
+    if (!doPedido.length) return success(c, { status: "pending" });
+    const mp = doPedido.find((p) => p.status === "approved") || doPedido[0];
     const r = await aplicarStatus(mp);
     return success(c, { status: r === "confirmado" || r === "ja_confirmado" ? "paid" : r === "recusado" ? "rejected" : r === "divergente" ? "divergent" : "pending" });
   } catch (e) {

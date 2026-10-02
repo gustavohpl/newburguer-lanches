@@ -283,6 +283,12 @@ export function OrderTracking({ isOpen, onClose, orderId }: OrderTrackingProps) 
                 </p>
               )}
               <p className="text-gray-700 dark:text-gray-300"><span className="font-medium">Total:</span> R$ {order.total.toFixed(2).replace('.', ',')}</p>
+              {(order as any).paymentStatus === 'paid' && (
+                <p className="text-green-700 dark:text-green-400 font-bold">✓ Pagamento confirmado online</p>
+              )}
+              {(order as any).paymentStatus === 'aguardando' && (
+                <p className="text-amber-700 dark:text-amber-400 font-medium">⏳ Aguardando a confirmação do pagamento</p>
+              )}
             </div>
           </div>
 

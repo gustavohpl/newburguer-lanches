@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Copy, Check, Loader, CheckCircle, X, Clock } from 'lucide-react';
 import * as api from '../utils/api';
 import { useConfig } from '../ConfigContext';
@@ -42,7 +42,11 @@ export function PixPaymentPagSeguro({
   // Tempo restante
   const [timeLeft, setTimeLeft] = useState(30 * 60); // 30 minutos em segundos
 
+  // StrictMode/reabertura rodam o efeito 2×: um pedido gera um Pix só
+  const criado = useRef(false);
   useEffect(() => {
+    if (criado.current) return;
+    criado.current = true;
     createPayment();
   }, []);
 
@@ -285,7 +289,7 @@ export function PixPaymentPagSeguro({
             <div className="text-center bg-green-50 dark:bg-zinc-800 p-4 rounded-lg border-2 border-green-200 dark:border-zinc-700">
               <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Valor a pagar:</p>
               <p className="text-3xl font-bold text-green-600 dark:text-green-500">
-                R$ {amount.toFixed(2)}
+                R$ {amount.toFixed(2).replace('.', ',')}
               </p>
             </div>
 
@@ -365,7 +369,7 @@ export function PixPaymentPagSeguro({
           <div className="text-center bg-green-50 dark:bg-zinc-800 p-4 rounded-lg border-2 border-green-200 dark:border-zinc-700">
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">Valor a pagar:</p>
             <p className="text-3xl font-bold text-green-600 dark:text-green-500">
-              R$ {amount.toFixed(2)}
+              R$ {amount.toFixed(2).replace('.', ',')}
             </p>
           </div>
 
