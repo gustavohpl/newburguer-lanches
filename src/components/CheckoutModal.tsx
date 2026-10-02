@@ -82,6 +82,13 @@ export function CheckoutModal({
   const [splitMethod1, setSplitMethod1] = useState<PaymentMethod>('pix');
   const [splitMethod2, setSplitMethod2] = useState<PaymentMethod>('cash');
   const [splitAmount1, setSplitAmount1] = useState('');
+  const nomeForma = (m: PaymentMethod) => (m === 'pix' ? 'PIX' : m === 'card' ? 'Cartão' : 'Dinheiro');
+  const valorMisto2 = () => parseFloat((getTotalWithDiscount() - (parseFloat(splitAmount1) || 0)).toFixed(2));
+  // no misto o cliente paga em Pix só a parte dele
+  const valorPix = () => (!splitPayment ? getTotalWithDiscount()
+    : splitMethod1 === 'pix' ? parseFloat(splitAmount1) || 0
+    : splitMethod2 === 'pix' ? valorMisto2() : 0);
+  const descricaoMisto = () => `${nomeForma(splitMethod1)} R$ ${(parseFloat(splitAmount1) || 0).toFixed(2).replace('.', ',')} + ${nomeForma(splitMethod2)} R$ ${valorMisto2().toFixed(2).replace('.', ',')}`;
   
   // 🆕 Setores disponíveis
   const [availableSectors, setAvailableSectors] = useState<Array<{id: string, name: string, color: string}>>([]);
@@ -479,8 +486,8 @@ export function CheckoutModal({
 
       // FLUXO DE PAGAMENTO
       
-      // 1. PIX
-      if (paymentMethod === 'pix') {
+      // 1. PIX (no pagamento misto, só a parte em Pix)
+      if (splitPayment ? valorPix() > 0 : paymentMethod === 'pix') {
         const isAutoPaymentEnabled = config.automaticPayment && config.features?.automaticPaymentAllowed !== false;
         
         if (isAutoPaymentEnabled) {
@@ -491,6 +498,17 @@ export function CheckoutModal({
            setShowPixPayment(true);
         }
         return; // Pára aqui e espera o modal resolver
+      }
+
+      if (splitPayment) {
+        const enviar = await perguntar(
+          '✅ Pedido confirmado com sucesso!\n\n' +
+          '💳 Pagamento misto: ' + descricaoMisto() + '\n\n' +
+          'Deseja enviar os detalhes do pedido para o WhatsApp da loja?'
+        );
+        if (enviar) finishOrderAndNotify(orderId, 'Pagamento misto');
+        else finishOrderWithoutWhatsApp(orderId);
+        return;
       }
 
       // 2. CARTÃO
@@ -866,7 +884,7 @@ export function CheckoutModal({
       {/* PIX Payment Modal (Manual) */}
       {showPixPayment && (
         <PixPayment
-          amount={getTotalWithDiscount()}
+          amount={valorPix()}
           onClose={() => {
             setShowPixPayment(false);
             // Após fechar, limpar e fechar o checkout
@@ -881,7 +899,7 @@ export function CheckoutModal({
       {/* PIX Payment Modal (PagSeguro Automático) */}
       {showPixPaymentPagSeguro && (
         <PixPaymentPagSeguro
-          amount={getTotalWithDiscount()}
+          amount={valorPix()}
           customerName={name}
           customerEmail={`${phone.replace(/\D/g, '')}@temp.com`} // Email temporário
           customerPhone={phone}
