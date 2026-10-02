@@ -1,0 +1,309 @@
+/* ============================================================
+   PRIME — app de delivery premium (claro, limpo, muito animado).
+   Tudo escopado em .prime para não vazar nos outros designs.
+   A cor de destaque vem de --ac (config.themeColor).
+   ============================================================ */
+.prime {
+  --bg: #f6f5f2;
+  --card: #ffffff;
+  --ink: #1d1d1f;
+  --muted: #6e6e73;
+  --soft: #a1a1a6;
+  --line: #ebeae6;
+  --chip: #f1f0ec;
+  --r: 18px;
+  --sombra: 0 1px 2px rgba(20, 20, 20, 0.04), 0 8px 24px rgba(20, 20, 20, 0.06);
+  --sombra-forte: 0 18px 50px rgba(20, 20, 20, 0.16);
+  --mola: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --suave: cubic-bezier(0.22, 1, 0.36, 1);
+  font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+.prime * { box-sizing: border-box; }
+.prime button { font: inherit; color: inherit; cursor: pointer; border: 0; background: none; }
+.prime button:disabled { cursor: not-allowed; }
+.prime :focus-visible { outline: 3px solid var(--ac); outline-offset: 2px; border-radius: 10px; }
+.prime img { display: block; }
+
+/* ---------- capa em camadas (parallax) */
+.pr-capa { position: relative; height: clamp(360px, 62vh, 620px); overflow: hidden; background: #0b0b0c; isolation: isolate; }
+.pr-capa .camada { position: absolute; inset: -6% -2%; will-change: transform; }
+.pr-capa .camada img { width: 100%; height: 100%; object-fit: cover; object-position: 62% 50%; }
+.pr-capa .fundo img { filter: saturate(1.05) brightness(0.92); }
+.pr-capa .vinheta { position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  background: linear-gradient(90deg, rgba(6,6,7,0.92) 0%, rgba(6,6,7,0.62) 38%, rgba(6,6,7,0.05) 70%),
+              linear-gradient(0deg, var(--bg) 0%, rgba(246,245,242,0) 22%); }
+.pr-capa .brilho { position: absolute; z-index: 2; width: 46vw; height: 46vw; right: 6%; top: 8%; border-radius: 50%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--ac) 38%, transparent) 0%, transparent 62%);
+  filter: blur(20px); pointer-events: none; animation: pr-respira 6s ease-in-out infinite; }
+.pr-vapor { position: absolute; z-index: 4; inset: 0; pointer-events: none; }
+.pr-capa-texto { position: absolute; z-index: 5; left: 0; right: 0; bottom: clamp(70px, 12vh, 110px);
+  max-width: 1120px; margin: 0 auto; padding: 0 20px; color: #fff; }
+.pr-logo { width: 74px; height: 74px; border-radius: 22px; background: #fff; padding: 6px; box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  object-fit: contain; margin-bottom: 18px; }
+.pr-titulo { font-size: clamp(38px, 6.4vw, 78px); line-height: 0.98; font-weight: 800; letter-spacing: -0.03em; margin: 0; }
+.pr-titulo .linha { display: block; overflow: hidden; padding-bottom: 0.06em; }
+.pr-subtitulo { margin: 14px 0 0; font-size: clamp(15px, 1.6vw, 19px); color: rgba(255,255,255,0.78); max-width: 520px; }
+.pr-selo { display: inline-flex; align-items: center; gap: 8px; margin-top: 18px; padding: 8px 14px; border-radius: 999px;
+  background: rgba(255,255,255,0.12); backdrop-filter: blur(10px); font-size: 13px; font-weight: 700; color: #fff; }
+.pr-selo i { width: 9px; height: 9px; border-radius: 50%; background: #9aa0a6; }
+.pr-selo.aberto i { background: #3ee66f; box-shadow: 0 0 0 0 rgba(62,230,111,.6); animation: pr-pulso 1.6s infinite; }
+
+/* ---------- cartão da loja (sobe por cima da capa) */
+.pr-loja { position: relative; z-index: 6; max-width: 1120px; margin: -46px auto 0; padding: 0 16px; }
+.pr-loja-card { background: var(--card); border-radius: 24px; box-shadow: var(--sombra); padding: 18px 20px;
+  display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+.pr-info { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--muted); }
+.pr-info svg { color: var(--ac); flex: none; }
+.pr-acoes { margin-left: auto; display: flex; gap: 8px; }
+.pr-btn-sec { display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 12px; background: var(--chip);
+  font-weight: 700; font-size: 14px; transition: transform .25s var(--mola), background .2s; }
+.pr-btn-sec:hover { background: #e8e6e0; transform: translateY(-1px); }
+.pr-btn-sec:active { transform: scale(0.95); }
+
+/* ---------- topo fixo que aparece ao rolar */
+.pr-topo { position: fixed; z-index: 40; top: 0; left: 0; right: 0; transform: translateY(-110%);
+  transition: transform .45s var(--suave); background: rgba(255,255,255,0.86); backdrop-filter: blur(16px) saturate(1.4);
+  border-bottom: 1px solid var(--line); }
+.pr-topo.visivel { transform: none; }
+.pr-topo-in { max-width: 1120px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 12px; }
+.pr-topo img { width: 36px; height: 36px; border-radius: 11px; object-fit: contain; background: #fff; border: 1px solid var(--line); }
+.pr-topo b { font-size: 16px; }
+
+/* ---------- busca + chips de categoria (grudam no topo) */
+.pr-gruda { position: sticky; top: 0; z-index: 30; background: color-mix(in srgb, var(--bg) 92%, transparent);
+  backdrop-filter: blur(14px); transition: top .45s var(--suave); }
+.pr-gruda.com-topo { top: 57px; }
+.pr-busca { max-width: 1120px; margin: 0 auto; padding: 14px 16px 6px; }
+.pr-busca label { display: flex; align-items: center; gap: 10px; background: var(--card); border: 1px solid var(--line);
+  border-radius: 14px; padding: 12px 14px; transition: box-shadow .25s, border-color .25s; }
+.pr-busca label:focus-within { border-color: var(--ac); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ac) 16%, transparent); }
+.pr-busca input { border: 0; outline: 0; flex: 1; font: inherit; font-size: 15px; background: transparent; color: var(--ink); }
+.pr-chips { max-width: 1120px; margin: 0 auto; padding: 8px 16px 12px; display: flex; gap: 10px; overflow-x: auto; scrollbar-width: none; }
+.pr-chips::-webkit-scrollbar { display: none; }
+.pr-chip { position: relative; flex: none; display: flex; flex-direction: column; align-items: center; gap: 6px; width: 84px; padding: 6px 2px 8px; }
+.pr-chip .bola { width: 64px; height: 64px; border-radius: 22px; background: var(--chip); display: grid; place-items: center;
+  overflow: hidden; transition: transform .35s var(--mola), background .3s; }
+.pr-chip .bola img { width: 54px; height: 54px; object-fit: contain; transition: transform .45s var(--mola); }
+.pr-chip .bola span { font-size: 30px; }
+.pr-chip:hover .bola img { transform: scale(1.12) rotate(-4deg); }
+.pr-chip:active .bola { transform: scale(0.9); }
+.pr-chip b { font-size: 12.5px; font-weight: 700; color: var(--muted); white-space: nowrap; transition: color .25s; }
+.pr-chip.ativo b { color: var(--ink); }
+.pr-chip .marca { position: absolute; inset: 0; border-radius: 20px; background: color-mix(in srgb, var(--ac) 12%, transparent); z-index: -1; }
+
+/* ---------- conteúdo */
+.pr-conteudo { max-width: 1120px; margin: 0 auto; padding: 8px 16px 140px; }
+.pr-secao { padding-top: 26px; scroll-margin-top: 170px; }
+.pr-secao-cab { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.pr-secao-cab img { width: 40px; height: 40px; object-fit: contain; }
+.pr-secao-cab h2 { margin: 0; font-size: clamp(20px, 2.4vw, 26px); font-weight: 800; letter-spacing: -0.02em; }
+.pr-secao-cab small { color: var(--soft); font-weight: 600; font-size: 13px; }
+
+/* banners */
+.pr-banners { display: grid; grid-auto-flow: column; grid-auto-columns: min(86%, 560px); gap: 14px; overflow-x: auto;
+  scroll-snap-type: x mandatory; padding: 4px 2px 10px; scrollbar-width: none; }
+.pr-banners::-webkit-scrollbar { display: none; }
+.pr-banner { position: relative; scroll-snap-align: start; border-radius: 22px; overflow: hidden; aspect-ratio: 16 / 7.4;
+  box-shadow: var(--sombra); background: #ddd; transform: translateZ(0); }
+.pr-banner img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.2s var(--suave); }
+.pr-banner:hover img { transform: scale(1.05); }
+.pr-banner .txt { position: absolute; inset: 0; padding: clamp(16px, 3vw, 28px); display: flex; flex-direction: column;
+  justify-content: center; align-items: flex-start; color: #fff; max-width: 62%; }
+.pr-banner .txt b { font-size: clamp(20px, 3vw, 32px); line-height: 1.05; font-weight: 800; letter-spacing: -0.02em;
+  text-shadow: 0 2px 18px rgba(0,0,0,.25); }
+.pr-banner .txt span { margin-top: 12px; padding: 9px 14px; border-radius: 999px; background: #fff; color: var(--ink);
+  font-weight: 800; font-size: 13px; transition: transform .3s var(--mola); }
+.pr-banner:hover .txt span { transform: translateX(4px); }
+.pr-pontos { display: flex; justify-content: center; gap: 6px; margin-top: 4px; }
+.pr-pontos i { width: 7px; height: 7px; border-radius: 99px; background: #d4d2cc; transition: width .4s var(--suave), background .3s; }
+.pr-pontos i.on { width: 22px; background: var(--ac); }
+
+/* destaques (cartões grandes) */
+.pr-destaques { display: grid; grid-auto-flow: column; grid-auto-columns: 220px; gap: 14px; overflow-x: auto; padding: 4px 2px 14px;
+  scroll-snap-type: x proximity; scrollbar-width: none; }
+.pr-destaques::-webkit-scrollbar { display: none; }
+.pr-dcard { scroll-snap-align: start; text-align: left; background: var(--card); border-radius: 20px; overflow: hidden; box-shadow: var(--sombra);
+  transition: transform .45s var(--mola), box-shadow .3s; transform-style: preserve-3d; }
+.pr-dcard:hover { box-shadow: var(--sombra-forte); }
+.pr-dcard .foto { position: relative; aspect-ratio: 1; background: var(--chip); overflow: hidden; }
+.pr-dcard .foto img { width: 100%; height: 100%; object-fit: cover; transition: transform .8s var(--suave); }
+.pr-dcard:hover .foto img { transform: scale(1.08); }
+.pr-dcard .foto img.ilustra { object-fit: contain; padding: 18%; }
+.pr-dcard .corpo { padding: 12px 14px 14px; }
+.pr-dcard .corpo b { display: block; font-size: 15px; line-height: 1.25; }
+.pr-dcard .corpo span { color: var(--ac); font-weight: 800; font-size: 15px; }
+
+/* lista de produtos (foto à direita) */
+.pr-lista { display: grid; grid-template-columns: 1fr; gap: 12px; }
+@media (min-width: 860px) { .pr-lista { grid-template-columns: 1fr 1fr; } }
+.pr-item { position: relative; display: grid; grid-template-columns: 1fr 112px; gap: 14px; align-items: center; width: 100%; text-align: left;
+  background: var(--card); border-radius: var(--r); padding: 14px; box-shadow: var(--sombra);
+  transition: transform .35s var(--mola), box-shadow .3s; }
+.pr-item:hover { transform: translateY(-3px); box-shadow: var(--sombra-forte); }
+.pr-item:active { transform: scale(0.98); }
+.pr-item h3 { margin: 0; font-size: 16px; font-weight: 700; line-height: 1.3; }
+.pr-item p { margin: 6px 0 10px; color: var(--muted); font-size: 13.5px; line-height: 1.45;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.pr-preco { font-weight: 800; color: var(--ink); font-size: 15px; }
+.pr-preco s { color: var(--soft); font-weight: 600; margin-left: 6px; font-size: 13px; }
+.pr-preco.promo { color: var(--ac); }
+.pr-item .foto { position: relative; width: 112px; height: 112px; border-radius: 14px; overflow: hidden; background: var(--chip); }
+.pr-item .foto img { width: 100%; height: 100%; object-fit: cover; transition: transform .8s var(--suave), opacity .5s; }
+.pr-item:hover .foto img { transform: scale(1.07); }
+.pr-item .foto img.ilustra { object-fit: contain; padding: 12%; }
+.pr-mais { position: absolute; right: 8px; bottom: 8px; width: 34px; height: 34px; border-radius: 12px; background: #fff; color: var(--ac);
+  display: grid; place-items: center; box-shadow: 0 4px 14px rgba(0,0,0,.16); transition: transform .3s var(--mola); }
+.pr-item:hover .pr-mais { transform: scale(1.12) rotate(90deg); }
+.pr-item.off { opacity: .55; filter: grayscale(.8); }
+.pr-tag { position: absolute; top: 10px; left: 10px; padding: 4px 9px; border-radius: 999px; font-size: 11px; font-weight: 800;
+  background: var(--ink); color: #fff; }
+.pr-carrega { position: absolute; inset: 0; background: linear-gradient(100deg, transparent 20%, rgba(255,255,255,.55) 50%, transparent 80%) var(--chip);
+  background-size: 220% 100%; animation: pr-brilho 1.2s linear infinite; }
+
+/* vazio / loja fechada */
+.pr-vazio { text-align: center; padding: 40px 10px; color: var(--muted); }
+.pr-vazio img { width: 140px; margin: 0 auto 10px; }
+.pr-fechada { max-width: 1120px; margin: 14px auto 0; padding: 0 16px; }
+.pr-fechada div { background: #1d1d1f; color: #fff; border-radius: 16px; padding: 14px 18px; display: flex; gap: 12px; align-items: center; font-size: 14px; }
+
+/* sacola fixa */
+.pr-sacola { position: fixed; z-index: 45; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); width: min(560px, calc(100% - 28px));
+  transform: translateX(-50%); }
+.pr-sacola button { width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 18px; background: var(--ac);
+  color: var(--ac-ink); font-weight: 800; font-size: 16px; box-shadow: 0 14px 40px color-mix(in srgb, var(--ac) 45%, transparent); }
+.pr-sacola .conta { min-width: 28px; height: 28px; padding: 0 8px; border-radius: 99px; background: rgba(255,255,255,.22); display: grid; place-items: center; font-size: 14px; }
+.pr-sacola .ir { margin-left: auto; display: flex; align-items: center; gap: 6px; }
+
+/* aviso (toast) */
+.pr-aviso { position: fixed; z-index: 60; left: 50%; top: 18px; transform: translateX(-50%); display: flex; align-items: center; gap: 12px;
+  background: #1d1d1f; color: #fff; border-radius: 16px; padding: 10px 16px 10px 10px; box-shadow: var(--sombra-forte); font-weight: 700; font-size: 14px; }
+.pr-aviso img { width: 44px; height: 44px; }
+
+/* rodapé */
+.pr-rodape { max-width: 1120px; margin: 30px auto 0; padding: 26px 16px 40px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px;
+  display: grid; gap: 8px; }
+.pr-rodape b { color: var(--ink); font-size: 16px; }
+
+/* ---------- folha do produto */
+.pr-veu { position: fixed; inset: 0; z-index: 70; background: rgba(12,12,13,.48); backdrop-filter: blur(3px); }
+.pr-folha { position: fixed; z-index: 71; left: 0; right: 0; bottom: 0; max-height: 92vh; background: var(--card); border-radius: 26px 26px 0 0;
+  display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 -20px 60px rgba(0,0,0,.25); }
+@media (min-width: 860px) {
+  .pr-folha { left: 50%; right: auto; bottom: auto; top: 50%; width: 760px; max-height: 86vh; border-radius: 28px; }
+}
+.pr-folha .pegador { position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 42px; height: 5px; border-radius: 9px; background: rgba(255,255,255,.75); z-index: 3; }
+.pr-folha .rola { overflow-y: auto; overscroll-behavior: contain; }
+.pr-folha .imagem { position: relative; height: 300px; background: var(--chip); overflow: hidden; }
+.pr-folha .imagem img { width: 100%; height: 100%; object-fit: cover; }
+.pr-folha .imagem img.ilustra { object-fit: contain; padding: 10%; }
+.pr-folha .fechar { position: absolute; top: 14px; right: 14px; z-index: 3; width: 40px; height: 40px; border-radius: 14px; background: rgba(255,255,255,.92);
+  display: grid; place-items: center; box-shadow: 0 6px 18px rgba(0,0,0,.15); transition: transform .3s var(--mola); }
+.pr-folha .fechar:hover { transform: rotate(90deg); }
+.pr-folha .miolo { padding: 20px 22px 8px; }
+.pr-folha h2 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; }
+.pr-folha .desc { color: var(--muted); margin: 8px 0 0; line-height: 1.5; }
+.pr-folha .ingr { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.pr-folha .ingr span { background: var(--chip); border-radius: 99px; padding: 5px 10px; font-size: 12.5px; color: var(--muted); font-weight: 600; }
+.pr-grupo { margin-top: 20px; }
+.pr-grupo-cab { display: flex; justify-content: space-between; align-items: center; background: var(--chip); margin: 0 -22px; padding: 12px 22px; }
+.pr-grupo-cab b { font-size: 15px; }
+.pr-grupo-cab small { color: var(--soft); font-weight: 700; font-size: 12px; }
+.pr-opcao { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 0; border-bottom: 1px solid var(--line); text-align: left; }
+.pr-opcao .nome { flex: 1; font-weight: 600; }
+.pr-opcao .valor { color: var(--muted); font-weight: 700; font-size: 14px; }
+.pr-check { width: 24px; height: 24px; border-radius: 8px; border: 2px solid #d4d2cc; display: grid; place-items: center; transition: all .3s var(--mola); color: transparent; }
+.pr-opcao.on .pr-check { background: var(--ac); border-color: var(--ac); color: var(--ac-ink); transform: scale(1.08); }
+.pr-obs { width: 100%; min-height: 84px; border: 1px solid var(--line); border-radius: 14px; padding: 12px; font: inherit; resize: vertical; margin-top: 10px; }
+.pr-obs:focus { outline: none; border-color: var(--ac); box-shadow: 0 0 0 4px color-mix(in srgb, var(--ac) 16%, transparent); }
+.pr-folha .rodape { display: flex; gap: 12px; padding: 14px 18px max(14px, env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: var(--card); }
+.pr-qtd { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 14px; }
+.pr-qtd button { width: 44px; height: 48px; display: grid; place-items: center; color: var(--ac); }
+.pr-qtd button:disabled { color: #ccc; }
+.pr-qtd .n { width: 26px; text-align: center; font-weight: 800; font-size: 17px; overflow: hidden; height: 24px; position: relative; }
+.pr-add { flex: 1; display: flex; justify-content: space-between; align-items: center; padding: 0 18px; border-radius: 14px; background: var(--ac);
+  color: var(--ac-ink); font-weight: 800; font-size: 15.5px; min-height: 50px; transition: transform .25s var(--mola), filter .2s; }
+.pr-add:hover { filter: brightness(1.06); }
+.pr-add:active { transform: scale(0.97); }
+.pr-add:disabled { background: #c9c7c1; color: #fff; }
+
+/* item que voa até a sacola */
+.pr-voo { position: fixed; z-index: 80; border-radius: 16px; overflow: hidden; pointer-events: none; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+.pr-voo img { width: 100%; height: 100%; object-fit: cover; }
+
+/* revelação ao rolar (o GSAP anima; sem JS/sem movimento fica visível) */
+.prime.anima .pr-revela { opacity: 0; transform: translateY(26px); }
+
+@keyframes pr-pulso { 0% { box-shadow: 0 0 0 0 rgba(62,230,111,.6); } 100% { box-shadow: 0 0 0 10px rgba(62,230,111,0); } }
+@keyframes pr-respira { 0%, 100% { opacity: .55; transform: scale(1); } 50% { opacity: .9; transform: scale(1.08); } }
+@keyframes pr-brilho { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .prime *, .prime *::before, .prime *::after { animation: none !important; transition: none !important; }
+}
+
+/* campos de texto: o estilo global do site pinta inputs de escuro — no Prime eles são claros */
+.prime .pr-busca input { background: transparent !important; color: var(--ink) !important; box-shadow: none !important; padding: 0 !important; height: auto !important; }
+.prime .pr-busca input::placeholder, .prime .pr-obs::placeholder { color: var(--soft) !important; }
+.prime .pr-obs { background: #fff !important; color: var(--ink) !important; }
+
+/* ---------- abertura cinematográfica (vídeo preso à rolagem) */
+.ab { position: relative; background: #161617; }
+.ab-tela { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; color: #fff; }
+.ab-tela canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.ab-sombra { position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(120% 80% at 50% 50%, transparent 55%, rgba(0,0,0,.55) 100%),
+              linear-gradient(0deg, var(--bg) 0%, rgba(246,245,242,0) 9%); }
+.ab-intro { position: absolute; left: 0; right: 0; top: clamp(70px, 12vh, 120px); text-align: center; padding: 0 20px; }
+.ab-intro img { width: 64px; height: 64px; border-radius: 20px; background: #fff; padding: 5px; object-fit: contain; margin: 0 auto 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,.45); }
+.ab-intro .pr-selo { margin: 0 auto 14px; }
+.ab-intro h1 { margin: 0; font-size: clamp(40px, 7vw, 92px); font-weight: 800; letter-spacing: -0.035em; line-height: .95;
+  text-shadow: 0 6px 40px rgba(0,0,0,.6); }
+.ab-intro p { margin: 12px 0 0; color: rgba(255,255,255,.75); font-size: clamp(15px, 1.6vw, 19px); }
+.ab-rotulo { position: absolute; transform: translateY(-50%); display: flex; align-items: center; gap: 10px; white-space: nowrap;
+  font-size: clamp(12px, 1.25vw, 16px); }
+.ab-rotulo.esq { right: calc(50% + min(19vw, 250px)); flex-direction: row-reverse; text-align: right; }
+.ab-rotulo.dir { left: calc(50% + min(19vw, 250px)); }
+.ab-rotulo b { background: rgba(255,255,255,.1); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,.18); padding: 8px 14px;
+  border-radius: 999px; font-weight: 700; }
+.ab-rotulo .traco { width: clamp(24px, 6vw, 80px); height: 1px; background: linear-gradient(90deg, transparent, var(--ac)); }
+.ab-rotulo.esq .traco { background: linear-gradient(270deg, transparent, var(--ac)); }
+.ab-rotulo .traco::after { content: ''; display: block; width: 7px; height: 7px; border-radius: 50%; background: var(--ac); margin-top: -3px;
+  box-shadow: 0 0 12px var(--ac); }
+.ab-rotulo.dir .traco::after { margin-left: -3px; }
+.ab-rotulo.esq .traco::after { margin-left: calc(100% - 4px); }
+.ab-final { position: absolute; left: 0; right: 0; bottom: clamp(40px, 9vh, 90px); text-align: center; display: grid; justify-items: center; gap: 14px; }
+.ab-final b { font-size: clamp(26px, 3.6vw, 46px); font-weight: 800; letter-spacing: -0.03em; text-shadow: 0 6px 30px rgba(0,0,0,.6); }
+.ab-final button { background: var(--ac); color: var(--ac-ink); font-weight: 800; padding: 15px 26px; border-radius: 16px; font-size: 16px;
+  box-shadow: 0 14px 40px color-mix(in srgb, var(--ac) 50%, transparent); transition: transform .3s var(--mola); }
+.ab-final button:hover { transform: translateY(-2px) scale(1.03); }
+.ab-dica { position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%); display: grid; justify-items: center; gap: 4px;
+  font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.7); animation: ab-pula 1.8s ease-in-out infinite; }
+@keyframes ab-pula { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, 8px); } }
+@media (max-width: 767px) {
+  .ab-rotulo { font-size: 11px; }
+  .ab-rotulo.esq { right: calc(50% + 31vw); }
+  .ab-rotulo.dir { left: calc(50% + 31vw); }
+  .ab-rotulo .traco { width: 14px; }
+  .ab-rotulo b { padding: 6px 9px; }
+}
+
+/* abertura — computador: textos na coluna da esquerda (o lanche fica no centro) */
+@media (min-width: 900px) {
+  .ab-intro { left: 6vw; right: auto; top: 30vh; text-align: left; max-width: 30vw; padding: 0; }
+  .ab-intro img, .ab-intro .pr-selo { margin-left: 0; }
+  .ab-intro .pr-selo { display: inline-flex; }
+  .ab-intro h1 { font-size: clamp(44px, 5.4vw, 86px); }
+  .ab-final { left: 6vw; right: auto; top: 40vh; bottom: auto; text-align: left; justify-items: start; max-width: 28vw; }
+}
+/* abertura — celular: rótulos encostados nas bordas, sem traço */
+@media (max-width: 767px) {
+  .ab-rotulo.esq { left: 10px; right: auto; flex-direction: row; }
+  .ab-rotulo.dir { right: 10px; left: auto; }
+  .ab-rotulo .traco { display: none; }
+  .ab-rotulo b { background: rgba(10,10,11,.55); font-size: 11px; }
+}
