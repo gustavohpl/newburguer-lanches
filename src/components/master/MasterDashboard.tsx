@@ -3129,8 +3129,9 @@ export function MasterDashboard() {
                     <label className="block text-sm font-medium text-gray-700 mb-1">Usuário do Admin</label>
                     <input
                       type="text"
-                      value={config.adminUsername || 'admin'}
+                      value={config.adminUsername || ''}
                       onChange={(e) => setConfig({ ...config, adminUsername: e.target.value })}
+                      placeholder="Não definido: só a senha é conferida"
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:outline-none"
                     />
                   </div>

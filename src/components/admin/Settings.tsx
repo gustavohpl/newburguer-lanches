@@ -200,13 +200,7 @@ export function Settings() {
       setIsTesting(true);
       console.log('🖨️ [SETTINGS] Testando impressão...');
       
-      const success = await testPrint();
-      
-      if (success) {
-        alert('✅ Teste de impressão bem-sucedido! Verifique o cupom impresso.');
-      } else {
-        alert('❌ Falha no teste de impressão. Verifique a conexão.');
-      }
+      await testPrint();
     } catch (error) {
       console.error('❌ [SETTINGS] Erro no teste de impressão:', error);
       alert('❌ Erro no teste de impressão');

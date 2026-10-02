@@ -139,7 +139,7 @@ router.get('/config/public', async (c) => {
 router.get('/master/config', async (c) => {
   try {
     const systemConfig: any = await kv.get('system_config') || {};
-    const hasAdminPassword = !!Deno.env.get('ADMIN_PASSWORD');
+    const hasAdminPassword = !!(Deno.env.get('ADMIN_PASSWORD') || await kv.get('admin_password'));
     const masterConfig = {
       ...systemConfig, hasAdminPassword, metaAccessToken: undefined,
       pagSeguroToken: systemConfig.pagSeguroToken || '',
@@ -167,6 +167,11 @@ router.post('/master/config', async (c) => {
     if (adminPassword) {
       console.log('🔐 [MASTER CONFIG] Atualizando senha do admin via painel');
       await kv.set('admin_password', adminPassword);
+    }
+    const anterior: any = await kv.get('system_config') || {};
+    if (adminPassword || (anterior.adminUsername || '') !== (config.adminUsername || '')) {
+      const sessoes = await kv.getByPrefix('admin_session:');
+      await kv.mdel(sessoes.map((s: any) => s?._key).filter(Boolean));
     }
     await kv.set('system_config', systemConfigToSave);
     return success(c, { config: systemConfigToSave });

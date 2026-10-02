@@ -99,7 +99,7 @@ router.post('/admin/login', async (c) => {
     }
 
     const body = await c.req.json();
-    const { password, webrtcIp, browserInfo } = body;
+    const { username, password, webrtcIp, browserInfo } = body;
     if (webrtcIp) console.log(`🔓 [WEBRTC] Admin login recebeu webrtcIp: ${webrtcIp} (request IP: ${ip})`);
     if (browserInfo) console.log(`🌐 [BROWSER] Admin login: tz=${browserInfo.timezone}, lang=${browserInfo.language}, platform=${browserInfo.platform}`);
 
@@ -124,7 +124,9 @@ router.post('/admin/login', async (c) => {
       return error(c, 'Erro de configuração do servidor', 500);
     }
 
-    if (password === adminPassword) {
+    const usuarioConfigurado = ((await kv.get('system_config'))?.adminUsername || '').trim().toLowerCase();
+    const usuarioOk = !usuarioConfigurado || String(username || '').trim().toLowerCase() === usuarioConfigurado;
+    if (usuarioOk && password === adminPassword) {
       console.log('✅ [LOGIN] Login admin bem-sucedido');
       const token = `admin_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
       const csrfToken = `csrf_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
@@ -144,14 +146,14 @@ router.post('/admin/login', async (c) => {
       cleanupExpiredSessions().catch(() => {});
       return success(c, { authenticated: true, message: 'Login realizado com sucesso', token, csrfToken });
     } else {
-      console.warn(`⚠️ [LOGIN] Senha incorreta — IP: ${ip}`);
+      console.warn(`⚠️ [LOGIN] Usuário ou senha incorretos — IP: ${ip}`);
       await recordFailedAttempt('admin_login', ip);
       writeAuditLogWithGeo({
         action: 'LOGIN_FAILED', username: 'admin (tentativa)',
         ip, details: `Tentativa de login admin com senha incorreta. User-Agent: ${userAgent}`,
         status: 'failure', userAgent, webrtcIp: webrtcIp || null, browserInfo: browserInfo || null
       });
-      return error(c, 'Senha incorreta', 401);
+      return error(c, 'Usuário ou senha incorretos', 401);
     }
   } catch (e) {
     console.error('❌ [LOGIN] Erro ao processar login:', e);
