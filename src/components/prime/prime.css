@@ -1,8 +1,3 @@
-/* ============================================================
-   PRIME — app de delivery premium (claro, limpo, muito animado).
-   Tudo escopado em .prime para não vazar nos outros designs.
-   A cor de destaque vem de --ac (config.themeColor).
-   ============================================================ */
 .prime {
   --bg: #f6f5f2;
   --card: #ffffff;
@@ -28,7 +23,6 @@
 .prime :focus-visible { outline: 3px solid var(--ac); outline-offset: 2px; border-radius: 10px; }
 .prime img { display: block; }
 
-/* ---------- capa em camadas (parallax) */
 .pr-capa { position: relative; height: clamp(360px, 62vh, 620px); overflow: hidden; background: #0b0b0c; isolation: isolate; }
 .pr-capa .camada { position: absolute; inset: -6% -2%; will-change: transform; }
 .pr-capa .camada img { width: 100%; height: 100%; object-fit: cover; object-position: 62% 50%; }
@@ -52,7 +46,6 @@
 .pr-selo i { width: 9px; height: 9px; border-radius: 50%; background: #9aa0a6; }
 .pr-selo.aberto i { background: #3ee66f; box-shadow: 0 0 0 0 rgba(62,230,111,.6); animation: pr-pulso 1.6s infinite; }
 
-/* ---------- cartão da loja (sobe por cima da capa) */
 .pr-loja { position: relative; z-index: 6; max-width: 1120px; margin: -46px auto 0; padding: 0 16px; }
 .pr-loja-card { background: var(--card); border-radius: 24px; box-shadow: var(--sombra); padding: 18px 20px;
   display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
@@ -64,7 +57,6 @@
 .pr-btn-sec:hover { background: #e8e6e0; transform: translateY(-1px); }
 .pr-btn-sec:active { transform: scale(0.95); }
 
-/* ---------- topo fixo que aparece ao rolar */
 .pr-topo { position: fixed; z-index: 40; top: 0; left: 0; right: 0; transform: translateY(-110%);
   transition: transform .45s var(--suave); background: rgba(255,255,255,0.86); backdrop-filter: blur(16px) saturate(1.4);
   border-bottom: 1px solid var(--line); }
@@ -73,7 +65,6 @@
 .pr-topo img { width: 36px; height: 36px; border-radius: 11px; object-fit: contain; background: #fff; border: 1px solid var(--line); }
 .pr-topo b { font-size: 16px; }
 
-/* ---------- busca + chips de categoria (grudam no topo) */
 .pr-gruda { position: sticky; top: 0; z-index: 30; background: color-mix(in srgb, var(--bg) 92%, transparent);
   backdrop-filter: blur(14px); transition: top .45s var(--suave); }
 .pr-gruda.com-topo { top: 57px; }
@@ -95,7 +86,6 @@
 .pr-chip.ativo b { color: var(--ink); }
 .pr-chip .marca { position: absolute; inset: 0; border-radius: 20px; background: color-mix(in srgb, var(--ac) 12%, transparent); z-index: -1; }
 
-/* ---------- conteúdo */
 .pr-conteudo { max-width: 1120px; margin: 0 auto; padding: 8px 16px 140px; }
 .pr-secao { padding-top: 26px; scroll-margin-top: 170px; }
 .pr-secao-cab { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
@@ -103,7 +93,6 @@
 .pr-secao-cab h2 { margin: 0; font-size: clamp(20px, 2.4vw, 26px); font-weight: 800; letter-spacing: -0.02em; }
 .pr-secao-cab small { color: var(--soft); font-weight: 600; font-size: 13px; }
 
-/* banners */
 .pr-banners { display: grid; grid-auto-flow: column; grid-auto-columns: min(86%, 560px); gap: 14px; overflow-x: auto;
   scroll-snap-type: x mandatory; padding: 4px 2px 10px; scrollbar-width: none; }
 .pr-banners::-webkit-scrollbar { display: none; }
@@ -122,7 +111,6 @@
 .pr-pontos i { width: 7px; height: 7px; border-radius: 99px; background: #d4d2cc; transition: width .4s var(--suave), background .3s; }
 .pr-pontos i.on { width: 22px; background: var(--ac); }
 
-/* destaques (cartões grandes) */
 .pr-destaques { display: grid; grid-auto-flow: column; grid-auto-columns: 220px; gap: 14px; overflow-x: auto; padding: 4px 2px 14px;
   scroll-snap-type: x proximity; scrollbar-width: none; }
 .pr-destaques::-webkit-scrollbar { display: none; }
@@ -137,7 +125,6 @@
 .pr-dcard .corpo b { display: block; font-size: 15px; line-height: 1.25; }
 .pr-dcard .corpo span { color: var(--ac); font-weight: 800; font-size: 15px; }
 
-/* lista de produtos (foto à direita) */
 .pr-lista { display: grid; grid-template-columns: 1fr; gap: 12px; }
 @media (min-width: 860px) { .pr-lista { grid-template-columns: 1fr 1fr; } }
 .pr-item { position: relative; display: grid; grid-template-columns: 1fr 112px; gap: 14px; align-items: center; width: 100%; text-align: left;
@@ -164,13 +151,11 @@
 .pr-carrega { position: absolute; inset: 0; background: linear-gradient(100deg, transparent 20%, rgba(255,255,255,.55) 50%, transparent 80%) var(--chip);
   background-size: 220% 100%; animation: pr-brilho 1.2s linear infinite; }
 
-/* vazio / loja fechada */
 .pr-vazio { text-align: center; padding: 40px 10px; color: var(--muted); }
 .pr-vazio img { width: 140px; margin: 0 auto 10px; }
 .pr-fechada { max-width: 1120px; margin: 14px auto 0; padding: 0 16px; }
 .pr-fechada div { background: #1d1d1f; color: #fff; border-radius: 16px; padding: 14px 18px; display: flex; gap: 12px; align-items: center; font-size: 14px; }
 
-/* sacola fixa */
 .pr-sacola { position: fixed; z-index: 45; left: 50%; bottom: max(16px, env(safe-area-inset-bottom)); width: min(560px, calc(100% - 28px));
   transform: translateX(-50%); }
 .pr-sacola button { width: 100%; display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-radius: 18px; background: var(--ac);
@@ -178,17 +163,14 @@
 .pr-sacola .conta { min-width: 28px; height: 28px; padding: 0 8px; border-radius: 99px; background: rgba(255,255,255,.22); display: grid; place-items: center; font-size: 14px; }
 .pr-sacola .ir { margin-left: auto; display: flex; align-items: center; gap: 6px; }
 
-/* aviso (toast) */
 .pr-aviso { position: fixed; z-index: 60; left: 50%; top: 18px; transform: translateX(-50%); display: flex; align-items: center; gap: 12px;
   background: #1d1d1f; color: #fff; border-radius: 16px; padding: 10px 16px 10px 10px; box-shadow: var(--sombra-forte); font-weight: 700; font-size: 14px; }
 .pr-aviso img { width: 44px; height: 44px; }
 
-/* rodapé */
 .pr-rodape { max-width: 1120px; margin: 30px auto 0; padding: 26px 16px 40px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px;
   display: grid; gap: 8px; }
 .pr-rodape b { color: var(--ink); font-size: 16px; }
 
-/* ---------- folha do produto */
 .pr-veu { position: fixed; inset: 0; z-index: 70; background: rgba(12,12,13,.48); backdrop-filter: blur(3px); }
 .pr-folha { position: fixed; z-index: 71; left: 0; right: 0; bottom: 0; max-height: 92vh; background: var(--card); border-radius: 26px 26px 0 0;
   display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 -20px 60px rgba(0,0,0,.25); }
@@ -230,12 +212,11 @@
 .pr-add:active { transform: scale(0.97); }
 .pr-add:disabled { background: #c9c7c1; color: #fff; }
 
-/* item que voa até a sacola */
 .pr-voo { position: fixed; z-index: 80; border-radius: 16px; overflow: hidden; pointer-events: none; box-shadow: 0 10px 30px rgba(0,0,0,.25); }
 .pr-voo img { width: 100%; height: 100%; object-fit: cover; }
 
-/* revelação ao rolar (o GSAP anima; sem JS/sem movimento fica visível) */
-.prime.anima .pr-revela { opacity: 0; transform: translateY(26px); }
+/* o GSAP revela; sem JS ou sem movimento fica visível */
+.prime.anima .pr-revela:not(.revelado) { opacity: 0; transform: translateY(26px); }
 
 @keyframes pr-pulso { 0% { box-shadow: 0 0 0 0 rgba(62,230,111,.6); } 100% { box-shadow: 0 0 0 10px rgba(62,230,111,0); } }
 @keyframes pr-respira { 0%, 100% { opacity: .55; transform: scale(1); } 50% { opacity: .9; transform: scale(1.08); } }
@@ -245,12 +226,12 @@
   .prime *, .prime *::before, .prime *::after { animation: none !important; transition: none !important; }
 }
 
-/* campos de texto: o estilo global do site pinta inputs de escuro — no Prime eles são claros */
-.prime .pr-busca input { background: transparent !important; color: var(--ink) !important; box-shadow: none !important; padding: 0 !important; height: auto !important; }
-.prime .pr-busca input::placeholder, .prime .pr-obs::placeholder { color: var(--soft) !important; }
-.prime .pr-obs { background: #fff !important; color: var(--ink) !important; }
+/* #client-app: vencer o "#client-app input { background:#303134 !important }" global */
+#client-app .prime .pr-busca input, .prime .pr-busca input { background: transparent !important; color: var(--ink) !important;
+  box-shadow: none !important; padding: 0 !important; height: auto !important; border: 0 !important; }
+#client-app .prime .pr-busca input::placeholder, #client-app .prime .pr-obs::placeholder { color: var(--soft) !important; }
+#client-app .prime .pr-obs, .prime .pr-obs { background: #fff !important; color: var(--ink) !important; border-color: var(--line) !important; }
 
-/* ---------- abertura cinematográfica (vídeo preso à rolagem) */
 .ab { position: relative; background: #161617; }
 .ab-tela { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; color: #fff; }
 .ab-tela canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
@@ -292,7 +273,6 @@
   .ab-rotulo b { padding: 6px 9px; }
 }
 
-/* abertura — computador: textos na coluna da esquerda (o lanche fica no centro) */
 @media (min-width: 900px) {
   .ab-intro { left: 6vw; right: auto; top: 30vh; text-align: left; max-width: 30vw; padding: 0; }
   .ab-intro img, .ab-intro .pr-selo { margin-left: 0; }
@@ -300,7 +280,6 @@
   .ab-intro h1 { font-size: clamp(44px, 5.4vw, 86px); }
   .ab-final { left: 6vw; right: auto; top: 40vh; bottom: auto; text-align: left; justify-items: start; max-width: 28vw; }
 }
-/* abertura — celular: rótulos encostados nas bordas, sem traço */
 @media (max-width: 767px) {
   .ab-rotulo.esq { left: 10px; right: auto; flex-direction: row; }
   .ab-rotulo.dir { right: 10px; left: auto; }

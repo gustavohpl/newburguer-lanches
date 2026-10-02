@@ -15,13 +15,6 @@ import './prime.css';
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
 
-// ============================================================
-// PRIME — app de delivery premium (estrutura de app de delivery, visual próprio do NewBurguer)
-// Capa em camadas com parallax e vapor, título que se monta, rolagem suave (Lenis), busca, chips de categoria com
-// ilustrações (fal.ai) e marcação que desliza, banners, destaques com inclinação 3D, lista com foto à direita,
-// folha do produto com mola, item que voa até a sacola. Sem dados inventados: só o que vem do Master/produtos.
-// ============================================================
-
 interface PrimeLayoutProps {
   products: Product[];
   onAddToCart: (product: Product, notes?: string, quantity?: number, selectedAddons?: Array<{ id: string; name: string; price: number }>) => void;
@@ -62,7 +55,6 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
   const whats = (config.whatsappNumber || telefone || '').replace(/\D/g, '');
   const capaPropria = celular ? cfg.primeHeroMobileUrl || cfg.primeHeroUrl : cfg.primeHeroUrl;
 
-  // ---------- seções: categorias do Master (na ordem dele) + qualquer categoria a mais que os produtos tragam
   const secoes = useMemo<Secao[]>(() => {
     const cats: Array<{ id: string; label?: string; emoji?: string }> = (config.categories as any[]) || [];
     const lista: Secao[] = [];
@@ -103,7 +95,6 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
     return [...doMaster, ...nossos.filter((p) => secoes.some((s) => p.alvo?.test(`${s.id} ${s.titulo}`)))];
   }, [cfg.bannerCards, secoes]);
 
-  // ---------- tela, rolagem suave e animações de rolagem
   useEffect(() => {
     const r = () => setCelular(window.innerWidth < 768);
     window.addEventListener('resize', r);
@@ -115,7 +106,7 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
     const l = new Lenis({
       lerp: 0.1,
       smoothWheel: true,
-      // modais (sacola, checkout, folha do produto) rolam por conta própria
+      // modais rolam por conta própria
       prevent: (no: HTMLElement) => !!no.closest?.('[data-lenis-prevent], [role="dialog"], .overflow-y-auto, .overflow-auto'),
     } as any);
     lenis.current = l;
@@ -130,7 +121,6 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
     if (!raiz.current || reduzido) return;
     raiz.current.classList.add('anima');
     const ctx = gsap.context(() => {
-      // título que se monta palavra por palavra
       const tit = raiz.current!.querySelector('.pr-capa .pr-titulo');
       if (tit) {
         const st = new SplitText(tit, { type: 'words,lines', linesClass: 'linha' });
@@ -142,20 +132,13 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
       }
       gsap.from('.pr-loja-card', { y: 40, opacity: 0, duration: 1, delay: 0.5, ease: 'power3.out' });
       gsap.from('.pr-chip', { y: 20, opacity: 0, duration: 0.7, stagger: 0.05, delay: 0.7, ease: 'back.out(1.6)' });
-      // capa em camadas (quando não há abertura): fundo devagar, lanche mais rápido, texto some subindo
       if (raiz.current!.querySelector('.pr-capa')) {
         const gatilho = { trigger: capa.current, start: 'top top', end: 'bottom top', scrub: true };
         gsap.to('.pr-capa .fundo', { yPercent: 16, ease: 'none', scrollTrigger: gatilho });
         if (raiz.current!.querySelector('.pr-capa .frente')) gsap.to('.pr-capa .frente', { yPercent: -7, scale: 1.07, ease: 'none', scrollTrigger: gatilho });
         gsap.to('.pr-capa-texto', { y: -70, opacity: 0, ease: 'none', scrollTrigger: { ...gatilho, end: '70% top' } });
       }
-      // itens aparecem em cascata quando entram na tela
-      ScrollTrigger.batch('.pr-revela', {
-        start: 'top 90%',
-        onEnter: (lote) => gsap.to(lote, { opacity: 1, y: 0, duration: 0.8, stagger: 0.07, ease: 'power3.out', overwrite: true }),
-      });
     }, raiz);
-    // lanche da capa segue o mouse (computador)
     const frente = raiz.current.querySelector('.pr-capa .frente');
     const mx = frente ? gsap.quickTo(frente, 'x', { duration: 1.2, ease: 'power3.out' }) : null;
     const my = frente ? gsap.quickTo(frente, 'rotationY', { duration: 1.2, ease: 'power3.out' }) : null;
@@ -169,7 +152,22 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
     return () => { window.removeEventListener('pointermove', mover); ctx.revert(); };
   }, [reduzido, secoes.length, abertura]);
 
-  // topo fixo aparece quando a capa sai da tela
+  // refeito quando surgem itens novos (busca, abertura carregada)
+  useEffect(() => {
+    if (reduzido || !raiz.current) return;
+    const ctx = gsap.context(() => {
+      ScrollTrigger.batch('.pr-revela:not(.revelado)', {
+        start: 'top 92%',
+        onEnter: (lote) => {
+          gsap.to(lote, { opacity: 1, y: 0, duration: 0.8, stagger: 0.07, ease: 'power3.out', overwrite: true });
+          lote.forEach((e) => e.classList.add('revelado'));
+        },
+      });
+    }, raiz);
+    ScrollTrigger.refresh();
+    return () => ctx.revert();
+  }, [reduzido, secoes, resultado === null, abertura]);
+
   useEffect(() => {
     if (!capa.current) return;
     const io = new IntersectionObserver(([e]) => setTopo(!e.isIntersecting), { rootMargin: '-60px 0px 0px 0px' });
@@ -177,7 +175,6 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
     return () => io.disconnect();
   }, [abertura]);
 
-  // categoria ativa acompanha a rolagem
   useEffect(() => {
     const els = secoes.map((s) => document.getElementById(`pr-sec-${s.id}`)).filter(Boolean) as HTMLElement[];
     if (!els.length) return;
@@ -200,7 +197,6 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
     });
   };
 
-  // ---------- adicionar: voa até a sacola, sacola pula, aviso aparece
   const adicionar = (p: Product, notes: string, qtd: number, addons: any, origem: HTMLElement | null) => {
     onAddToCart(p, notes, qtd, addons);
     setAberto(null);
@@ -227,7 +223,6 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
     });
   };
 
-  // ---------- destaques com inclinação 3D ao passar o mouse
   const inclinar = (e: React.PointerEvent<HTMLElement>) => {
     if (reduzido || e.pointerType !== 'mouse') return;
     const r = e.currentTarget.getBoundingClientRect();
@@ -237,7 +232,6 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
   };
   const soltar = (e: React.PointerEvent<HTMLElement>) => gsap.to(e.currentTarget, { rotateY: 0, rotateX: 0, duration: 0.7, ease: 'elastic.out(1, 0.5)' });
 
-  // ---------- carrossel de banners (automático, pausa no toque)
   const trilho = useRef<HTMLDivElement>(null);
   const [banner, setBanner] = useState(0);
   useEffect(() => {
@@ -257,12 +251,12 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
     return () => { window.clearInterval(id); t?.removeEventListener('pointerenter', parar); t?.removeEventListener('pointerleave', seguir); };
   }, [banners.length, reduzido]);
 
-  const itemDaLista = (p: Product) => {
+  const itemDaLista = (p: Product, revela = true) => {
     const foto = fotoDe(p);
     const off = p.available === false;
     const promo = p.originalTotal && p.originalTotal > p.price;
     return (
-      <button key={p.id} className={`pr-item pr-revela ${off ? 'off' : ''}`} onClick={() => setAberto(p)} aria-label={`${p.name}, ${dinheiro(p.price)}`}>
+      <button key={p.id} className={`pr-item ${revela ? 'pr-revela' : ''} ${off ? 'off' : ''}`} onClick={() => setAberto(p)} aria-label={`${p.name}, ${dinheiro(p.price)}`}>
         <div>
           <h3>{p.name}</h3>
           {p.description && <p>{p.description}</p>}
@@ -280,7 +274,6 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
 
   return (
     <div className="prime" ref={raiz} style={{ ['--ac' as any]: cor, ['--ac-ink' as any]: legivelSobre(cor) }}>
-      {/* topo fixo */}
       <div className={`pr-topo ${topo ? 'visivel' : ''}`} aria-hidden={!topo}>
         <div className="pr-topo-in">
           {config.logoUrl && <img src={config.logoUrl} alt="" />}
@@ -291,7 +284,7 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
         </div>
       </div>
 
-      {/* abertura cinematográfica (vídeo preso à rolagem) — sem quadros ou com capa própria do Master, vale a capa */}
+      {/* sem quadros ou com capa própria no Master, vale a capa em camadas */}
       {!capaPropria && abertura !== false && (
         <div ref={abertura ? capa : undefined}>
           <PrimeAbertura nome={titulo} logo={config.logoUrl} aberta={isStoreOpen} horario={horario}
@@ -320,7 +313,6 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
       </header>
       )}
 
-      {/* cartão da loja */}
       <section className="pr-loja">
         <div className="pr-loja-card">
           {endereco && <span className="pr-info"><MapPin size={17} />{endereco}</span>}
@@ -338,7 +330,6 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
         <div className="pr-fechada"><div><Clock size={20} />A loja está fechada agora{horario ? ` — ${horario}` : ''}. Dá pra olhar o cardápio à vontade.</div></div>
       )}
 
-      {/* busca + categorias (grudam no topo) */}
       <div className={`pr-gruda ${topo ? 'com-topo' : ''}`}>
         <div className="pr-busca">
           <label>
@@ -363,7 +354,7 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
         {resultado ? (
           <section className="pr-secao">
             <div className="pr-secao-cab"><h2>Resultados</h2><small>{resultado.length} {resultado.length === 1 ? 'item' : 'itens'}</small></div>
-            {resultado.length ? <div className="pr-lista">{resultado.map(itemDaLista)}</div> : (
+            {resultado.length ? <div className="pr-lista">{resultado.map((p) => itemDaLista(p, false))}</div> : (
               <div className="pr-vazio"><img src={ARTE.sacola} alt="" /><b>Nada com “{busca}”</b><p>Tente outro nome, ou navegue pelas categorias.</p></div>
             )}
           </section>
@@ -415,7 +406,7 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
                   {s.ilustracao ? <img src={s.ilustracao} alt="" /> : <span style={{ fontSize: 30 }}>{s.emoji}</span>}
                   <h2>{s.titulo}</h2><small>{s.itens.length} {s.itens.length === 1 ? 'item' : 'itens'}</small>
                 </div>
-                <div className="pr-lista">{s.itens.map(itemDaLista)}</div>
+                <div className="pr-lista">{s.itens.map((p) => itemDaLista(p))}</div>
               </section>
             ))}
           </>
@@ -430,7 +421,6 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
         <span style={{ color: 'var(--soft)', fontSize: 12 }}>© {new Date().getFullYear()} {nome}</span>
       </footer>
 
-      {/* sacola fixa */}
       <AnimatePresence>
         {cartCount > 0 && (
           <motion.div className="pr-sacola" initial={{ y: 120, x: '-50%' }} animate={{ y: 0, x: '-50%' }} exit={{ y: 120, x: '-50%' }}
@@ -445,7 +435,6 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
         )}
       </AnimatePresence>
 
-      {/* aviso */}
       <AnimatePresence>
         {aviso && (
           <motion.div className="pr-aviso" role="status" initial={{ y: -80, x: '-50%', opacity: 0 }} animate={{ y: 0, x: '-50%', opacity: 1 }}
@@ -455,7 +444,6 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
         )}
       </AnimatePresence>
 
-      {/* folha do produto */}
       <AnimatePresence>
         {aberto && (
           <PrimeSheet key={aberto.id} product={aberto} ilustracao={ilustracaoDo(aberto)} lojaAberta={isStoreOpen}

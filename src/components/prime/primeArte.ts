@@ -1,4 +1,3 @@
-// Artes do PRIME (geradas na fal.ai e editadas por gerador-3d/preparar_prime.py → public/prime/*.webp)
 export const ARTE = {
   capa: '/prime/capa.webp',
   capaCelular: '/prime/capa-celular.webp',
@@ -12,7 +11,6 @@ export const ARTE = {
   ],
 };
 
-// Ilustração de cada categoria pelo nome/id (as categorias vêm do Master; o que não casar usa o emoji dela)
 const ILUSTRACOES: Array<[RegExp, string]> = [
   [/omelet/i, '/prime/cat-omeletes.webp'],
   [/artesan|gourmet|smash/i, '/prime/cat-artesanais.webp'],
@@ -28,7 +26,6 @@ export function ilustracaoDaCategoria(...nomes: Array<string | undefined>): stri
 
 export const dinheiro = (v: number) => `R$ ${v.toFixed(2).replace('.', ',')}`;
 
-// Texto legível sobre a cor de destaque
 export function legivelSobre(hex: string) {
   const h = (hex || '').replace('#', '');
   const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h.slice(0, 6);
