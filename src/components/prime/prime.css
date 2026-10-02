@@ -38,7 +38,7 @@
 .pr-vapor { position: absolute; z-index: 4; inset: 0; pointer-events: none; }
 .pr-capa-texto { position: absolute; z-index: 5; left: 0; right: 0; bottom: clamp(70px, 12vh, 110px);
   max-width: 1120px; margin: 0 auto; padding: 0 20px; color: #fff; }
-.pr-logo { width: 74px; height: 74px; border-radius: 22px; background: #fff; padding: 6px; box-shadow: 0 10px 30px rgba(0,0,0,.35);
+.pr-logo { width: 84px; height: 84px; border-radius: 22px; background: #fff; padding: 6px; box-shadow: 0 10px 30px rgba(0,0,0,.35);
   object-fit: contain; margin-bottom: 18px; }
 .pr-titulo { font-size: clamp(38px, 6.4vw, 78px); line-height: 0.98; font-weight: 800; letter-spacing: -0.03em; margin: 0; }
 .pr-titulo .linha { display: block; overflow: hidden; padding-bottom: 0.06em; }
@@ -65,7 +65,7 @@
   border-bottom: 1px solid var(--line); }
 .pr-topo.visivel { transform: none; }
 .pr-topo-in { max-width: 1120px; margin: 0 auto; padding: 10px 16px; display: flex; align-items: center; gap: 12px; }
-.pr-topo img { width: 36px; height: 36px; border-radius: 11px; object-fit: contain; background: #fff; border: 1px solid var(--line); }
+.pr-topo img { width: 42px; height: 42px; border-radius: 11px; object-fit: contain; background: #fff; border: 1px solid var(--line); }
 .pr-topo b { font-size: 16px; }
 
 .pr-gruda { position: sticky; top: 0; z-index: 30; background: color-mix(in srgb, var(--bg) 92%, transparent);
@@ -85,7 +85,8 @@
 .pr-chip .bola span { font-size: 30px; }
 .pr-chip:hover .bola img { transform: scale(1.12) rotate(-4deg); }
 .pr-chip:active .bola { transform: scale(0.9); }
-.pr-chip b { font-size: 12.5px; font-weight: 700; color: var(--muted); white-space: nowrap; transition: color .25s; }
+.pr-chip b { font-size: 12.5px; font-weight: 700; color: var(--muted); line-height: 1.2; text-align: center; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; transition: color .25s; }
 .pr-chip.ativo b { color: var(--ink); }
 .pr-chip .marca { position: absolute; inset: 0; border-radius: 20px; background: color-mix(in srgb, var(--ac) 12%, transparent); z-index: -1; }
 
@@ -179,7 +180,7 @@
   border-radius: 12px; background: var(--ac); color: #fff; font-weight: 600; font-size: 16px; box-shadow: 0 10px 24px rgba(0,0,0,.25);
   text-shadow: 0 2px 4px rgba(0,0,0,.9); }
 .pr-rodape .taxa em { font-style: normal; font-weight: 800; font-size: 20px; color: #fde047; text-shadow: 0 0 8px rgba(253,224,71,.5); }
-.pr-rodape .logo { height: 80px; width: auto; object-fit: contain; margin-bottom: 10px; filter: drop-shadow(0 25px 25px rgba(0,0,0,.4)); }
+.pr-rodape .logo { height: 96px; width: auto; object-fit: contain; margin-bottom: 10px; filter: drop-shadow(0 25px 25px rgba(0,0,0,.4)); }
 .pr-rodape b { color: #fff; font-size: 16px; }
 .pr-rodape .linha { display: inline-flex; align-items: center; gap: 8px; }
 .pr-rodape .linha svg { color: var(--ac); flex: none; }
@@ -254,7 +255,7 @@
 .ab-intro { position: absolute; left: 0; right: 0; top: clamp(12px, 2vh, 40px); text-align: center; padding: 0 20px; display: grid; justify-items: center; will-change: transform, opacity; }
 .ab-logo { position: relative; margin-bottom: 6px; }
 .ab-logo i { position: absolute; inset: 0; border-radius: 50%; filter: blur(40px); transform: scale(1.25); animation: ab-pulso 2s cubic-bezier(.4,0,.6,1) infinite; }
-.ab-logo img { position: relative; height: clamp(220px, 35vh, 460px); width: auto; object-fit: contain; filter: drop-shadow(0 0 25px rgba(251,191,36,.5)); }
+.ab-logo img { position: relative; height: clamp(250px, 40vh, 520px); width: auto; object-fit: contain; filter: drop-shadow(0 0 25px rgba(251,191,36,.5)); }
 @keyframes ab-pulso { 50% { opacity: .5; } }
 .ab-classico { display: grid; justify-items: center; gap: 8px; margin-bottom: 8px; font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif); }
 .ab-redes { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
@@ -286,7 +287,7 @@
 @keyframes ab-pula { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, 8px); } }
 @media (min-width: 900px) {
   .ab-intro { left: 6vw; right: auto; top: 0; bottom: 0; align-content: center; justify-items: start; text-align: left; max-width: 34vw; padding: 0; }
-  .ab-logo img { height: clamp(255px, 45vh, 520px); }
+  .ab-logo img { height: clamp(290px, 51vh, 590px); }
   .ab-classico { justify-items: start; }
   .ab-redes { justify-content: flex-start; }
     .ab-final { left: 6vw; right: auto; top: 40vh; bottom: auto; text-align: left; justify-items: start; max-width: 28vw; }
