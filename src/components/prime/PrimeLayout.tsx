@@ -12,7 +12,7 @@ import { useFranchise } from '../../FranchiseContext';
 import { SocialBrandColors } from '../Header';
 import { PrimeSheet } from './PrimeSheet';
 import { PrimeAbertura } from './PrimeAbertura';
-import { ARTE, ilustracaoDaCategoria, dinheiro, legivelSobre, semMovimento } from './primeArte';
+import { ARTE, ilustracaoDaCategoria, dinheiro, legivelSobre, misturarHex, semMovimento } from './primeArte';
 import './prime.css';
 
 gsap.registerPlugin(ScrollTrigger, SplitText);
@@ -56,6 +56,7 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
   const taxa = unitOverrides.deliveryFee ?? config.deliveryFee;
   const whats = (config.whatsappNumber || telefone || '').replace(/\D/g, '');
   const fundoSite = config.backgroundColor || '#161617';
+  const verdeEscuro = misturarHex(cor, fundoSite, 0.5); // papel de parede: verde do site escurecido
   const redes = Object.entries((cfg.socialMedia || {}) as Record<string, string>).filter(([, url]) => url && url.trim())
     .map(([rede, url]) => ({ rede, url, cor: cfg.socialMediaColors?.[rede] || SocialBrandColors[rede] || cor }));
   const capaPropria = celular ? cfg.primeHeroMobileUrl || cfg.primeHeroUrl : cfg.primeHeroUrl;
@@ -292,8 +293,8 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
       {/* sem quadros ou com capa própria no Master, vale a capa em camadas */}
       {!capaPropria && abertura !== false && (
         <div ref={abertura ? capa : undefined}>
-          <PrimeAbertura nome={titulo} logo={config.logoUrl || logoPadrao} aberta={isStoreOpen} horario={horario} cor={cor} redes={redes} fundo={fundoSite} aoPronta={setAbertura} onCardapio={() => secoes[0] && irPara(secoes[0].id)} />
-          <div className="pr-degrade" style={{ ['--fundo-site' as string]: fundoSite } as React.CSSProperties} />
+          <PrimeAbertura nome={titulo} logo={config.logoUrl || logoPadrao} aberta={isStoreOpen} horario={horario} cor={cor} redes={redes} fundo={fundoSite} parede={verdeEscuro} aoPronta={setAbertura} onCardapio={() => secoes[0] && irPara(secoes[0].id)} />
+          <div className="pr-degrade" style={{ ['--fundo-site' as string]: verdeEscuro } as React.CSSProperties} />
         </div>
       )}
       {(capaPropria || abertura === false) && (
@@ -419,7 +420,7 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
         )}
       </main>
 
-      <footer className="pr-rodape" style={{ ['--fundo-site' as string]: fundoSite } as React.CSSProperties}>
+      <footer className="pr-rodape" style={{ ['--fundo-site' as string]: verdeEscuro } as React.CSSProperties}>
         <div>
           {typeof taxa === 'number' && <span className="taxa"><Truck size={20} />Taxa de Entrega: <em>{dinheiro(taxa)}</em></span>}
           <img className="logo" src={config.logoUrl || logoPadrao} alt={nome} />

@@ -8,8 +8,6 @@ import { SocialIcons } from '../Header';
 gsap.registerPlugin(ScrollTrigger);
 
 const BASE = '/prime/abertura';
-// curva suave (ease-in-out) evita a faixa marcada que um degradê linear deixa
-const SUAVE = [0, 0.03, 0.1, 0.2, 0.33, 0.48, 0.63, 0.77, 0.88, 0.96, 1];
 
 function rgb(hex: string) {
   const h = (hex || '').replace('#', '');
@@ -26,11 +24,12 @@ interface Props {
   cor: string;
   redes: Array<{ rede: string; url: string; cor: string }>;
   fundo: string;
+  parede: string;
   onCardapio: () => void;
   aoPronta?: (ok: boolean) => void;
 }
 
-export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, onCardapio, aoPronta }: Props) {
+export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, parede, onCardapio, aoPronta }: Props) {
   const secao = useRef<HTMLElement>(null);
   const tela = useRef<HTMLCanvasElement>(null);
   const [info, setInfo] = useState<{ n: number; corteCel?: [number, number] }>({ n: 0 });
@@ -49,10 +48,12 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
     const c = tela.current;
     if (!c || !n) return;
     const g = c.getContext('2d')!;
-    const [r0, g0, b0] = rgb(fundo);
-    const cor = (a: number) => `rgba(${r0},${g0},${b0},${a})`;
-    // fundo escuro: 'lighten' troca o preto do estúdio do vídeo pela cor do site sem tocar no lanche
-    const clarear = (0.2126 * r0 + 0.7152 * g0 + 0.0722 * b0) / 255 < 0.3;
+    const [er, eg, eb] = rgb(fundo);   // escuro = fundo da animação (atrás do lanche)
+    const [vr, vg, vb] = rgb(parede);  // verde escuro = papel de parede (atrás do header)
+    const esc = (a: number) => `rgba(${er},${eg},${eb},${a})`;
+    const vrd = (a: number) => `rgba(${vr},${vg},${vb},${a})`;
+    // 'lighten' troca o preto do estúdio do vídeo pela cor do fundo sem tocar no lanche
+    const clarear = (0.2126 * er + 0.7152 * eg + 0.0722 * eb) / 255 < 0.3;
     const quadro = document.createElement('canvas');
     const q = quadro.getContext('2d')!;
     const emPe = window.innerWidth < 768 && window.innerHeight > window.innerWidth;
@@ -96,11 +97,6 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       desenhar(atual);
     };
     const pronta = (im?: HTMLImageElement) => !!im && im.complete && im.naturalWidth > 0;
-    const fundir = (x0: number, y0: number, x1: number, y1: number, rx: number, ry: number, rw: number, rh: number) => {
-      const f = g.createLinearGradient(x0, y0, x1, y1);
-      SUAVE.forEach((a, i) => f.addColorStop(i / (SUAVE.length - 1), cor(1 - a)));
-      g.fillStyle = f; g.fillRect(rx, ry, rw, rh);
-    };
     let atual = 0, alvo = 0, raf = 0, ultimo = -1;
     const desenhar = (f: number) => {
       const i = Math.max(0, Math.min(n - 1, Math.floor(f)));
@@ -117,10 +113,16 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       g.setTransform(dpr, 0, 0, dpr, 0, 0);
       g.imageSmoothingEnabled = true;
       g.imageSmoothingQuality = 'high';
-      g.fillStyle = cor(1);
-      g.fillRect(0, 0, W, H);
       const p = Math.min(1, f / ((n - 1) * 0.45));
       const y = caixa.y + desce * (1 - p * p * (3 - 2 * p));
+      // parede verde escura ao fundo + zona ESCURA atrás do lanche (p/ o lighten não esverdear o modelo)
+      const cx = caixa.x + caixa.w / 2, cy = y + caixa.h / 2;
+      const grad = g.createRadialGradient(cx, cy, 0, cx, cy, Math.hypot(W, H) * 0.6);
+      grad.addColorStop(0, esc(1));
+      grad.addColorStop(0.5, esc(1));
+      grad.addColorStop(1, vrd(1));
+      g.fillStyle = grad;
+      g.fillRect(0, 0, W, H);
       if (quadro.width !== a.naturalWidth) { quadro.width = a.naturalWidth; quadro.height = a.naturalHeight; }
       q.globalAlpha = 1;
       q.drawImage(a, 0, 0);
@@ -132,11 +134,6 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       g.globalCompositeOperation = clarear ? 'lighten' : 'source-over';
       g.drawImage(quadro, caixa.x, y, caixa.w, caixa.h);
       g.globalCompositeOperation = 'source-over';
-      const fx = caixa.w * 0.2, fy = caixa.h * 0.18;
-      if (caixa.x > 0) fundir(caixa.x, 0, caixa.x + fx, 0, caixa.x - 1, 0, fx + 1, H);
-      if (caixa.x + caixa.w < W) fundir(caixa.x + caixa.w, 0, caixa.x + caixa.w - fx, 0, caixa.x + caixa.w - fx, 0, fx + 1, H);
-      if (y > 0) fundir(0, y, 0, y + fy, 0, y - 1, W, fy + 1);
-      if (y + caixa.h < H) fundir(0, y + caixa.h, 0, y + caixa.h - fy, 0, y + caixa.h - fy, W, fy + 1);
     };
     const laco = () => {
       atual += (alvo - atual) * 0.14;
@@ -167,7 +164,7 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
 
   if (!n) return null;
   return (
-    <section ref={secao} className="ab" style={{ height: reduzido ? '100vh' : '150vh', background: fundo, ['--ab-fundo' as string]: fundo } as React.CSSProperties} aria-label={`Abertura ${nome}`}>
+    <section ref={secao} className="ab" style={{ height: reduzido ? '100vh' : '150vh', background: parede, ['--ab-fundo' as string]: parede } as React.CSSProperties} aria-label={`Abertura ${nome}`}>
       <div className="ab-tela">
         <canvas ref={tela} aria-hidden />
         <div className="ab-sombra" />

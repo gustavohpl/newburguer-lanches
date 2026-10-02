@@ -35,5 +35,18 @@ export function legivelSobre(hex: string) {
   return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255 > 0.6 ? '#1d1d1f' : '#ffffff';
 }
 
+export function misturarHex(a: string, b: string, t: number) {
+  const px = (h: string) => {
+    const s = (h || '').replace('#', '');
+    const f = s.length === 3 ? s.split('').map((c) => c + c).join('') : s.slice(0, 6);
+    const n = parseInt(f, 16);
+    return Number.isNaN(n) ? [0, 0, 0] : [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  };
+  const [ar, ag, ab] = px(a), [br, bg, bb] = px(b);
+  const m = (x: number, y: number) => Math.round(x * t + y * (1 - t));
+  const h = (x: number) => x.toString(16).padStart(2, '0');
+  return `#${h(m(ar, br))}${h(m(ag, bg))}${h(m(ab, bb))}`;
+}
+
 export const semMovimento = () =>
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
