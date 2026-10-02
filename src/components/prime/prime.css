@@ -282,15 +282,11 @@
 .ab-horario::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to right, transparent, rgba(255,255,255,.2), transparent);
   transform: translateX(-100%); transition: transform .7s; }
 .ab-horario:hover::after { transform: translateX(100%); }
-.ab-intro p { margin: 0; color: rgba(255,255,255,.75); font-size: clamp(15px, 1.6vw, 19px); }
 .ab-final { position: absolute; left: 0; right: 0; bottom: clamp(40px, 9vh, 90px); text-align: center; display: grid; justify-items: center; gap: 14px; will-change: transform, opacity; }
 .ab-final b { font-size: clamp(26px, 3.6vw, 46px); font-weight: 800; letter-spacing: -0.03em; text-shadow: 0 6px 30px rgba(0,0,0,.6); }
 .ab-final button { background: var(--ac); color: var(--ac-ink); font-weight: 800; padding: 15px 26px; border-radius: 16px; font-size: 16px;
   box-shadow: 0 14px 40px color-mix(in srgb, var(--ac) 50%, transparent); transition: transform .3s var(--mola); }
 .ab-final button:hover { transform: translateY(-2px) scale(1.03); }
-.ab-dica { position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%); display: grid; justify-items: center; gap: 4px;
-  font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.7); animation: ab-pula 1.8s ease-in-out infinite; }
-@keyframes ab-pula { 0%, 100% { transform: translate(-50%, 0); } 50% { transform: translate(-50%, 8px); } }
 @media (min-width: 900px) {
   .ab-intro { left: 6vw; right: auto; top: 0; bottom: 0; align-content: center; justify-items: start; text-align: left; max-width: 34vw; padding: 0; }
   .ab-logo { justify-self: center; }

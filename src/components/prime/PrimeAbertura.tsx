@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { ChevronDown } from 'lucide-react';
 import { original, semMovimento } from './primeArte';
 import { SocialIcons } from '../Header';
 
@@ -173,9 +172,8 @@ export function PrimeAbertura({ nome, logo, logoOriginal, aberta, horario, cor, 
       ScrollTrigger.create({ ...st, onUpdate: (s) => { alvo = s.progress * (n - 1); acordar(); } });
       const tl = gsap.timeline({ scrollTrigger: { ...st, scrub: 0.5 } });
       // posições = fração da ROLAGEM (padding força a duração total da timeline p/ 1.0)
-      tl.to('.ab-dica', { opacity: 0, duration: 0.06 }, 0.02)
-        // logo + infos SOBEM (rolagem natural) e saem pelo topo
-        .fromTo('.ab-intro', { yPercent: 0 }, { yPercent: -175, ease: 'none', duration: 0.52 }, 0)
+      // logo + infos SOBEM (rolagem natural) e saem pelo topo
+      tl.fromTo('.ab-intro', { yPercent: 0 }, { yPercent: -175, ease: 'none', duration: 0.52 }, 0)
         .to('.ab-intro', { opacity: 0, duration: 0.12, ease: 'power1.in' }, 0.4)
         // "Montado do seu jeito" sobe de baixo (a partir de ~metade da logo) e NÃO trava: segue subindo até o fim
         .fromTo('.ab-final', { yPercent: 135 }, { yPercent: -85, ease: 'none', duration: 0.7 }, 0.3)
@@ -210,13 +208,11 @@ export function PrimeAbertura({ nome, logo, logoOriginal, aberta, horario, cor, 
             <span className={`ab-selo ${aberta ? 'aberto' : ''}`}>{aberta && <i />}{aberta ? 'ABERTO AGORA' : 'FECHADO'}</span>
             {horario && <span className="ab-horario" style={{ background: `linear-gradient(to right, ${cor}, ${cor}dd)` }}><span>🕐</span>{horario}</span>}
           </div>
-          <p>Cada camada feita na hora.</p>
         </div>
         <div className="ab-final" style={{ opacity: reduzido ? 1 : 0 }}>
           <b>Montado do seu jeito.</b>
           <button onClick={onCardapio}>Ver o cardápio</button>
         </div>
-        {!reduzido && <div className="ab-dica"><span>Role para abrir</span><ChevronDown size={20} /></div>}
       </div>
     </section>
   );
