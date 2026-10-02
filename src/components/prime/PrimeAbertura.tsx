@@ -113,7 +113,7 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       const p = Math.min(1, f / ((n - 1) * 0.45));
       const prog = n > 1 ? f / (n - 1) : 0;
       // sobe o tempo todo (rolagem contínua), além da subida inicial do fechado e de abrir
-      const y = caixa.y + desce * (1 - p * p * (3 - 2 * p)) - H * 0.12 * prog;
+      const y = caixa.y + desce * (1 - p * p * (3 - 2 * p)) - H * 0.26 * prog;
       // papel de parede VERDE do lado do header -> ESCURO do lado do lanche (degradê direcional):
       // o lanche fica todo no escuro (lighten não encosta no verde = sem borda verde)
       const cx = caixa.x + caixa.w / 2;
@@ -173,7 +173,7 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
         .fromTo('.ab-intro', { yPercent: 0 }, { yPercent: -175, ease: 'none', duration: 0.52 }, 0)
         .to('.ab-intro', { opacity: 0, duration: 0.12, ease: 'power1.in' }, 0.4)
         // "Montado do seu jeito" sobe de baixo (a partir de ~metade da logo) e NÃO trava: segue subindo até o fim
-        .fromTo('.ab-final', { yPercent: 135 }, { yPercent: -28, ease: 'none', duration: 0.7 }, 0.3)
+        .fromTo('.ab-final', { yPercent: 135 }, { yPercent: -85, ease: 'none', duration: 0.7 }, 0.3)
         .fromTo('.ab-final', { opacity: 0 }, { opacity: 1, ease: 'power1.out', duration: 0.16 }, 0.33)
         .to({}, { duration: 0.01 }, 1);
       gsap.from('.ab-intro > *', { y: 30, opacity: 0, duration: 1, stagger: 0.1, ease: 'power3.out', delay: 0.2 });
