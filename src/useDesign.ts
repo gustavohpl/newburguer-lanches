@@ -161,7 +161,9 @@ const DESIGNS: Record<DesignId, DesignTokens> = {
  */
 export function useDesign(): DesignTokens {
   const { config } = useConfig();
-  const style = (config.designStyle as DesignId) || 'classic';
+  // ?design=prime no endereço: ver um design sem mudar o salvo no Master (que vale para produção)
+  const forcado = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('design') : null;
+  const style = ((forcado && forcado in DESIGNS ? forcado : config.designStyle) as DesignId) || 'classic';
   return DESIGNS[style] || DESIGNS.classic;
 }
 
