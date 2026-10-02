@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Campaign } from '../../../hooks/useTrafegoPago';
 import { useMetaAPI } from '../../../hooks/useMetaAPI';
+import { CampaignCard } from './CampaignCard';
 import { toast } from 'sonner@2.0.3';
 
 interface CampanhasListProps {
