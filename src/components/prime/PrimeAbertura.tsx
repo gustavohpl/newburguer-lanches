@@ -8,15 +8,6 @@ import { SocialIcons } from '../Header';
 gsap.registerPlugin(ScrollTrigger);
 
 const BASE = '/prime/abertura';
-// curva suave (ease-in-out) evita a faixa marcada que um degradê linear deixa
-const SUAVE = [0, 0.03, 0.1, 0.2, 0.33, 0.48, 0.63, 0.77, 0.88, 0.96, 1];
-
-function rgb(hex: string) {
-  const h = (hex || '').replace('#', '');
-  const c = h.length === 3 ? h.split('').map((x) => x + x).join('') : h.slice(0, 6);
-  const v = parseInt(c, 16);
-  return Number.isNaN(v) ? [22, 22, 23] : [(v >> 16) & 255, (v >> 8) & 255, v & 255];
-}
 
 interface Props {
   nome: string;
@@ -49,12 +40,12 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
     const c = tela.current;
     if (!c || !n) return;
     const g = c.getContext('2d')!;
-    const [r0, g0, b0] = rgb(fundo);
-    const cor = (a: number) => `rgba(${r0},${g0},${b0},${a})`;
-    // fundo escuro: 'lighten' troca o preto do estúdio do vídeo pela cor do site sem tocar no lanche
-    const clarear = (0.2126 * r0 + 0.7152 * g0 + 0.0722 * b0) / 255 < 0.3;
     const quadro = document.createElement('canvas');
     const q = quadro.getContext('2d')!;
+    // máscara em baixa resolução p/ achar SÓ o fundo (região escura/neutra ligada à borda)
+    const masc = document.createElement('canvas');
+    const mc = masc.getContext('2d', { willReadFrequently: true })!;
+    let mw = 0, mh = 0, bg = new Uint8Array(0), vis = new Uint8Array(0), pilha = new Int32Array(0);
     const emPe = window.innerWidth < 768 && window.innerHeight > window.innerWidth;
     const corte = emPe && info.corteCel ? info.corteCel : null;
     const pasta = `${BASE}/${corte ? 'cel' : 'pc'}`;
@@ -96,10 +87,34 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       desenhar(atual);
     };
     const pronta = (im?: HTMLImageElement) => !!im && im.complete && im.naturalWidth > 0;
-    const fundir = (x0: number, y0: number, x1: number, y1: number, rx: number, ry: number, rw: number, rh: number) => {
-      const f = g.createLinearGradient(x0, y0, x1, y1);
-      SUAVE.forEach((a, i) => f.addColorStop(i / (SUAVE.length - 1), cor(1 - a)));
-      g.fillStyle = f; g.fillRect(rx, ry, rw, rh);
+    // máscara do fundo: escuro E neutro, ligado à borda (flood-fill). Sombras internas do lanche fechado ficam de fora.
+    const mascararFundo = () => {
+      if (!mw) return;
+      mc.imageSmoothingEnabled = true;
+      mc.clearRect(0, 0, mw, mh);
+      mc.drawImage(quadro, 0, 0, mw, mh);
+      const d = mc.getImageData(0, 0, mw, mh);
+      const px = d.data, N = mw * mh;
+      for (let i2 = 0; i2 < N; i2++) {
+        const r = px[i2 * 4], gg = px[i2 * 4 + 1], b = px[i2 * 4 + 2];
+        const mx = r > gg ? (r > b ? r : b) : (gg > b ? gg : b);
+        const mn = r < gg ? (r < b ? r : b) : (gg < b ? gg : b);
+        bg[i2] = ((r * 77 + gg * 151 + b * 28) >> 8) < 74 && mx - mn < 34 ? 1 : 0;
+        vis[i2] = 0;
+      }
+      let sp = 0;
+      const semear = (idx: number) => { if (bg[idx] && !vis[idx]) { vis[idx] = 1; pilha[sp++] = idx; } };
+      for (let x = 0; x < mw; x++) { semear(x); semear((mh - 1) * mw + x); }
+      for (let yy = 0; yy < mh; yy++) { semear(yy * mw); semear(yy * mw + mw - 1); }
+      while (sp) {
+        const idx = pilha[--sp], x = idx % mw, yy = (idx / mw) | 0;
+        if (x > 0) semear(idx - 1);
+        if (x < mw - 1) semear(idx + 1);
+        if (yy > 0) semear(idx - mw);
+        if (yy < mh - 1) semear(idx + mw);
+      }
+      for (let i2 = 0; i2 < N; i2++) { px[i2 * 4] = px[i2 * 4 + 1] = px[i2 * 4 + 2] = 0; px[i2 * 4 + 3] = vis[i2] ? 255 : 0; }
+      mc.putImageData(d, 0, 0);
     };
     let atual = 0, alvo = 0, raf = 0, ultimo = -1;
     const desenhar = (f: number) => {
@@ -117,26 +132,28 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       g.setTransform(dpr, 0, 0, dpr, 0, 0);
       g.imageSmoothingEnabled = true;
       g.imageSmoothingQuality = 'high';
-      g.fillStyle = cor(1);
-      g.fillRect(0, 0, W, H);
-      const p = Math.min(1, f / ((n - 1) * 0.45));
-      const y = caixa.y + desce * (1 - p * p * (3 - 2 * p));
-      if (quadro.width !== a.naturalWidth) { quadro.width = a.naturalWidth; quadro.height = a.naturalHeight; }
+      if (quadro.width !== a.naturalWidth) {
+        quadro.width = a.naturalWidth; quadro.height = a.naturalHeight;
+        mw = 320; mh = Math.max(1, Math.round(mw * quadro.height / quadro.width));
+        masc.width = mw; masc.height = mh;
+        bg = new Uint8Array(mw * mh); vis = new Uint8Array(mw * mh); pilha = new Int32Array(mw * mh);
+      }
+      q.globalCompositeOperation = 'source-over';
       q.globalAlpha = 1;
+      q.clearRect(0, 0, quadro.width, quadro.height);
       q.drawImage(a, 0, 0);
       // mistura com o próximo quadro: movimento contínuo entre os quadros do vídeo
-      if (a === imgs[i] && t > 0.02 && pronta(b)) {
-        q.globalAlpha = t;
-        q.drawImage(b, 0, 0);
-      }
-      g.globalCompositeOperation = clarear ? 'lighten' : 'source-over';
-      g.drawImage(quadro, caixa.x, y, caixa.w, caixa.h);
+      if (a === imgs[i] && t > 0.02 && pronta(b)) { q.globalAlpha = t; q.drawImage(b, 0, 0); }
+      const p = Math.min(1, f / ((n - 1) * 0.45));
+      const y = caixa.y + desce * (1 - p * p * (3 - 2 * p));
+      // desenha o lanche e apaga só o fundo ligado à borda -> a parede verde (fundo do .ab) aparece atrás
+      g.clearRect(0, 0, W, H);
       g.globalCompositeOperation = 'source-over';
-      const fx = caixa.w * 0.2, fy = caixa.h * 0.18;
-      if (caixa.x > 0) fundir(caixa.x, 0, caixa.x + fx, 0, caixa.x - 1, 0, fx + 1, H);
-      if (caixa.x + caixa.w < W) fundir(caixa.x + caixa.w, 0, caixa.x + caixa.w - fx, 0, caixa.x + caixa.w - fx, 0, fx + 1, H);
-      if (y > 0) fundir(0, y, 0, y + fy, 0, y - 1, W, fy + 1);
-      if (y + caixa.h < H) fundir(0, y + caixa.h, 0, y + caixa.h - fy, 0, y + caixa.h - fy, W, fy + 1);
+      g.drawImage(quadro, caixa.x, y, caixa.w, caixa.h);
+      mascararFundo();
+      g.globalCompositeOperation = 'destination-out';
+      g.drawImage(masc, caixa.x, y, caixa.w, caixa.h);
+      g.globalCompositeOperation = 'source-over';
     };
     const laco = () => {
       atual += (alvo - atual) * 0.14;

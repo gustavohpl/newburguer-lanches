@@ -292,8 +292,8 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
       {/* sem quadros ou com capa própria no Master, vale a capa em camadas */}
       {!capaPropria && abertura !== false && (
         <div ref={abertura ? capa : undefined}>
-          <PrimeAbertura nome={titulo} logo={config.logoUrl || logoPadrao} aberta={isStoreOpen} horario={horario} cor={cor} redes={redes} fundo={fundoSite} aoPronta={setAbertura} onCardapio={() => secoes[0] && irPara(secoes[0].id)} />
-          <div className="pr-degrade" style={{ ['--fundo-site' as string]: fundoSite } as React.CSSProperties} />
+          <PrimeAbertura nome={titulo} logo={config.logoUrl || logoPadrao} aberta={isStoreOpen} horario={horario} cor={cor} redes={redes} fundo={cor} aoPronta={setAbertura} onCardapio={() => secoes[0] && irPara(secoes[0].id)} />
+          <div className="pr-degrade" style={{ ['--fundo-site' as string]: cor } as React.CSSProperties} />
         </div>
       )}
       {(capaPropria || abertura === false) && (
