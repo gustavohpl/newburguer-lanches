@@ -77,7 +77,7 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
 
     let dpr = 1, W = 0, H = 0, desce = 0, caixa = { x: 0, y: 0, w: 0, h: 0 };
     const medir = () => {
-      dpr = Math.min(window.devicePixelRatio || 1, 3);
+      dpr = Math.min(window.devicePixelRatio || 1, 4);
       W = c.clientWidth; H = c.clientHeight;
       c.width = W * dpr; c.height = H * dpr;
       const r = 16 / 9;
@@ -120,14 +120,18 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       const cx = caixa.x + caixa.w / 2;
       const largo = W / H > 0.9 && W >= 900;
       let grad: CanvasGradient;
+      let verdeTopo = vrd(1);
       if (largo) {
         const xEsc = cx - caixa.w * 0.22;            // borda esquerda do lanche (com folga)
         grad = g.createLinearGradient(Math.max(0, xEsc - W * 0.12), 0, xEsc, 0);
       } else {
         const yEsc = y + caixa.h * 0.08;             // topo do lanche
         grad = g.createLinearGradient(0, Math.max(0, yEsc - H * 0.16), 0, yEsc);
+        // em pé o lanche sobe pra dentro do verde ao abrir -> some o verde conforme abre (sem borda verde no ingrediente)
+        const abriu = Math.min(1, f / ((n - 1) * 0.5));
+        verdeTopo = `rgb(${Math.round(vr + (er - vr) * abriu)},${Math.round(vg + (eg - vg) * abriu)},${Math.round(vb + (eb - vb) * abriu)})`;
       }
-      grad.addColorStop(0, vrd(1));
+      grad.addColorStop(0, verdeTopo);
       grad.addColorStop(1, esc(1));
       g.fillStyle = grad;
       g.fillRect(0, 0, W, H);
@@ -144,7 +148,7 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       g.globalCompositeOperation = 'source-over';
     };
     const laco = () => {
-      atual += (alvo - atual) * 0.26;
+      atual += (alvo - atual) * 0.34;
       desenhar(atual);
       raf = requestAnimationFrame(laco);
     };
