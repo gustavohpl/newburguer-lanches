@@ -430,7 +430,9 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
 
       <footer className="pr-rodape" style={{ ['--fundo-site' as string]: verdeEscuro } as React.CSSProperties}>
         <div>
-          {typeof taxa === 'number' && <span className="taxa"><Truck size={20} />Taxa de Entrega: <em>{dinheiro(taxa)}</em></span>}
+          {typeof taxa === 'number' && (
+            <span className="taxa"><i><Truck size={18} /></i><span><small>Taxa de entrega</small><b>{taxa > 0 ? dinheiro(taxa) : 'Grátis'}</b></span></span>
+          )}
           <img className="logo" src={leve(config.logoUrl, 256) || logoPadrao} onError={original(config.logoUrl)} alt={nome} />
           <b>{nome}</b>
           {endereco && <span className="linha"><MapPin size={15} />{endereco}</span>}

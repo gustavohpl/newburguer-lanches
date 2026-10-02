@@ -91,7 +91,7 @@ export function PrimeAbertura({ nome, logo, logoOriginal, aberta, horario, cor, 
       // em pé: lanche acima do meio (botão final embaixo); computador: à direita (textos na esquerda)
       const largo = W / H > 0.9 && W >= 900;
       if (largo) { w *= 1.08; h *= 1.08; }
-      caixa = { x: (W - w) / 2 + (largo ? W * 0.13 : 0), y: (H - h) / 2 + (W / H <= 0.9 ? H * 0.05 : 0), w, h };
+      caixa = { x: (W - w) / 2 + (largo ? W * 0.13 : 0), y: (H - h) / 2 + (W / H <= 0.9 ? H * 0.16 : 0), w, h };
       // em pé o lanche fechado começa abaixo da logo/status e sobe enquanto abre (fechado ocupa 16,5%–78% do quadro)
       const intro = secao.current?.querySelector<HTMLElement>('.ab-intro');
       desce = W / H <= 0.9 && intro ? Math.max(0, Math.min(intro.offsetTop + intro.offsetHeight + 10 - (caixa.y + 0.165 * caixa.h),

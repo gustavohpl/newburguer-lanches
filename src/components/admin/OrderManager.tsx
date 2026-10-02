@@ -520,8 +520,11 @@ export function OrderManager() {
   const cancelledOrders = Array.from(cancelledMap.values())
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
+  // o total de ativos não depende do filtro escolhido
+  const ativos24h = orders.filter(o => o.status !== 'completed' && o.status !== 'cancelled'
+    && Date.now() - new Date(o.createdAt).getTime() < 24 * 60 * 60 * 1000).length;
   const statusFilters = [
-    { value: 'all' as const, label: 'Ativos (24h)', count: filteredOrders.length },
+    { value: 'all' as const, label: 'Ativos (24h)', count: ativos24h },
     { value: 'pending' as const, label: 'Aguardando', count: orders.filter(o => o.status === 'pending').length },
     { value: 'preparing' as const, label: 'Preparando', count: orders.filter(o => o.status === 'preparing').length },
     { value: 'packing' as const, label: 'Embalando', count: orders.filter(o => o.status === 'packing').length },
