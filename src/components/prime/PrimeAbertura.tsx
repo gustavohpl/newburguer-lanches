@@ -84,7 +84,7 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       // em pé: lanche acima do meio (botão final embaixo); computador: à direita (textos na esquerda)
       const largo = W / H > 0.9 && W >= 900;
       if (largo) { w *= 1.08; h *= 1.08; }
-      caixa = { x: (W - w) / 2 + (largo ? W * 0.13 : 0), y: (H - h) / 2 - (W / H <= 0.9 ? H * 0.07 : 0), w, h };
+      caixa = { x: (W - w) / 2 + (largo ? W * 0.13 : 0), y: (H - h) / 2 + (W / H <= 0.9 ? H * 0.05 : 0), w, h };
       if (corte) caixa = { ...caixa, x: caixa.x + corte[0] * caixa.w, w: corte[1] * caixa.w };
       // em pé o lanche fechado começa abaixo da logo/status e sobe enquanto abre (fechado ocupa 16,5%–78% do quadro)
       const intro = secao.current?.querySelector<HTMLElement>('.ab-intro');
@@ -113,7 +113,7 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       const p = Math.min(1, f / ((n - 1) * 0.45));
       const prog = n > 1 ? f / (n - 1) : 0;
       // sobe o tempo todo (rolagem contínua), além da subida inicial do fechado e de abrir
-      const y = caixa.y + desce * (1 - p * p * (3 - 2 * p)) - H * 0.22 * prog;
+      const y = caixa.y + desce * (1 - p * p * (3 - 2 * p)) - H * 0.12 * prog;
       // papel de parede VERDE do lado do header -> ESCURO do lado do lanche (degradê direcional):
       // o lanche fica todo no escuro (lighten não encosta no verde = sem borda verde)
       const cx = caixa.x + caixa.w / 2;
