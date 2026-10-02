@@ -7,6 +7,9 @@ import { AwwwardsHero } from './components/awwwards/AwwwardsHero'
 import { RevealHero } from './components/reveal/RevealHero'
 import { ConfigProvider } from './ConfigContext'
 import './styles/globals.css'
+import { iniciarPwa } from './pwa'
+
+iniciarPwa()
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

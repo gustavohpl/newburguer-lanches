@@ -388,7 +388,11 @@
 .prime-ck .bg-gradient-to-r.from-amber-50 { background: color-mix(in srgb, var(--ac) 7%, var(--card)); }
 .prime-ck .border-amber-300 { border-color: color-mix(in srgb, var(--ac) 30%, var(--card)); }
 .prime-ck .text-amber-900 { color: var(--ink); }
-.pr-meus { position: fixed; z-index: 44; left: 16px; bottom: max(16px, env(safe-area-inset-bottom)); width: 54px; height: 54px; border-radius: 18px;
+.prime .pr-meus { position: fixed; z-index: 44; left: 16px; bottom: max(16px, env(safe-area-inset-bottom)); width: 54px; height: 54px; border-radius: 18px;
   background: var(--card); color: var(--ac); display: grid; place-items: center; box-shadow: var(--sombra-forte); transition: bottom .45s var(--suave), transform .2s; }
-.pr-meus:active { transform: scale(.94); }
-@media (max-width: 720px) { .pr-meus.sobe { bottom: calc(max(16px, env(safe-area-inset-bottom)) + 72px); } }
+.prime .pr-meus:active { transform: scale(.94); }
+@media (max-width: 720px) { .prime .pr-meus.sobe { bottom: calc(max(16px, env(safe-area-inset-bottom)) + 72px); } }
+.prime .pr-instalar { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 999px; background: var(--ac); color: var(--ac-ink);
+  font-size: 13px; font-weight: 800; white-space: nowrap; }
+.prime .pr-rodape .pr-instalar { margin-top: 14px; font-size: 14px; padding: 11px 18px; }
+@media (max-width: 420px) { .prime .pr-topo .pr-instalar { padding: 8px 10px; font-size: 0; gap: 0; } }

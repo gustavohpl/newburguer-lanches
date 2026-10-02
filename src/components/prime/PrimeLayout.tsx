@@ -4,10 +4,11 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SplitText } from 'gsap/SplitText';
 import Lenis from 'lenis';
-import { Search, ShoppingBag, MapPin, Clock, Phone, ChevronRight, Bike, Plus, Instagram, MessageCircle, Truck, ClipboardList } from 'lucide-react';
+import { Search, ShoppingBag, MapPin, Clock, Phone, ChevronRight, Bike, Plus, Instagram, MessageCircle, Truck, ClipboardList, Download } from 'lucide-react';
 import logoPadrao from 'figma:asset/2217307d23df7779a3757aa35c01d81549336b8b.png';
 import type { Product } from '../../App';
 import { useConfig } from '../../ConfigContext';
+import { useInstalar } from '../../pwa';
 import { useFranchise } from '../../FranchiseContext';
 import { SocialBrandColors } from '../Header';
 import { PrimeSheet } from './PrimeSheet';
@@ -32,6 +33,7 @@ const fotoDe = (p: Product) => p.imageUrl || p.image || null;
 
 export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isStoreOpen, onMeusPedidos }: PrimeLayoutProps) {
   const { config } = useConfig();
+  const instalar = useInstalar();
   const cfg = config as any;
   const { unitOverrides } = useFranchise();
   const raiz = useRef<HTMLDivElement>(null);
@@ -291,6 +293,7 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
           <span className={`pr-selo ${isStoreOpen ? 'aberto' : ''}`} style={{ marginTop: 0, marginLeft: 'auto', background: 'var(--chip)', color: 'var(--ink)' }}>
             <i />{isStoreOpen ? 'Aberto' : 'Fechado'}
           </span>
+          {instalar && <button className="pr-instalar" onClick={instalar}><Download size={16} />Instalar app</button>}
         </div>
       </div>
 
@@ -432,6 +435,7 @@ export function PrimeLayout({ products, onAddToCart, cartCount, onOpenCart, isSt
           {endereco && <span className="linha"><MapPin size={15} />{endereco}</span>}
           {horario && <span className="linha"><Clock size={15} />{horario}</span>}
           {telefone && <span className="linha"><Phone size={15} />{telefone}</span>}
+          {instalar && <button className="pr-instalar" onClick={instalar}><Download size={16} />Instalar o app {nome}</button>}
           <small>© {new Date().getFullYear()} {nome} · Todos os direitos reservados</small>
         </div>
       </footer>
