@@ -6,6 +6,7 @@ import { CategoryPage } from './components/CategoryPage';
 import { HomePage } from './components/HomePage';
 import { Footer } from './components/Footer';
 import { Cart } from './components/Cart';
+import { PrimeCart } from './components/prime/PrimeCart';
 import { MiniCart } from './components/MiniCart';
 import { CheckoutModal } from './components/CheckoutModal';
 import { OrderTracking } from './components/OrderTracking';

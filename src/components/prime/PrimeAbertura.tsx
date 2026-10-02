@@ -145,7 +145,9 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       g.globalCompositeOperation = 'source-over';
     };
     const laco = () => {
-      atual += (alvo - atual) * 0.4;
+      const d = alvo - atual;
+      // amortecimento adaptativo: acompanha de perto no scroll rápido, suave no devagar
+      atual += d * (0.45 + 0.5 * Math.min(1, Math.abs(d) / 14));
       desenhar(atual);
       raf = requestAnimationFrame(laco);
     };
@@ -167,6 +169,7 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       tl.to('.ab-dica', { opacity: 0, duration: 0.05 }, 0.02)
         .fromTo('.ab-final', { opacity: 0, y: 40 }, { opacity: 1, y: 0, duration: 0.1, ease: 'power3.out' }, 0.1)
         .to('.ab-intro', { opacity: 0, y: -50, duration: 0.1, ease: 'power2.in' }, 0.14)
+        .to('.ab-final', { opacity: 0, y: -24, duration: 0.1, ease: 'power2.in' }, 0.88) // sai antes do cardápio entrar
         .to({}, { duration: 0.01 }, 1);
       gsap.from('.ab-intro > *', { y: 30, opacity: 0, duration: 1, stagger: 0.1, ease: 'power3.out', delay: 0.2 });
     }, secao);
@@ -175,7 +178,7 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
 
   if (!n) return null;
   return (
-    <section ref={secao} className="ab" style={{ height: reduzido ? '100vh' : '134vh', background: parede, ['--ab-fundo' as string]: parede, ['--ab-escuro' as string]: fundo } as React.CSSProperties} aria-label={`Abertura ${nome}`}>
+    <section ref={secao} className="ab" style={{ height: reduzido ? '100vh' : '134vh', background: fundo, ['--ab-fundo' as string]: parede, ['--ab-escuro' as string]: fundo } as React.CSSProperties} aria-label={`Abertura ${nome}`}>
       <div className="ab-tela">
         <canvas ref={tela} aria-hidden />
         <div className="ab-sombra" />
