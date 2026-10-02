@@ -273,9 +273,7 @@
 .ab-horario::after { content: ''; position: absolute; inset: 0; background: linear-gradient(to right, transparent, rgba(255,255,255,.2), transparent);
   transform: translateX(-100%); transition: transform .7s; }
 .ab-horario:hover::after { transform: translateX(100%); }
-.ab-intro h1 { margin: 0; font-size: clamp(32px, 7vw, 92px); font-weight: 800; letter-spacing: -0.035em; line-height: .95;
-  text-shadow: 0 6px 40px rgba(0,0,0,.6); }
-.ab-intro p { margin: 10px 0 0; color: rgba(255,255,255,.75); font-size: clamp(15px, 1.6vw, 19px); }
+.ab-intro p { margin: 0; color: rgba(255,255,255,.75); font-size: clamp(15px, 1.6vw, 19px); }
 .ab-final { position: absolute; left: 0; right: 0; bottom: clamp(40px, 9vh, 90px); text-align: center; display: grid; justify-items: center; gap: 14px; }
 .ab-final b { font-size: clamp(26px, 3.6vw, 46px); font-weight: 800; letter-spacing: -0.03em; text-shadow: 0 6px 30px rgba(0,0,0,.6); }
 .ab-final button { background: var(--ac); color: var(--ac-ink); font-weight: 800; padding: 15px 26px; border-radius: 16px; font-size: 16px;
@@ -289,6 +287,5 @@
   .ab-logo img { height: clamp(140px, 26vh, 288px); }
   .ab-classico { justify-items: start; }
   .ab-redes { justify-content: flex-start; }
-  .ab-intro h1 { font-size: clamp(44px, 5.4vw, 86px); }
-  .ab-final { left: 6vw; right: auto; top: 40vh; bottom: auto; text-align: left; justify-items: start; max-width: 28vw; }
+    .ab-final { left: 6vw; right: auto; top: 40vh; bottom: auto; text-align: left; justify-items: start; max-width: 28vw; }
 }

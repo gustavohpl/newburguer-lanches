@@ -189,7 +189,6 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
             <span className={`ab-selo ${aberta ? 'aberto' : ''}`}>{aberta && <i />}{aberta ? 'ABERTO AGORA' : 'FECHADO'}</span>
             {horario && <span className="ab-horario" style={{ background: `linear-gradient(to right, ${cor}, ${cor}dd)` }}><span>🕐</span>{horario}</span>}
           </div>
-          <h1>{nome}</h1>
           <p>Cada camada feita na hora.</p>
         </div>
         <div className="ab-final" style={{ opacity: reduzido ? 1 : 0 }}>
