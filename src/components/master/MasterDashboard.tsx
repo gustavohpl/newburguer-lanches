@@ -1374,7 +1374,7 @@ export function MasterDashboard() {
                 </div>
 
                 <p className="text-xs text-gray-500 mt-4 flex items-center gap-1">
-                  <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                  <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
                   Esses elementos ficarão pulsando no fundo do cabeçalho do site.
                 </p>
               </div>
