@@ -77,7 +77,7 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
 
     let dpr = 1, W = 0, H = 0, desce = 0, caixa = { x: 0, y: 0, w: 0, h: 0 };
     const medir = () => {
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      dpr = Math.min(window.devicePixelRatio || 1, 3);
       W = c.clientWidth; H = c.clientHeight;
       c.width = W * dpr; c.height = H * dpr;
       const r = 16 / 9;
@@ -91,8 +91,8 @@ export function PrimeAbertura({ nome, logo, aberta, horario, cor, redes, fundo, 
       if (corte) caixa = { ...caixa, x: caixa.x + corte[0] * caixa.w, w: corte[1] * caixa.w };
       // em pé o lanche fechado começa abaixo da logo/status e sobe enquanto abre (fechado ocupa 16,5%–78% do quadro)
       const intro = secao.current?.querySelector<HTMLElement>('.ab-intro');
-      desce = W / H <= 0.9 && intro ? Math.max(0, Math.min(intro.offsetTop + intro.offsetHeight + 12 - (caixa.y + 0.165 * caixa.h),
-                                                             H - 70 - (caixa.y + 0.78 * caixa.h))) : 0;
+      desce = W / H <= 0.9 && intro ? Math.max(0, Math.min(intro.offsetTop + intro.offsetHeight + 10 - (caixa.y + 0.165 * caixa.h),
+                                                             H - 14 - (caixa.y + 0.82 * caixa.h))) : 0;
       ultimo = -1;
       desenhar(atual);
     };
