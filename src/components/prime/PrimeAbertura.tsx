@@ -68,7 +68,7 @@ export function PrimeAbertura({ nome, logo, logoOriginal, aberta, horario, cor, 
     let vivo = true;
     const chegou = (i: number, q: ImageBitmap | HTMLImageElement) => {
       if (!vivo) { if (q instanceof ImageBitmap) q.close(); return; }
-      imgs[i] = q; ultimo = -1; desenhar(atual);
+      imgs[i] = q; ultimo = ''; desenhar(atual);
     };
     const carregar = (i: number, prioridade: 'high' | 'auto' = 'auto') => {
       // ?v= muda a cada vídeo novo: o cache do app nunca mistura quadros de versões diferentes
@@ -96,16 +96,20 @@ export function PrimeAbertura({ nome, logo, logoOriginal, aberta, horario, cor, 
       const intro = secao.current?.querySelector<HTMLElement>('.ab-intro');
       desce = W / H <= 0.9 && intro ? Math.max(0, Math.min(intro.offsetTop + intro.offsetHeight + 10 - (caixa.y + 0.165 * caixa.h),
                                                              H - 14 - (caixa.y + 0.82 * caixa.h))) : 0;
-      ultimo = -1;
+      ultimo = '';
       desenhar(atual);
     };
-    let atual = 0, alvo = 0, raf = 0, ultimo = -1, rapido = false;
+    let atual = 0, alvo = 0, raf = 0, ultimo = '', rapido = false;
+    const logoImg = secao.current?.querySelector<HTMLElement>('.ab-logo img');
     const desenhar = (f: number) => {
       const i = Math.max(0, Math.min(n - 1, Math.floor(f)));
       let a = imgs[i];
       for (let d = 1; d < n && !a; d++) a = imgs[i - d] || imgs[i + d];
       if (!a) return;
-      const chave = Math.round(f * 50) * 2 + (rapido ? 1 : 0);
+      // papel de parede colorido = vinheta que sai da logo (acompanha a logo quando ela sobe com a rolagem)
+      const lr = logoImg?.getBoundingClientRect(), cr = c.getBoundingClientRect();
+      const lx = lr ? lr.left + lr.width / 2 - cr.left : W / 2, ly = lr ? lr.top + lr.height / 2 - cr.top : H * 0.25;
+      const chave = `${Math.round(f * 50) * 2 + (rapido ? 1 : 0)}|${Math.round(ly)}`;
       if (chave === ultimo) return;
       ultimo = chave;
       g.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -116,26 +120,32 @@ export function PrimeAbertura({ nome, logo, logoOriginal, aberta, horario, cor, 
       const prog = n > 1 ? f / (n - 1) : 0;
       // sobe o tempo todo (rolagem contínua), além da subida inicial do fechado e de abrir
       const y = caixa.y + desce * (1 - p * p * (3 - 2 * p)) - H * 0.26 * prog;
-      // papel de parede VERDE do lado do header -> ESCURO do lado do lanche (degradê direcional):
-      // o lanche fica todo no escuro (lighten não encosta no verde = sem borda verde)
       const cx = caixa.x + caixa.w / 2;
       const largo = W / H > 0.9 && W >= 900;
-      let grad: CanvasGradient;
-      let verdeTopo = vrd(1);
+      // a vinheta se apaga no escuro antes do lanche (lighten não encosta no colorido = sem borda colorida)
+      let rx: number, ry: number, corParede = vrd(1);
       if (largo) {
-        const xEsc = cx - caixa.w * 0.22;            // borda esquerda do lanche (com folga)
-        grad = g.createLinearGradient(Math.max(0, xEsc - W * 0.12), 0, xEsc, 0);
+        rx = Math.max(40, cx - caixa.w * 0.22 - lx);   // até a borda esquerda do lanche
+        ry = H * 0.62;
       } else {
-        const yEsc = y + caixa.h * 0.08;             // topo do lanche
-        grad = g.createLinearGradient(0, Math.max(0, yEsc - H * 0.16), 0, yEsc);
-        // em pé o lanche sobe pra dentro do verde ao abrir -> some o verde conforme abre (sem borda verde no ingrediente)
+        ry = Math.max(40, y + caixa.h * 0.08 - ly);    // até o topo do lanche
+        rx = Math.max(ry, W * 0.62);
+        // em pé o lanche sobe pra dentro do colorido ao abrir -> a cor some conforme abre
         const abriu = Math.min(1, f / ((n - 1) * 0.5));
-        verdeTopo = `rgb(${Math.round(vr + (er - vr) * abriu)},${Math.round(vg + (eg - vg) * abriu)},${Math.round(vb + (eb - vb) * abriu)})`;
+        corParede = `rgb(${Math.round(vr + (er - vr) * abriu)},${Math.round(vg + (eg - vg) * abriu)},${Math.round(vb + (eb - vb) * abriu)})`;
       }
-      grad.addColorStop(0, verdeTopo);
+      g.fillStyle = esc(1);
+      g.fillRect(0, 0, W, H);
+      g.save();
+      g.translate(lx, ly);
+      g.scale(rx / ry, 1);
+      const grad = g.createRadialGradient(0, 0, 0, 0, 0, ry);
+      grad.addColorStop(0, corParede);
+      grad.addColorStop(0.5, corParede);
       grad.addColorStop(1, esc(1));
       g.fillStyle = grad;
-      g.fillRect(0, 0, W, H);
+      g.fillRect(-ry, -ry, ry * 2, ry * 2);
+      g.restore();
       // caminho único e leve: desenha o quadro direto com lighten (sem offscreen nem mistura) -> FPS máximo em qualquer velocidade
       g.globalCompositeOperation = clarear ? 'lighten' : 'source-over';
       const X = caixa.x + caixa.w * ux / tw, Y = y + caixa.h * uy / th, DW = caixa.w * uw / tw, DH = caixa.h * uh / th;
@@ -170,7 +180,8 @@ export function PrimeAbertura({ nome, logo, logoOriginal, aberta, horario, cor, 
     const ctx = gsap.context(() => {
       const st = { trigger: secao.current, start: 'top top', end: 'bottom bottom', scrub: true };
       ScrollTrigger.create({ ...st, onUpdate: (s) => { alvo = s.progress * (n - 1); acordar(); } });
-      const tl = gsap.timeline({ scrollTrigger: { ...st, scrub: 0.5 } });
+      // a logo se move com atraso (scrub 0.5): acorda o canvas p/ a vinheta acompanhar
+      const tl = gsap.timeline({ scrollTrigger: { ...st, scrub: 0.5 }, onUpdate: acordar });
       // posições = fração da ROLAGEM (padding força a duração total da timeline p/ 1.0)
       // logo + infos SOBEM (rolagem natural) e saem pelo topo
       tl.fromTo('.ab-intro', { yPercent: 0 }, { yPercent: -175, ease: 'none', duration: 0.52 }, 0)
@@ -179,7 +190,7 @@ export function PrimeAbertura({ nome, logo, logoOriginal, aberta, horario, cor, 
         .fromTo('.ab-final', { yPercent: 135 }, { yPercent: -85, ease: 'none', duration: 0.7 }, 0.3)
         .fromTo('.ab-final', { opacity: 0 }, { opacity: 1, ease: 'power1.out', duration: 0.16 }, 0.33)
         .to({}, { duration: 0.01 }, 1);
-      gsap.from('.ab-intro > *', { y: 30, opacity: 0, duration: 1, stagger: 0.1, ease: 'power3.out', delay: 0.2 });
+      gsap.from('.ab-intro > *', { y: 30, opacity: 0, duration: 1, stagger: 0.1, ease: 'power3.out', delay: 0.2, onUpdate: acordar });
     }, secao);
     return () => { cancelAnimationFrame(raf); soltar(); ctx.revert(); };
   }, [n, info, fundo, reduzido]);
