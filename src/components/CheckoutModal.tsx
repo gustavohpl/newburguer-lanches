@@ -655,7 +655,7 @@ export function CheckoutModal({
     
     // Gerar mensagem do WhatsApp usando template literals normais
     const nl = '\n'; // quebra de linha
-    let message = '🍔 *NOVO PEDIDO - NEWBURGUER LANCHES*' + nl + nl;
+    let message = '🍔 *NOVO PEDIDO - ' + (config.siteName || 'NewBurguer Lanches').replace(/\p{Extended_Pictographic}/gu, '').trim().toUpperCase() + '*' + nl + nl;
     message += '📋 *Código do Pedido:* #' + orderId + nl;
     message += '👤 *Nome:* ' + name + nl;
     message += '📱 *Telefone:* ' + phone + nl + nl;

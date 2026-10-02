@@ -119,6 +119,16 @@ function formatLine(left: string, right: string, width: number = 32): string {
 }
 
 // Centralizar texto
+// impressão roda fora do React: nome da loja vem da config que o ConfigContext salva
+function nomeLoja(): string {
+  try {
+    const nome = JSON.parse(localStorage.getItem('faroeste_system_config') || '{}').siteName as string | undefined;
+    return (nome || 'NewBurguer Lanches').replace(/\p{Extended_Pictographic}/gu, '').trim().toUpperCase();
+  } catch {
+    return 'NEWBURGUER LANCHES';
+  }
+}
+
 function centerText(text: string, width: number = 32): string {
   const spaces = Math.max(0, Math.floor((width - text.length) / 2));
   return ' '.repeat(spaces) + text + '\n';
@@ -150,7 +160,7 @@ export async function printOrder(
     receipt += Commands.FONT_LARGE;
     receipt += Commands.BOLD_ON;
     receipt += separator('=');
-    receipt += centerText('🍔 NEWBURGUER LANCHES 🍔');
+    receipt += centerText(`🍔 ${nomeLoja()} 🍔`);
     receipt += separator('=');
     receipt += Commands.BOLD_OFF;
     receipt += Commands.FONT_NORMAL;
@@ -308,7 +318,7 @@ export async function testPrint(connection: PrinterConnection): Promise<boolean>
     testReceipt += Commands.ALIGN_CENTER;
     testReceipt += Commands.FONT_LARGE;
     testReceipt += Commands.BOLD_ON;
-    testReceipt += '🍔 NEWBURGUER LANCHES 🍔\n\n';
+    testReceipt += `🍔 ${nomeLoja()} 🍔\n\n`;
     testReceipt += Commands.FONT_NORMAL;
     testReceipt += Commands.BOLD_OFF;
     testReceipt += '✅ Impressora conectada!\n';
