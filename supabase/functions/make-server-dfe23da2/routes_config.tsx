@@ -6,7 +6,7 @@
 import { Hono } from "npm:hono";
 import * as kv from "./kv_retry.tsx";
 import { unidadeAtual, cidadeAtual } from "./kv_retry.tsx";
-import { acharUnidade, acharCidade, entrarNaUnidade, soCidade, unidadeParaEntrega, emCadaUnidade, juntarPorId, situacaoDaCidade, disponibilidade } from "./franquia.tsx";
+import { acharUnidade, acharCidade, entrarNaUnidade, soCidade, unidadeParaEntrega, emCadaUnidade, juntarPorId, situacaoDaCidade, disponibilidade, escopoDoPedido, configDaUnidade } from "./franquia.tsx";
 import { cuponsDaUnidade, acharCupom, chaveDoCupom } from "./cupons.tsx";
 import { success, error, getBrasiliaISOString, getBusinessDayStart } from "./server_utils.tsx";
 import { requireAdmin, requireMaster, cleanupExpiredSessions, resetCleanupThrottle } from "./middleware.tsx";
@@ -323,7 +323,8 @@ router.post('/payment/pix', async (c) => {
   try {
     const body = await c.req.json();
     const { amount, customerName, customerPhone, customerEmail, items, orderId } = body;
-    const config: any = await kv.get('system_config') || {};
+    await escopoDoPedido(String(orderId || ''));
+    const config: any = await configDaUnidade();
     const PAGSEGURO_TOKEN = config.pagSeguroToken || Deno.env.get('PAGSEGURO_TOKEN');
     const PAGSEGURO_ENVIRONMENT = Deno.env.get('PAGSEGURO_ENVIRONMENT') || 'sandbox';
     const automaticPayment = config.automaticPayment !== false;

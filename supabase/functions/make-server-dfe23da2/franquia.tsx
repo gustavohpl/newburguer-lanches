@@ -52,7 +52,7 @@ export async function situacaoDaCidade(cidade: any, itens: string[] = []) {
       id: u.id, nome: u.name, endereco: u.address || '', telefone: u.phone || '', horario: u.openingHours || '',
       aberta: u.isOpen !== false && ((status as any)?.isOpen ?? true),
       entrega: cfg.features?.deliverySystem !== false, retirada: true, consumoLocal,
-      estimativas: estimativas || null, taxa: (taxa ?? u.deliveryFee ?? 0) as number,
+      estimativas: estimativas || { delivery: { min: 30, max: 50 }, pickup: { min: 15, max: 25 }, dineIn: { min: 20, max: 30 } }, taxa: (taxa ?? u.deliveryFee ?? 0) as number,
       ativos: (pedidos as any[]).filter((o) => EM_ANDAMENTO.includes(o?.status)).length,
       temItens: produtos.length === itens.length && produtos.every((p: any) => p && p.available !== false && !semEstoque.includes(p.id)),
     };
@@ -98,4 +98,10 @@ export async function disponibilidade() {
     .map((i: any) => ({ id: i.id, name: i.name, stock: i.currentStock, min: i.minAlert }));
   const unavailableProducts = produtos.filter((p: any) => (p.recipe?.ingredients || []).some((r: any) => vazios.includes(r.ingredientId))).map((p: any) => p.id);
   return { unavailableProducts, emptyIngredients: vazios, lowStockIngredients, totalIngredients: ingredientes.length };
+}
+
+// config que vale para a unidade do escopo (a da rede com o que o Admin da unidade mudou por cima)
+export async function configDaUnidade() {
+  const sistema: any = await kv.get('system_config') || {};
+  return unidadeAtual() ? { ...sistema, ...(await kv.get('unit_config') || {}) } : sistema;
 }

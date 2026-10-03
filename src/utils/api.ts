@@ -833,7 +833,7 @@ export async function createPixPayment(paymentData: {
   try {
     const response = await fetch(`${API_BASE_URL}/payment/pix`, {
       method: 'POST',
-      headers,
+      headers: getHeadersWithUnit(),
       body: JSON.stringify(paymentData),
     });
     
@@ -855,7 +855,7 @@ export async function createPixPayment(paymentData: {
 // Mercado Pago: o servidor calcula o valor pelo pedido salvo e confirma consultando o próprio MP
 async function mpChamar(caminho: string, init: RequestInit = {}) {
   try {
-    const response = await fetch(`${API_BASE_URL}${caminho}`, { ...init, headers });
+    const response = await fetch(`${API_BASE_URL}${caminho}`, { ...init, headers: getHeadersWithUnit() });
     return await response.json();
   } catch {
     return { success: false, error: 'Erro de conexão' };
@@ -880,7 +880,7 @@ export async function checkPaymentStatus(referenceId: string) {
   try {
     const response = await fetch(`${API_BASE_URL}/payment/status/${referenceId}`, {
       method: 'GET',
-      headers,
+      headers: getHeadersWithUnit(),
     });
     
     if (!response.ok) {
@@ -903,7 +903,7 @@ export async function processCardPayment(data: any) {
   try {
     const response = await fetch(`${API_BASE_URL}/payment/card`, {
       method: 'POST',
-      headers,
+      headers: getHeadersWithUnit(),
       body: JSON.stringify(data),
     });
     return response.json();
@@ -1008,10 +1008,7 @@ export async function submitOrderReview(orderId: string, reviews: any[]) {
   try {
     const response = await fetch(`${API_BASE_URL}/orders/${orderId}/review`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${publicAnonKey}`,
-      },
+      headers: getHeadersWithUnit(),
       body: JSON.stringify({ reviews }),
     });
     
@@ -1499,7 +1496,7 @@ export async function getDeliverySectors() {
 // Obter ranking e lista de motoristas
 export async function getDeliveryAvailableColors() {
   try {
-    const response = await fetch(`${API_BASE_URL}/delivery/available-colors`, { headers });
+    const response = await fetch(`${API_BASE_URL}/delivery/available-colors`, { headers: getHeadersWithUnit() });
     return response.json();
   } catch (error) {
     console.error('❌ [API] Erro ao buscar cores disponíveis:', error);

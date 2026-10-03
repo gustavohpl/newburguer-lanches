@@ -1377,7 +1377,7 @@ export function CheckoutModal({
                       </div>
                     )}
                   </div>
-                ) : (
+                ) : noSiteDaCidade ? null : (
                   <div className="mt-8 p-6 bg-zinc-50 dark:bg-zinc-800/40 rounded-2xl border border-zinc-200 dark:border-zinc-700/50">
                     <div className="flex items-center gap-3 mb-3 text-amber-600">
                       <MapPin className="w-5 h-5" />
@@ -1441,6 +1441,9 @@ export function CheckoutModal({
                   </div>
                 )}
 
+                {noSiteDaCidade && deliveryType === 'delivery' && opcoes && !opcoes.entregaPor && (
+                  <p className="mt-6 text-sm font-medium text-red-600">Nenhuma unidade pode entregar esse pedido agora. Tente retirada ou mais tarde.</p>
+                )}
                 <div className="flex gap-4 mt-10">
                   <button
                     onClick={() => setStep(1)}
@@ -1450,7 +1453,8 @@ export function CheckoutModal({
                   </button>
                   <button
                     onClick={() => setStep(3)}
-                    disabled={deliveryType === 'delivery' && (!street.trim() || !houseNumber.trim() || !neighborhood.trim())}
+                    disabled={(deliveryType === 'delivery' && (!street.trim() || !houseNumber.trim() || !neighborhood.trim()))
+                      || (noSiteDaCidade && (deliveryType === 'delivery' ? !!opcoes && !opcoes.entregaPor : !unidadeId))}
                     className="flex-1 bg-amber-600 hover:bg-amber-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-800 disabled:text-zinc-500 disabled:cursor-not-allowed text-white py-4 rounded-xl font-bold transition-all shadow-lg shadow-amber-500/20"
                   >
                     Continuar

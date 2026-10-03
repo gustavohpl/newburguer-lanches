@@ -92,7 +92,9 @@ function AppContent() {
   const isClean = design.headerLayout === 'minimal';
   const isRustic = design.id === 'rustic';
   const isPrime = design.id === 'prime';
-  const { unitOverrides, franchiseEnabled, selectedUnit, needsSelection } = useFranchise();
+  const { unitOverrides, franchiseEnabled, selectedUnit, selectedCity, needsSelection } = useFranchise();
+  // loja em uso: a unidade (Admin/entregador) ou a cidade (cliente, que vê o site da cidade)
+  const lojaEscolhida = selectedUnit?.id || selectedCity?.id || null;
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   
   // Hook de cliente
@@ -122,7 +124,7 @@ function AppContent() {
   const effectiveIsOpen = unitOverrides.isOpen === false ? false : isStoreOpen;
   const effectiveDeliveryFee = deliveryFee;
   // trocar de cidade troca de loja: o carrinho da outra não vale aqui
-  useEffect(() => { setCartItems([]); }, [selectedUnit?.id]);
+  useEffect(() => { setCartItems([]); }, [lojaEscolhida]);
   
   // 🌓 DETECÇÃO DE MODO ESCURO PARA O CLIENTE
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -493,7 +495,7 @@ function AppContent() {
   // Carregar produtos do banco de dados
   // 🏙️ Quando franchise ativo, só carrega quando unidade estiver selecionada
   useEffect(() => {
-    if (franchiseEnabled && !selectedUnit) {
+    if (franchiseEnabled && !lojaEscolhida) {
       // Franchise ativo mas sem unidade: não carregar dados
       return;
     }
@@ -525,7 +527,7 @@ function AppContent() {
     
     // Cleanup: limpar interval quando componente desmontar ou showAdmin mudar
     return () => clearInterval(productRefreshInterval);
-  }, [customer, showAdmin, selectedUnit]); // 🏙️ Recarrega ao trocar unidade
+  }, [customer, showAdmin, lojaEscolhida]); // 🏙️ Recarrega ao trocar de cidade/unidade
 
   // Carregar status da loja
   const loadStoreStatus = async () => {
