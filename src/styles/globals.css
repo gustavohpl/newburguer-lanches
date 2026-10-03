@@ -222,3 +222,15 @@
 html {
   font-size: var(--font-size);
 }
+
+/* Admin e Master no celular: nada passa da largura da tela (linhas quebram, itens encolhem, tabela rola sozinha) */
+@media (max-width: 767px) {
+  .painel .flex:not(.flex-col):not(.flex-nowrap):not(.inline-flex):not(.overflow-x-auto):not(.overflow-x-scroll) { flex-wrap: wrap; }
+  .painel input:not([type="checkbox"]):not([type="radio"]):not([type="color"]), .painel select { min-width: 7rem; flex-grow: 1; }
+  .painel * { min-width: 0; }
+  .painel svg, .painel img, .painel input[type="checkbox"], .painel input[type="radio"] { flex-shrink: 0; }
+  .painel img, .painel video { max-width: 100%; }
+  .painel .overflow-x-auto > *, .painel .overflow-x-scroll > * { flex-shrink: 0; white-space: nowrap; }
+  .painel table { display: block; max-width: 100%; overflow-x: auto; }
+  .painel pre, .painel code { white-space: pre-wrap; word-break: break-word; }
+}

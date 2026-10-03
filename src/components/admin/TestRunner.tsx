@@ -110,6 +110,8 @@ export function TestRunner({ fetchFn, endpoint, historyEndpoint }: TestRunnerPro
       const response = await doFetch(url);
       const data = await response.json();
       if (data.success && data.runs) {
+        // histórico gravado em outro formato (sem resumo) derrubava a tela inteira do Master
+        data.runs = data.runs.filter((r: any) => r?.summary && Array.isArray(r.results));
         setHistory(data.runs);
         if (data.runs.length > 0) {
           setPreviousRun(data.runs[data.runs.length - 1]);

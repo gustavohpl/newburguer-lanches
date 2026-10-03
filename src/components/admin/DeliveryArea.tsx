@@ -425,7 +425,7 @@ export function DeliveryArea() {
       <div className="mb-6 bg-white rounded-lg border-2 border-gray-200 p-1 flex gap-1">
         <button
           onClick={() => setActiveTab('ready')}
-          className={`flex-1 py-3 px-4 rounded-md font-medium transition-colors ${
+          className={`flex-1 py-3 px-1 md:px-4 text-xs md:text-base rounded-md font-medium transition-colors ${
             activeTab === 'ready'
               ? 'bg-orange-600 text-white shadow-md'
               : 'bg-transparent text-gray-600 hover:bg-gray-100'
@@ -439,7 +439,7 @@ export function DeliveryArea() {
         
         <button
           onClick={() => setActiveTab('inRoute')}
-          className={`flex-1 py-3 px-4 rounded-md font-medium transition-colors ${
+          className={`flex-1 py-3 px-1 md:px-4 text-xs md:text-base rounded-md font-medium transition-colors ${
             activeTab === 'inRoute'
               ? 'bg-blue-600 text-white shadow-md'
               : 'bg-transparent text-gray-600 hover:bg-gray-100'
@@ -453,7 +453,7 @@ export function DeliveryArea() {
         
         <button
           onClick={() => setActiveTab('completed')}
-          className={`flex-1 py-3 px-4 rounded-md font-medium transition-colors ${
+          className={`flex-1 py-3 px-1 md:px-4 text-xs md:text-base rounded-md font-medium transition-colors ${
             activeTab === 'completed'
               ? 'bg-green-600 text-white shadow-md'
               : 'bg-transparent text-gray-600 hover:bg-gray-100'
@@ -467,7 +467,7 @@ export function DeliveryArea() {
         
         <button
           onClick={() => setActiveTab('drivers')}
-          className={`flex-1 py-3 px-4 rounded-md font-medium transition-colors ${
+          className={`flex-1 py-3 px-1 md:px-4 text-xs md:text-base rounded-md font-medium transition-colors ${
             activeTab === 'drivers'
               ? 'bg-green-600 text-white shadow-md'
               : 'bg-transparent text-gray-600 hover:bg-gray-100'

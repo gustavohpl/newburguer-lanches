@@ -5,8 +5,6 @@ import {
   ShoppingBag, 
   Users, 
   LogOut,
-  Menu,
-  X,
   Settings as SettingsIcon,
   Megaphone,
   Truck,
@@ -14,6 +12,7 @@ import {
   Building2
 } from 'lucide-react';
 import { useConfig } from '../../ConfigContext';
+import { BarraCelular } from '../BarraCelular';
 import { useFranchise } from '../../FranchiseContext';
 import defaultLogo from 'figma:asset/2217307d23df7779a3757aa35c01d81549336b8b.png';
 import { DashboardHome } from './DashboardHome';
@@ -40,7 +39,6 @@ export function AdminDashboard({ onLogout, onProductsChange }: AdminDashboardPro
   const siteName = config.siteName || 'NewBurguer Lanches';
   
   const [currentMenu, setCurrentMenu] = useState<MenuOption>('dashboard');
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   const handleProductsChange = () => {
     // Notificar o App.tsx que produtos mudaram (atualiza homepage)
@@ -164,53 +162,12 @@ export function AdminDashboard({ onLogout, onProductsChange }: AdminDashboardPro
               )}
             </div>
           </div>
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-          >
-            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </button>
         </div>
-
-        {/* Mobile Menu */}
-        {isMobileMenuOpen && (
-          <div className="mt-4 space-y-2 pb-2">
-            {menuItems.map(item => {
-              const Icon = item.icon;
-              const isActive = currentMenu === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => {
-                    setCurrentMenu(item.id);
-                    setIsMobileMenuOpen(false);
-                  }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg transition-all ${
-                    isActive
-                      ? 'bg-white text-black shadow-lg'
-                      : 'text-white hover:bg-white/10'
-                  }`}
-                  style={isActive ? { color: themeColor } : {}}
-                >
-                  <Icon className="w-5 h-5" />
-                  <span className="font-medium">{item.label}</span>
-                </button>
-              );
-            })}
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-lg text-white hover:bg-red-600/80 transition-colors"
-            >
-              <LogOut className="w-5 h-5" />
-              <span className="font-medium">Sair</span>
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto md:pt-0 pt-20">
-        <div className="p-6">
+      <main className="painel flex-1 overflow-y-auto md:pt-0 pt-20 pb-24 md:pb-0 min-w-0">
+        <div className="p-4 md:p-6">
           {currentMenu === 'dashboard' && <DashboardHome />}
           {currentMenu === 'products' && <ProductsManagement onProductsChange={handleProductsChange} />}
           {currentMenu === 'orders' && <OrderManager />}
@@ -222,6 +179,13 @@ export function AdminDashboard({ onLogout, onProductsChange }: AdminDashboardPro
         </div>
       </main>
 
+      <BarraCelular
+        itens={['orders', 'products', 'delivery', 'dashboard', 'stock', 'ads', 'customers', 'settings'].map((id) => menuItems.find((m) => m.id === id)).filter(Boolean).map((m) => ({ ...m!, label: m!.id === 'delivery' ? 'Entregas' : m!.id === 'dashboard' ? 'Painel' : m!.id === 'settings' ? 'Ajustes' : m!.label }))}
+        ativo={currentMenu}
+        aoEscolher={(id) => { setCurrentMenu(id as MenuOption); window.scrollTo(0, 0); }}
+        cor={themeColor}
+        extras={<button onClick={handleLogout} className="flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"><LogOut className="h-4 w-4" />Sair</button>}
+      />
     </div>
   );
 }

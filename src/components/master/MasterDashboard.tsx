@@ -41,6 +41,7 @@ import {
 } from 'lucide-react';
 import * as api from '../../utils/api';
 import { masterFetch } from '../../utils/api';
+import { BarraCelular } from '../BarraCelular';
 import { useConfig } from '../../ConfigContext';
 import { TestRunner } from '../admin/TestRunner';
 import { E2ETestRunner } from '../admin/E2ETestRunner';
@@ -565,9 +566,9 @@ export function MasterDashboard() {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
-        <header className="bg-white shadow-sm p-6 flex justify-between items-center sticky top-0 z-10">
-          <h2 className="text-2xl font-bold text-gray-800">
+      <main className="painel flex-1 overflow-y-auto min-w-0 pb-24 md:pb-0">
+        <header className="bg-white shadow-sm p-4 md:p-6 flex flex-nowrap justify-between items-center gap-3 sticky top-0 z-10">
+          <h2 className="text-lg md:text-2xl font-bold text-gray-800 truncate">
             {activeTab === 'general' && 'Configurações Gerais'}
             {activeTab === 'appearance' && 'Identidade Visual'}
             {activeTab === 'integrations' && 'Integrações Externas'}
@@ -582,15 +583,15 @@ export function MasterDashboard() {
             <button
               onClick={handleSave}
               disabled={loading}
-              className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-blue-200 transition-all flex items-center gap-2"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 md:px-6 py-2.5 rounded-lg font-bold shadow-lg shadow-blue-200 transition-all flex items-center gap-2 shrink-0"
             >
               {loading ? <RefreshCw className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-              Salvar Alterações
+              <span className="md:hidden">Salvar</span><span className="hidden md:inline">Salvar Alterações</span>
             </button>
           )}
         </header>
 
-        <div className={`p-8 mx-auto ${activeTab === 'audit' || activeTab === 'analytics' || activeTab === 'tests' ? 'max-w-6xl' : 'max-w-4xl'}`}>
+        <div className={`p-4 md:p-8 mx-auto ${activeTab === 'audit' || activeTab === 'analytics' || activeTab === 'tests' ? 'max-w-6xl' : 'max-w-4xl'}`}>
           {/* TAB: GERAL */}
           {activeTab === 'general' && (
             <div className="space-y-6 animate-in fade-in">
@@ -2894,6 +2895,23 @@ export function MasterDashboard() {
       </main>
 
 
+      <BarraCelular
+        itens={[
+          { id: 'general', label: 'Geral', icon: LayoutTemplate },
+          { id: 'appearance', label: 'Aparência', icon: Palette },
+          { id: 'delivery', label: config.franchise?.enabled ? 'Franquias' : 'Setores', icon: config.franchise?.enabled ? Building2 : Truck },
+          { id: 'features', label: 'Funções', icon: Zap },
+          { id: 'integrations', label: 'Integrações', icon: Globe },
+          { id: 'admin', label: 'Acesso Admin', icon: Key },
+          { id: 'tests', label: 'Testes', icon: FlaskConical },
+          { id: 'audit', label: 'Logs', icon: ShieldAlert },
+          { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+        ]}
+        ativo={activeTab}
+        aoEscolher={(id) => { setActiveTab(id as typeof activeTab); window.scrollTo(0, 0); }}
+        cor="#2563eb"
+        extras={<button onClick={() => { setToken(null); sessionStorage.removeItem('faroeste_master_token'); }} className="flex w-full items-center justify-center gap-2 rounded-lg py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"><LogOut className="h-4 w-4" />Sair</button>}
+      />
     </div>
   );
 }
