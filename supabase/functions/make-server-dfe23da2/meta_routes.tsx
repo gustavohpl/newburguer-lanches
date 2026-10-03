@@ -10,7 +10,7 @@ import { requireAdmin, requireAdminLeitura, requireMaster } from "./middleware.t
 const BASE = Deno.env.get("META_API_URL") || "https://graph.facebook.com/v23.0";
 const SEGREDOS = "meta_segredos";
 
-type Segredos = { token?: string; conta?: string; pagina?: string; instagram?: string; atualizadoEm?: string };
+type Segredos = { token?: string; conta?: string; pagina?: string; instagram?: string; atualizadoEm?: string; pixel?: string };
 type Cfg = { token: string; conta: string; pagina: string; instagram: string | null; pixel: string | null };
 type Params = Record<string, string | number | boolean | object | null | undefined>;
 type Metricas = { spend?: string; reach?: string; impressions?: string; clicks?: string; cpc?: string; ctr?: string; actions?: { action_type: string; value: string }[] };
@@ -23,7 +23,7 @@ async function metaConfig(): Promise<Cfg> {
   const s = await segredosMeta();
   const config: any = await kv.get("system_config") || {};
   if (!s.token || !s.conta || !s.pagina) throw new MetaError("Meta não configurada (Master → Integrações → Meta: token, conta de anúncios e página).");
-  return { token: s.token, conta: `act_${s.conta.replace(/^act_/, "")}`, pagina: s.pagina, instagram: s.instagram || null, pixel: config.metaPixelId || null };
+  return { token: s.token, conta: `act_${s.conta.replace(/^act_/, "")}`, pagina: s.pagina, instagram: s.instagram || null, pixel: s.pixel || config.metaPixelId || null };
 }
 
 function codificar(p: Params): URLSearchParams {
@@ -316,7 +316,7 @@ router.get("/master/meta", requireMaster, async (c) => {
       conta = { nome: ct.name, moeda: ct.currency, status: ct.account_status, pagina: pg.name ?? null };
     } catch (e) { erroConta = (e as Error).message; }
   }
-  return success(c, { temToken: !!s.token, conta: s.conta || "", pagina: s.pagina || "", instagram: s.instagram || "", atualizadoEm: s.atualizadoEm || null, resultado: conta, erroConta });
+  return success(c, { temToken: !!s.token, conta: s.conta || "", pagina: s.pagina || "", instagram: s.instagram || "", pixel: s.pixel || "", atualizadoEm: s.atualizadoEm || null, resultado: conta, erroConta });
 });
 
 router.post("/master/meta", requireMaster, async (c) => {
@@ -329,6 +329,7 @@ router.post("/master/meta", requireMaster, async (c) => {
     conta: so(limpo(b.conta)) || atual.conta,
     pagina: so(limpo(b.pagina)) || atual.pagina,
     instagram: so(limpo(b.instagram)) || atual.instagram,
+    pixel: typeof b.pixel === "string" ? so(limpo(b.pixel)) : atual.pixel,
   };
   await kv.set(SEGREDOS, { ...novo, atualizadoEm: new Date().toISOString() });
   return success(c, { temToken: !!novo.token });

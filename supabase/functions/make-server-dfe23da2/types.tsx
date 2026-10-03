@@ -233,6 +233,7 @@ export interface SecurityMetrics {
 
 export interface AdminSession {
   token: string;
+  unitId?: string;
   username: string;
   createdAt: string;
   expiresAt: string;
@@ -253,6 +254,7 @@ export interface MasterSession {
 
 export interface DriverSession {
   token: string;
+  unitId?: string;
   phone: string;
   name: string;
   color?: string;

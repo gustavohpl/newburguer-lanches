@@ -5,6 +5,8 @@
 
 import { Hono } from "npm:hono";
 import * as kv from "./kv_retry.tsx";
+import { unidadeAtual } from "./kv_retry.tsx";
+import { franquia, acharUnidade } from "./franquia.tsx";
 import {
   success, error,
   sanitizeName, sanitizePhone,
@@ -56,6 +58,7 @@ router.post('/delivery/login', async (c) => {
       }
     }
 
+    if ((await franquia()) && !unidadeAtual()) return error(c, 'Escolha a cidade antes de entrar.', 400);
     const rawBody = await c.req.json();
     const name = sanitizeName(rawBody.name);
     const phone = sanitizePhone(rawBody.phone);
@@ -122,7 +125,7 @@ router.post('/delivery/login', async (c) => {
     const driverToken = `driver_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
     const driverSessionKey = `driver_session:${driverToken}`;
     await kv.set(driverSessionKey, {
-      _key: driverSessionKey, phone: normalizedPhone, name, color: assignedColor,
+      _key: driverSessionKey, phone: normalizedPhone, name, color: assignedColor, ...(unidadeAtual() ? { unitId: unidadeAtual() } : {}),
       createdAt: new Date().toISOString(),
       expiresAt: new Date(Date.now() + DRIVER_SESSION_DURATION_MS).toISOString(),
     });
@@ -300,6 +303,9 @@ router.get('/delivery/history/:phone', requireAdminOrDriver, async (c) => {
 // ==========================================
 
 router.get('/delivery/sectors', async (c) => {
+  const achada = await acharUnidade(unidadeAtual());
+  if (achada) return success(c, { sectors: achada.unidade.sectors || [] });
+  if (await franquia()) return success(c, { sectors: [] });
   const sectors = await kv.getByPrefix('sector:');
   return success(c, { sectors });
 });
@@ -342,7 +348,8 @@ router.delete('/delivery/sectors/:id', requireMaster, async (c) => {
 
 router.get('/settings/delivery-fee', async (c) => {
   try {
-    const fee = await kv.get('delivery_fee') || 0;
+    const salva = await kv.get('delivery_fee');
+    const fee = salva ?? (await acharUnidade(unidadeAtual()))?.unidade.deliveryFee ?? 0;
     return success(c, { fee });
   } catch (e) {
     return error(c, `Erro ao buscar taxa de entrega: ${e}`);

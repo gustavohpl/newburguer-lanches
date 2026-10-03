@@ -5,6 +5,7 @@
 
 import { Hono } from "npm:hono";
 import * as kv from "./kv_retry.tsx";
+import { franquia, unidadeExiste } from "./franquia.tsx";
 import {
   success, error, getClientIp,
   SESSION_DURATION_MS,
@@ -116,15 +117,19 @@ router.post('/admin/login', async (c) => {
       }
     }
 
-    const envPassword = Deno.env.get('ADMIN_PASSWORD');
-    const storedPassword = await kv.get('admin_password');
-    const adminPassword = storedPassword || envPassword;
+    // com franquia ligada cada unidade tem a própria senha (definida no Master) e a sessão fica presa a ela
+    const unitId = (await franquia()) ? String(body.unitId || '') : '';
+    if (await franquia()) {
+      if (!(await unidadeExiste(unitId))) return error(c, 'Escolha a cidade da loja.', 400);
+      if (!(await kv.get(`admin_senha_unidade:${unitId}`))) return error(c, 'Esta unidade ainda não tem senha. Peça para definir no Master.', 401);
+    }
+    const adminPassword = unitId ? await kv.get(`admin_senha_unidade:${unitId}`) : (await kv.get('admin_password') || Deno.env.get('ADMIN_PASSWORD'));
     if (!adminPassword) {
       console.error('❌ [LOGIN] Senha de admin não configurada (nem ENV nem KV)');
       return error(c, 'Erro de configuração do servidor', 500);
     }
 
-    const usuarioConfigurado = ((await kv.get('system_config'))?.adminUsername || '').trim().toLowerCase();
+    const usuarioConfigurado = unitId ? '' : ((await kv.get('system_config'))?.adminUsername || '').trim().toLowerCase();
     const usuarioOk = !usuarioConfigurado || String(username || '').trim().toLowerCase() === usuarioConfigurado;
     if (usuarioOk && password === adminPassword) {
       console.log('✅ [LOGIN] Login admin bem-sucedido');
@@ -132,7 +137,7 @@ router.post('/admin/login', async (c) => {
       const csrfToken = `csrf_${Date.now()}_${Math.random().toString(36).substring(2, 15)}`;
       const sessionKey = `admin_session:${token}`;
       await kv.set(sessionKey, {
-        _key: sessionKey, csrfToken,
+        _key: sessionKey, csrfToken, ...(unitId ? { unitId } : {}),
         createdAt: new Date().toISOString(),
         expiresAt: new Date(Date.now() + SESSION_DURATION_MS).toISOString(),
       });

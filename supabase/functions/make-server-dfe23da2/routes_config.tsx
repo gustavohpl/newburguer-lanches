@@ -5,6 +5,8 @@
 
 import { Hono } from "npm:hono";
 import * as kv from "./kv_retry.tsx";
+import { unidadeAtual } from "./kv_retry.tsx";
+import { acharUnidade } from "./franquia.tsx";
 import { success, error, getBrasiliaISOString, getBusinessDayStart } from "./server_utils.tsx";
 import { requireAdmin, requireMaster, cleanupExpiredSessions, resetCleanupThrottle } from "./middleware.tsx";
 import { supabase } from "./supabase_client.tsx";
@@ -114,7 +116,8 @@ router.post('/coupons/increment-usage', async (c) => {
 
 router.get('/store/status', async (c) => {
   const status: any = await kv.get('store_status');
-  return success(c, { isOpen: status?.isOpen ?? true });
+  const achada = await acharUnidade(unidadeAtual());
+  return success(c, { isOpen: achada?.unidade.isOpen !== false && (status?.isOpen ?? true) });
 });
 
 router.post('/store/status', requireAdmin, async (c) => {
@@ -124,11 +127,12 @@ router.post('/store/status', requireAdmin, async (c) => {
 });
 
 router.get('/config/public', async (c) => {
-  const config: any = await kv.get('system_config') || {};
+  const config: any = { ...(await kv.get('system_config') || {}), ...(unidadeAtual() ? await kv.get('unit_config') || {} : {}) };
   const categories = await kv.get('categories') || [];
   const publicConfig = {
     ...config, categories,
     pagSeguroToken: undefined, pagSeguroEmail: undefined, metaAccessToken: undefined,
+    ...(unidadeAtual() ? { metaPixelId: (await kv.get('meta_segredos'))?.pixel || '' } : {}),
     hasPagSeguroToken: !!(config.pagSeguroToken || Deno.env.get('PAGSEGURO_TOKEN')),
     mercadoPagoAtivo: !!(await segredosMP()).accessToken,
     adminUsername: undefined
@@ -140,8 +144,9 @@ router.get('/master/config', async (c) => {
   try {
     const systemConfig: any = await kv.get('system_config') || {};
     const hasAdminPassword = !!(Deno.env.get('ADMIN_PASSWORD') || await kv.get('admin_password'));
+    const unidadesComSenha = (await supabase.from('kv_store_dfe23da2').select('key').like('key', 'admin_senha_unidade:%')).data?.map((d: any) => d.key.slice('admin_senha_unidade:'.length)) || [];
     const masterConfig = {
-      ...systemConfig, hasAdminPassword, metaAccessToken: undefined,
+      ...systemConfig, hasAdminPassword, unidadesComSenha, metaAccessToken: undefined,
       pagSeguroToken: systemConfig.pagSeguroToken || '',
       pagSeguroEmail: systemConfig.pagSeguroEmail || '',
     };
@@ -183,6 +188,13 @@ router.post('/master/config', async (c) => {
 router.post('/admin/config', async (c) => {
   try {
     const updates = await c.req.json();
+    // Admin de unidade só mexe na config da própria unidade (system_config é da rede, do Master)
+    if (unidadeAtual()) {
+      const atual: any = await kv.get('unit_config') || {};
+      const novo = { ...atual, ...updates, franchise: undefined, features: undefined };
+      await kv.set('unit_config', novo);
+      return success(c, { config: { ...(await kv.get('system_config') || {}), ...novo } });
+    }
     const currentConfig: any = await kv.get('system_config') || {};
     const updatedConfig = { ...currentConfig, ...updates };
     await kv.set('system_config', updatedConfig);
@@ -190,6 +202,43 @@ router.post('/admin/config', async (c) => {
   } catch (e) {
     return error(c, `Erro ao atualizar configuração: ${e}`, 500);
   }
+});
+
+// Franquia: senha do Admin de cada unidade (só entra, nunca volta para a tela); trocar derruba as sessões da unidade
+router.post('/master/franquia/senha', async (c) => {
+  const { unitId, senha } = await c.req.json().catch(() => ({}));
+  if (!(await acharUnidade(unitId))) return error(c, 'Unidade não encontrada', 404);
+  if (typeof senha !== 'string' || senha.trim().length < 6) return error(c, 'A senha precisa ter pelo menos 6 caracteres', 400);
+  await kv.set(`admin_senha_unidade:${unitId}`, senha.trim());
+  const sessoes = (await kv.getByPrefix('admin_session:')).filter((s: any) => s?.unitId === unitId);
+  if (sessoes.length) await kv.mdel(sessoes.map((s: any) => s._key).filter(Boolean));
+  return success(c, { unitId });
+});
+
+// copia os dados da loja de antes da franquia para uma unidade (os originais ficam)
+router.post('/franchise/migrate', requireMaster, async (c) => {
+  const { targetUnitId } = await c.req.json().catch(() => ({}));
+  if (!(await acharUnidade(targetUnitId))) return error(c, 'Unidade não encontrada', 404);
+  const prefixos = ['product:', 'order:', 'archive:', 'coupon:', 'stock_ingredient:', 'stock_deduction:', 'driver:', 'pagamento:', 'pix_payment:'];
+  const avulsas = ['categories', 'delivery_config', 'delivery_fee', 'store_status', 'time_estimates', 'stock_restock_schedule', 'meta_segredos'];
+  const detalhes: Record<string, number> = {};
+  const linhas: { key: string; value: unknown }[] = [];
+  for (const prefixo of prefixos) {
+    const { data, error: e } = await supabase.from('kv_store_dfe23da2').select('key, value').like('key', `${prefixo}%`);
+    if (e) return error(c, `Erro ao ler ${prefixo}: ${e.message}`, 500);
+    detalhes[prefixo] = data?.length || 0;
+    linhas.push(...(data || []));
+    if (prefixo === 'order:' || prefixo === 'archive:') linhas.push(...(data || []).map((d: any) => ({ key: `order_unit:${d.key.slice(prefixo.length)}`, value: targetUnitId })));
+  }
+  const { data: soltas } = await supabase.from('kv_store_dfe23da2').select('key, value').in('key', avulsas);
+  for (const d of soltas || []) { linhas.push(d); detalhes[d.key] = 1; }
+  const destino = linhas.map((l) => ({ key: l.key.startsWith('order_unit:') ? l.key : `unit:${targetUnitId}:${l.key}`, value: l.value }));
+  for (let i = 0; i < destino.length; i += 500) {
+    const { error: e } = await supabase.from('kv_store_dfe23da2').upsert(destino.slice(i, i + 500));
+    if (e) return error(c, `Erro ao copiar: ${e.message}`, 500);
+  }
+  const migrated = linhas.filter((l) => !l.key.startsWith('order_unit:')).length;
+  return success(c, { migrated, details: detalhes, message: `${migrated} itens copiados para a unidade "${targetUnitId}". Os dados originais foram mantidos.` });
 });
 
 router.post('/master/cleanup-sessions', async (c) => {

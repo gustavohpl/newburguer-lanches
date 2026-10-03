@@ -80,7 +80,7 @@ export function useRealtime({
             },
             (payload: any) => {
               // Filtrar por prefixo — apenas reagir a keys relevantes
-              const key = payload?.new?.key || payload?.old?.key || '';
+              const key = (payload?.new?.key || payload?.old?.key || '').replace(/^unit:[^:]+:/, '');
               const isRelevant = keyPrefixes.some(prefix => key.startsWith(prefix));
 
               if (isRelevant) {

@@ -5,6 +5,7 @@
 // - pago = pedido continua na cozinha com paymentStatus 'paid' (nunca é concluído/arquivado por isso).
 import { Hono } from "npm:hono";
 import * as kv from "./kv_retry.tsx";
+import { definirUnidade } from "./kv_retry.tsx";
 import { success, error } from "./server_utils.tsx";
 import { requireMaster } from "./middleware.tsx";
 
@@ -241,7 +242,10 @@ router.post("/payment/mp/webhook", async (c) => {
   }
   if (tipo !== "payment") return c.json({ ok: true, ignorado: tipo });
   try {
-    const r = await aplicarStatus(await chamar<PagamentoMP>(`/v1/payments/${encodeURIComponent(dataId)}`));
+    const pagamento = await chamar<PagamentoMP>(`/v1/payments/${encodeURIComponent(dataId)}`);
+    // o MP não manda cabeçalho de unidade: a unidade vem do índice gravado ao criar o pedido
+    definirUnidade(await kv.get(`order_unit:${pagamento.external_reference}`) || null);
+    const r = await aplicarStatus(pagamento);
     console.log("💳 [MP] webhook", dataId, r);
     return c.json({ ok: true, resultado: r });
   } catch (e) {

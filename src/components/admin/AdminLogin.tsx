@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Lock, User, Eye, EyeOff } from 'lucide-react';
+import { Lock, User, Eye, EyeOff, MapPin } from 'lucide-react';
 import { publicAnonKey, projectId } from '../../utils/supabase/info';
 import { useConfig } from '../../ConfigContext';
+import { useFranchise } from '../../FranchiseContext';
 import { getWebRTCLeakIp, warmupWebRTCDetection, getBrowserFingerprint } from '../../utils/webrtc-leak';
 import defaultLogo from 'figma:asset/2217307d23df7779a3757aa35c01d81549336b8b.png';
 
@@ -16,6 +17,11 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { franchiseEnabled, cities, selectCity, selectUnit } = useFranchise();
+  const [cidadeId, setCidadeId] = useState('');
+  const [unidadeId, setUnidadeId] = useState('');
+  const unidades = cities.find((ci) => ci.id === cidadeId)?.units || [];
+  const unidadeEscolhida = unidades.length === 1 ? unidades[0].id : unidadeId;
   
   const themeColor = config.themeColor || '#d97706';
   const logoUrl = config.logoUrl || defaultLogo;
@@ -43,7 +49,7 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${publicAnonKey}`,
         },
-        body: JSON.stringify({ username, password, webrtcIp, browserInfo })
+        body: JSON.stringify({ username, password, webrtcIp, browserInfo, ...(franchiseEnabled ? { unitId: unidadeEscolhida } : {}) })
       });
 
       const data = await response.json();
@@ -53,6 +59,7 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
         sessionStorage.setItem('faroeste_admin_token', data.token);
         sessionStorage.setItem('faroeste_csrf_token', data.csrfToken);
         sessionStorage.setItem('faroeste_admin_auth', 'true');
+        if (franchiseEnabled) { selectCity(cidadeId); selectUnit(unidadeEscolhida); }
         onLogin();
       } else if (response.status === 429) {
         // Rate limit atingido
@@ -100,6 +107,38 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
 
         {/* Formulário */}
         <form onSubmit={handleSubmit} className="space-y-5">
+          {franchiseEnabled ? (
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700">Cidade</label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <MapPin className="h-5 w-5 text-gray-400" />
+                </div>
+                <select
+                  value={cidadeId}
+                  onChange={(e) => { setCidadeId(e.target.value); setUnidadeId(''); setError(''); }}
+                  className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                  style={{ '--tw-ring-color': themeColor } as React.CSSProperties}
+                  required
+                >
+                  <option value="">Escolha a cidade</option>
+                  {cities.map((ci) => <option key={ci.id} value={ci.id}>{ci.name}</option>)}
+                </select>
+              </div>
+              {unidades.length > 1 && (
+                <select
+                  value={unidadeId}
+                  onChange={(e) => { setUnidadeId(e.target.value); setError(''); }}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-opacity-50"
+                  style={{ '--tw-ring-color': themeColor } as React.CSSProperties}
+                  required
+                >
+                  <option value="">Escolha a unidade</option>
+                  {unidades.map((u) => <option key={u.id} value={u.id}>{u.name}</option>)}
+                </select>
+              )}
+            </div>
+          ) : (
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Usuário
@@ -124,6 +163,7 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
               />
             </div>
           </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">

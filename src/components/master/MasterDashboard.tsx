@@ -2071,7 +2071,7 @@ export function MasterDashboard() {
                   Meta Ads (Facebook & Instagram)
                 </h3>
                 <div className="grid grid-cols-1 gap-4">
-                  <div>
+                  {!config.franchise?.enabled && <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Pixel ID</label>
                     <input
                       type="text"
@@ -2080,9 +2080,9 @@ export function MasterDashboard() {
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono text-sm"
                       placeholder="Ex: 123456789012345"
                     />
-                  </div>
+                  </div>}
                   <div className="border-t border-gray-100 pt-4">
-                    <MetaConfig />
+                    <MetaConfig unidades={config.franchise?.enabled ? (config.franchise.cities || []).flatMap((ci) => ci.units.map((u) => ({ id: u.id, rotulo: `${ci.name} → ${u.name}` }))) : []} />
                   </div>
                 </div>
               </div>
@@ -2520,25 +2520,6 @@ export function MasterDashboard() {
                     </p>
                   </div>
 
-                  {/* Senha para trocar de franquia no Admin */}
-                  <div className="bg-white rounded-lg shadow-md p-5 border border-gray-200">
-                    <h4 className="font-bold text-gray-800 mb-2 flex items-center gap-2">
-                      <Key className="w-4 h-4 text-amber-600" />
-                      Senha para Trocar de Franquia (Admin)
-                    </h4>
-                    <p className="text-xs text-gray-500 mb-3">O admin precisará digitar esta senha para alternar entre franquias no dashboard.</p>
-                    <input
-                      type="text"
-                      value={config.franchise?.switchPassword || ''}
-                      onChange={(e) => setConfig({
-                        ...config,
-                        franchise: { ...config.franchise!, switchPassword: e.target.value }
-                      })}
-                      className="w-full max-w-sm p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
-                      placeholder="Senha para alternar franquias"
-                    />
-                  </div>
-
                   {/* Adicionar Cidade */}
                   <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
                     <h3 className="font-bold text-gray-800 mb-4 flex items-center gap-2">
@@ -2822,6 +2803,8 @@ export function MasterDashboard() {
                                                 </button>
                                               </div>
                                             </div>
+
+                                            <SenhaUnidade unitId={unit.id} definida={(config as any).unidadesComSenha?.includes(unit.id)} />
 
                                             {/* Setores desta unidade */}
                                             <div className="mt-3 pt-3 border-t border-gray-200">
@@ -3201,6 +3184,32 @@ export function MasterDashboard() {
       </main>
 
 
+    </div>
+  );
+}
+
+// senha do Admin da unidade: só entra (o servidor nunca devolve)
+function SenhaUnidade({ unitId, definida }: { unitId: string; definida?: boolean }) {
+  const [senha, setSenha] = useState('');
+  const [aviso, setAviso] = useState('');
+  const [salva, setSalva] = useState(!!definida);
+  const salvar = async () => {
+    setAviso('');
+    const r = await masterFetch('/master/franquia/senha', { method: 'POST', body: JSON.stringify({ unitId, senha }) });
+    const d = await r.json().catch(() => ({}));
+    if (r.ok && d.success) { setSalva(true); setSenha(''); setAviso('Senha salva. Quem estava logado nesta unidade precisa entrar de novo.'); }
+    else setAviso(r.status === 404 ? 'Salve as alterações da franquia antes de definir a senha.' : d.error || 'Erro ao salvar a senha');
+  };
+  return (
+    <div className="mt-3 pt-3 border-t border-gray-200">
+      <label className="block text-xs font-medium text-gray-600 mb-1">🔑 Senha do Admin desta unidade {salva && <span className="text-green-600">(definida)</span>}</label>
+      <div className="flex gap-2">
+        <input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} placeholder={salva ? 'Nova senha (deixe vazio para manter)' : 'Mínimo 6 caracteres'}
+          className="flex-1 p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-400 outline-none" />
+        <button type="button" onClick={salvar} disabled={senha.trim().length < 6}
+          className="px-3 py-2 rounded-lg text-sm font-bold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-40">Salvar senha</button>
+      </div>
+      {aviso && <p className="text-xs text-gray-600 mt-1">{aviso}</p>}
     </div>
   );
 }

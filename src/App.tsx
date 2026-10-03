@@ -121,8 +121,11 @@ function AppContent() {
   const [deliveryFee, setDeliveryFee] = useState(5.00);
   
   // 🏙️ Valores efetivos: quando franquia ativa, unidade override config global
-  const effectiveIsOpen = unitOverrides.isOpen !== undefined ? unitOverrides.isOpen : isStoreOpen;
-  const effectiveDeliveryFee = unitOverrides.deliveryFee !== undefined ? unitOverrides.deliveryFee : deliveryFee;
+  // o servidor já devolve aberto/taxa da unidade (Master + Admin dela); o Master fechar a unidade vale na hora
+  const effectiveIsOpen = unitOverrides.isOpen === false ? false : isStoreOpen;
+  const effectiveDeliveryFee = deliveryFee;
+  // trocar de cidade troca de loja: o carrinho da outra não vale aqui
+  useEffect(() => { setCartItems([]); }, [selectedUnit?.id]);
   
   // 🌓 DETECÇÃO DE MODO ESCURO PARA O CLIENTE
   const [isDarkMode, setIsDarkMode] = useState(false);

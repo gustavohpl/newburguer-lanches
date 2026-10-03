@@ -5,6 +5,17 @@
 
 import type { Context, Next } from "npm:hono";
 import * as kv from "./kv_retry.tsx";
+import { definirUnidade } from "./kv_retry.tsx";
+import { franquia, unidadeExiste } from "./franquia.tsx";
+
+// com franquia ligada, Admin e entregador ficam presos à unidade em que fizeram login (o cabeçalho não muda isso)
+async function prenderNaUnidade(session: any): Promise<boolean> {
+  if (!(await franquia())) { definirUnidade(null); return true; }
+  if (!session?.unitId || !(await unidadeExiste(session.unitId))) return false;
+  definirUnidade(session.unitId);
+  return true;
+}
+const SEM_UNIDADE = 'Sessão sem unidade. Saia e entre de novo escolhendo a cidade.';
 import { error } from "./server_utils.tsx";
 import type { AdminSession, MasterSession, DriverSession, RateLimitRecord } from "./types.tsx";
 import {
@@ -129,6 +140,8 @@ export const requireAdmin = async (c: Context, next: Next) => {
     return error(c, 'Sessão de admin expirada. Faça login novamente.', 401);
   }
 
+  if (!(await prenderNaUnidade(session))) return error(c, SEM_UNIDADE, 401);
+
   // CSRF validation for mutation requests
   if (['POST', 'PUT', 'DELETE'].includes(c.req.method)) {
     const csrfToken = c.req.header('X-CSRF-Token');
@@ -154,6 +167,7 @@ export const requireAdminLeitura = async (c: Context, next: Next) => {
   if (!session || (session.expiresAt && new Date(session.expiresAt) < new Date())) {
     return error(c, 'Sessão de admin inválida ou expirada. Faça login novamente.', 401);
   }
+  if (!(await prenderNaUnidade(session))) return error(c, SEM_UNIDADE, 401);
   c.set('authType' as never, 'admin');
   await next();
 };
@@ -192,6 +206,7 @@ export const requireDriver = async (c: Context, next: Next) => {
     await kv.del(`driver_session:${token}`);
     return error(c, 'Sessão de entregador expirada. Faça login novamente.', 401);
   }
+  if (!(await prenderNaUnidade(session))) return error(c, SEM_UNIDADE, 401);
 
   c.set('authType' as never, 'driver');
   c.set('driverPhone' as never, session.phone);
@@ -205,6 +220,7 @@ export const requireAdminOrDriver = async (c: Context, next: Next) => {
   if (adminToken) {
     const session = await kv.get(`admin_session:${adminToken}`) as AdminSession | null;
     if (session && (!session.expiresAt || new Date(session.expiresAt) > new Date())) {
+      if (!(await prenderNaUnidade(session))) return error(c, SEM_UNIDADE, 401);
       // CSRF for mutations
       if (['POST', 'PUT', 'DELETE'].includes(c.req.method)) {
         const csrf = c.req.header('X-CSRF-Token');
@@ -227,6 +243,7 @@ export const requireAdminOrDriver = async (c: Context, next: Next) => {
   if (driverToken) {
     const session = await kv.get(`driver_session:${driverToken}`) as DriverSession | null;
     if (session && (!session.expiresAt || new Date(session.expiresAt) > new Date())) {
+      if (!(await prenderNaUnidade(session))) return error(c, SEM_UNIDADE, 401);
       c.set('authType' as never, 'driver');
       c.set('driverPhone' as never, session.phone);
       c.set('driverName' as never, session.name);

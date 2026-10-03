@@ -5,6 +5,8 @@
 
 import { Hono } from "npm:hono";
 import * as kv from "./kv_retry.tsx";
+import { unidadeAtual } from "./kv_retry.tsx";
+import { franquia } from "./franquia.tsx";
 import {
   success, error,
   sanitizeName, sanitizePhone, sanitizeText, sanitizeReviews,
@@ -161,6 +163,7 @@ router.get('/orders/:id', async (c) => {
 // Criar pedido
 router.post('/orders', async (c) => {
   try {
+    if ((await franquia()) && !unidadeAtual()) return error(c, 'Escolha a cidade antes de fazer o pedido.', 400);
     const rawBody = await c.req.json();
     const body = {
       ...rawBody,
@@ -203,7 +206,7 @@ router.post('/orders', async (c) => {
     const timestamp = Date.now();
     const id = `order_${timestamp}`;
     let orderId = `FH-${timestamp.toString().slice(-6)}`;
-    while (await kv.get(`order:${orderId}`) || await kv.get(`archive:${orderId}`)) orderId = `FH-${Math.floor(100000 + Math.random() * 900000)}`;
+    while (await kv.get(`order:${orderId}`) || await kv.get(`archive:${orderId}`) || await kv.get(`order_unit:${orderId}`)) orderId = `FH-${Math.floor(100000 + Math.random() * 900000)}`;
 
     // Incrementar uso de cupom
     if (body.couponCode) {
@@ -231,6 +234,7 @@ router.post('/orders', async (c) => {
       createdAt: new Date().toISOString()
     };
     await kv.set(`order:${orderId}`, order);
+    if (unidadeAtual()) await kv.set(`order_unit:${orderId}`, unidadeAtual());
     console.log('✅ [BACKEND] Pedido criado com sucesso:', orderId);
     return success(c, { order });
   } catch (e) {
