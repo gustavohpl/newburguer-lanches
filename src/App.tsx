@@ -25,7 +25,7 @@ import { useDesign } from './useDesign';
 import { PrimeLayout } from './components/prime/PrimeLayout';
 import './components/three-d/threed-theme.css';
 import { FranchiseProvider, useFranchise } from './FranchiseContext';
-import { FranchiseSelectionModal } from './components/FranchiseSelectionModal';
+import { FranchiseSelectionModal, TrocarCidade } from './components/FranchiseSelectionModal';
 // áreas pesadas que o cliente do cardápio não usa: baixadas só quando abertas
 const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard').then((m) => ({ default: m.AdminDashboard })));
 const MasterDashboard = lazy(() => import('./components/master/MasterDashboard').then((m) => ({ default: m.MasterDashboard })));
@@ -771,6 +771,7 @@ function AppContent() {
       <Toaster richColors position="bottom-center" />
       <MetaPixel />
       {!showAdmin && <FranchiseSelectionModal />}
+      {!showAdmin && !showDelivery && <TrocarCidade />}
       {showAdmin ? (
         <div className="min-h-screen bg-gray-100">
           {!isAdminAuthenticated ? (

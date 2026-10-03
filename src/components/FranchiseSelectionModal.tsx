@@ -20,7 +20,8 @@ export function FranchiseSelectionModal() {
     selectCity, 
     selectUnit,
     resetSelection,
-    pageType
+    pageType,
+    localizando
   } = useFranchise();
 
   const [step, setStep] = useState<'city' | 'unit'>('city');
@@ -70,9 +71,9 @@ export function FranchiseSelectionModal() {
             <p className="text-white/70 text-xs mt-1">{pageLabel}</p>
           )}
           <p className="text-white/80 text-sm mt-2">
-            {currentStep === 'city' 
-              ? 'Selecione sua cidade' 
-              : 'Escolha a unidade'}
+            {localizando
+              ? 'Procurando a cidade mais perto de você...'
+              : currentStep === 'city' ? 'Selecione sua cidade' : 'Escolha a unidade'}
           </p>
         </div>
 
@@ -194,5 +195,20 @@ export function FranchiseSelectionModal() {
         </div>
       </div>
     </div>
+  );
+}
+
+// cliente: mostra a cidade escolhida (pelo GPS ou na mão) e deixa trocar
+export function TrocarCidade() {
+  const { franchiseEnabled, selectedCity, selectedUnit, resetSelection, pageType, unitsForSelectedCity } = useFranchise();
+  if (!franchiseEnabled || !selectedCity || !selectedUnit || pageType !== 'client') return null;
+  return (
+    <button
+      onClick={resetSelection}
+      className="fixed top-3 right-3 z-40 flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur hover:bg-black/75"
+    >
+      <MapPin className="w-3.5 h-3.5" />
+      {selectedCity.name}{unitsForSelectedCity.length > 1 ? ` · ${selectedUnit.name}` : ''} · trocar
+    </button>
   );
 }

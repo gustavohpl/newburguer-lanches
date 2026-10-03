@@ -2547,6 +2547,7 @@ export function MasterDashboard() {
                             });
                             setNewCityName('');
                             setEditingCityId(slug);
+                            buscarCoordenadas(newCity.name).then((coords) => coords && setConfig((prev) => ({ ...prev, franchise: { ...prev.franchise!, cities: (prev.franchise?.cities || []).map((c) => (c.id === slug ? { ...c, ...coords } : c)) } })));
                           }
                         }}
                       />
@@ -2565,6 +2566,7 @@ export function MasterDashboard() {
                           });
                           setNewCityName('');
                           setEditingCityId(slug);
+                          buscarCoordenadas(newCity.name).then((coords) => coords && setConfig((prev: any) => ({ ...prev, franchise: { ...prev.franchise!, cities: (prev.franchise?.cities || []).map((c: any) => (c.id === slug ? { ...c, ...coords } : c)) } })));
                         }}
                         className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-bold transition-colors flex items-center gap-2 shadow-sm whitespace-nowrap"
                       >
@@ -2644,6 +2646,8 @@ export function MasterDashboard() {
                                   className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
                                 />
                               </div>
+
+                              <LocalCidade cidade={city} aoMudar={(coords) => setConfig((prev) => ({ ...prev, franchise: { ...prev.franchise!, cities: (prev.franchise?.cities || []).map((c) => (c.id === city.id ? { ...c, ...coords } : c)) } }))} />
 
                               {/* Unidades desta cidade */}
                               <div className="pt-3 border-t border-gray-200">
@@ -3184,6 +3188,33 @@ export function MasterDashboard() {
       </main>
 
 
+    </div>
+  );
+}
+
+// coordenada da cidade (OpenStreetMap) para o celular do cliente/entregador abrir a cidade certa
+async function buscarCoordenadas(nome: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=br&city=${encodeURIComponent(nome)}`);
+    const [achado] = await r.json();
+    return achado ? { lat: Number(achado.lat), lng: Number(achado.lon) } : null;
+  } catch { return null; }
+}
+
+function LocalCidade({ cidade, aoMudar }: { cidade: any; aoMudar: (c: { lat?: number; lng?: number }) => void }) {
+  const [aviso, setAviso] = useState('');
+  const buscar = async () => { setAviso('Buscando...'); const c = await buscarCoordenadas(cidade.name); if (c) { aoMudar(c); setAviso(''); } else setAviso('Cidade não encontrada pelo nome; preencha a latitude e a longitude.'); };
+  const num = (v: string) => (v.trim() === '' ? undefined : Number(v.replace(',', '.')));
+  const campo = 'w-32 p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-indigo-500 outline-none';
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1">📍 Localização da cidade (abre a cidade certa pelo GPS do celular)</label>
+      <div className="flex flex-wrap items-center gap-2">
+        <input className={campo} placeholder="Latitude" value={cidade.lat ?? ''} onChange={(e) => aoMudar({ lat: num(e.target.value) })} />
+        <input className={campo} placeholder="Longitude" value={cidade.lng ?? ''} onChange={(e) => aoMudar({ lng: num(e.target.value) })} />
+        <button type="button" onClick={buscar} className="px-3 py-2 rounded-lg text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700">Buscar pelo nome</button>
+      </div>
+      {aviso && <p className="text-xs text-gray-600 mt-1">{aviso}</p>}
     </div>
   );
 }

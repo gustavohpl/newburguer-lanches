@@ -16,6 +16,7 @@ interface FranchiseContextType {
   selectedCity: FranchiseCity | null;
   selectedUnit: FranchiseUnit | null;
   needsSelection: boolean; // true = modal deve aparecer
+  localizando: boolean;
   
   // Ações
   selectCity: (cityId: string) => void;
@@ -44,6 +45,7 @@ const FranchiseContext = createContext<FranchiseContextType>({
   selectedCity: null,
   selectedUnit: null,
   needsSelection: false,
+  localizando: false,
   selectCity: () => {},
   selectUnit: () => {},
   resetSelection: () => {},
@@ -62,6 +64,12 @@ function getPageType(): 'client' | 'admin' | 'delivery' | 'master' {
   if (path === '/admin') return 'admin';
   if (path === '/entrega') return 'delivery';
   return 'client';
+}
+
+function distanciaKm(lat1: number, lng1: number, lat2: number, lng2: number) {
+  const r = (g: number) => (g * Math.PI) / 180;
+  const a = Math.sin(r(lat2 - lat1) / 2) ** 2 + Math.cos(r(lat1)) * Math.cos(r(lat2)) * Math.sin(r(lng2 - lng1) / 2) ** 2;
+  return 6371 * 2 * Math.asin(Math.sqrt(a));
 }
 
 // Storage keys
@@ -179,6 +187,24 @@ export function FranchiseProvider({ children }: { children: ReactNode }) {
     writeStorage(pageType, STORAGE_KEY_UNIT, unitId);
   }, [pageType]);
 
+  // celular escolhe a cidade cadastrada mais perto (até 60 km); sem permissão ou longe, fica a escolha manual
+  const [localizando, setLocalizando] = useState(false);
+  useEffect(() => {
+    if (!franchiseEnabled || !initialized || selectedCityId || (pageType !== 'client' && pageType !== 'delivery')) return;
+    const comCoord = cities.filter((c: any) => Number.isFinite(c.lat) && Number.isFinite(c.lng));
+    if (!comCoord.length || !navigator.geolocation) return;
+    try { if (sessionStorage.getItem('franquia_gps_tentado')) return; sessionStorage.setItem('franquia_gps_tentado', '1'); } catch { /* sem storage: tenta mesmo assim */ }
+    setLocalizando(true);
+    navigator.geolocation.getCurrentPosition(({ coords }) => {
+      const perto = comCoord.map((c: any) => ({ c, km: distanciaKm(coords.latitude, coords.longitude, c.lat, c.lng) })).sort((a, b) => a.km - b.km)[0];
+      if (perto.km <= 60) {
+        selectCity(perto.c.id);
+        if (perto.c.units.length === 1) selectUnit(perto.c.units[0].id);
+      }
+      setLocalizando(false);
+    }, () => setLocalizando(false), { timeout: 8000, maximumAge: 600000 });
+  }, [franchiseEnabled, initialized, selectedCityId, cities.length]);
+
   // Resetar seleção (para trocar de franquia)
   const resetSelection = useCallback(() => {
     setSelectedCityId(null);
@@ -202,6 +228,7 @@ export function FranchiseProvider({ children }: { children: ReactNode }) {
       selectedCity,
       selectedUnit,
       needsSelection,
+      localizando,
       selectCity,
       selectUnit,
       resetSelection,
