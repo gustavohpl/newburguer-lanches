@@ -12,7 +12,7 @@ import { useConfig } from './ConfigContext';
 //   3. Adicione a miniatura no seletor do Master
 // ============================================================
 
-export type DesignId = 'classic' | 'clean' | 'rustic' | 'threed' | 'prime';
+export type DesignId = 'classic' | 'clean' | 'rustic' | 'prime';
 
 export interface DesignTokens {
   id: DesignId;
@@ -112,31 +112,10 @@ const DESIGNS: Record<DesignId, DesignTokens> = {
     accentIntensity: 'strong',
   },
 
-  // ========== DESIGN 4: 3D (hero imersivo com modelo GLB) ==========
-  threed: {
-    id: 'threed',
-    name: '3D',
-    description: 'Hero imersivo com modelo 3D do hambúrguer girando ao scroll',
-    showHeaderBackground: false,
-    headerTextClass: 'text-white',
-    headerLayout: 'immersive',
-    pageBackgroundClass: '',
-    cardClass: 'border',
-    cardTitleClass: 'text-white font-bold',
-    cardPriceClass: 'font-black',
-    cardRounded: 'rounded-2xl',
-    cardShadow: 'shadow-lg',
-    buttonRounded: 'rounded-xl',
-    buttonStyle: 'solid',
-    categoryStyle: 'pill',
-    statusStyle: 'badge',
-    accentIntensity: 'strong',
-  },
-
   // ========== DESIGN 5: PRIME (editorial/cinematográfico, layout próprio) ==========
   prime: {
     id: 'prime',
-    name: 'Prime',
+    name: '3D Prime',
     description: 'Editorial cinematográfico: fundo quase preto, tipografia gigante, seções numeradas e cor de destaque',
     showHeaderBackground: false,
     headerTextClass: 'text-white',
@@ -163,7 +142,8 @@ export function useDesign(): DesignTokens {
   const { config } = useConfig();
   // ?design=prime no endereço: ver um design sem mudar o salvo no Master (que vale para produção)
   const forcado = typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('design') : null;
-  const style = ((forcado && forcado in DESIGNS ? forcado : config.designStyle) as DesignId) || 'classic';
+  const salvo = config.designStyle === ('threed' as string) ? 'prime' : config.designStyle; // o design 3D antigo virou o 3D Prime
+  const style = ((forcado && forcado in DESIGNS ? forcado : salvo) as DesignId) || 'classic';
   return DESIGNS[style] || DESIGNS.classic;
 }
 

@@ -167,138 +167,6 @@ function ImageConfig({ label, value, onChange, placeholder, helpText, token }: a
   );
 }
 
-// Componente para upload/definição do modelo 3D (.glb) do Hero Awwwards
-function ModelConfig({ value, onChange, token }: any) {
-  const [uploading, setUploading] = useState(false);
-  const [showInput, setShowInput] = useState(false);
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
-
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const name = file.name.toLowerCase();
-    if (!name.endsWith('.glb') && !name.endsWith('.gltf')) {
-      alert('Envie um arquivo .glb (ou .gltf).');
-      return;
-    }
-    // Limite do servidor: 60MB para modelos 3D.
-    if (file.size > 60 * 1024 * 1024) {
-      alert('Esse modelo tem mais de 60MB, que é o limite do servidor. Reduza/otimize o .glb (ex.: gltf-transform, Draco) e tente novamente.');
-      return;
-    }
-    // Aviso de desempenho no celular (não bloqueia).
-    if (file.size > 30 * 1024 * 1024) {
-      const mb = (file.size / (1024 * 1024)).toFixed(0);
-      const ok = confirm(`Esse modelo tem ${mb}MB e pode deixar o site lento no celular. Recomendo otimizar o .glb. Deseja enviar mesmo assim?`);
-      if (!ok) return;
-    }
-
-    if (!token) {
-      alert('Sessão expirada. Faça login novamente.');
-      return;
-    }
-
-    setUploading(true);
-    try {
-      const response = await api.uploadMasterImage(token, file);
-      if (response.success && response.url) {
-        onChange(response.url);
-      } else {
-        alert('Erro ao enviar o modelo: ' + (response.error || 'o servidor pode não aceitar arquivos .glb. Use o campo de URL abaixo como alternativa.'));
-      }
-    } catch (error) {
-      console.error('Erro no upload do GLB:', error);
-      alert('Erro ao enviar o modelo. Você pode colar uma URL manualmente abaixo.');
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
-  return (
-    <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-      <div className="flex justify-between items-start mb-3">
-        <label className="block text-sm font-bold text-gray-700">🍔 Modelo 3D do Hero (.glb)</label>
-        <button
-          onClick={() => setShowInput(!showInput)}
-          className="text-xs bg-white border border-gray-300 px-2 py-1 rounded hover:bg-gray-50 text-gray-600"
-        >
-          {showInput ? 'Ocultar URL' : 'Editar URL Manualmente'}
-        </button>
-      </div>
-
-      <div className="mb-3 flex items-center gap-4">
-        <div className="relative w-24 h-24 bg-zinc-800 rounded-lg overflow-hidden border border-gray-600 flex items-center justify-center shrink-0">
-          {uploading ? (
-            <RefreshCw className="w-8 h-8 text-blue-500 animate-spin" />
-          ) : value ? (
-            <div className="text-center px-1">
-              <span className="text-3xl">🍔</span>
-              <p className="text-[9px] text-green-400 mt-1 leading-tight">Modelo definido</p>
-            </div>
-          ) : (
-            <div className="text-center px-1">
-              <span className="text-3xl opacity-40">🍔</span>
-              <p className="text-[9px] text-gray-400 mt-1 leading-tight">Nenhum modelo</p>
-            </div>
-          )}
-        </div>
-        <div className="flex-1">
-          <input
-            type="file"
-            ref={fileInputRef}
-            onChange={handleFileChange}
-            accept=".glb,.gltf,model/gltf-binary"
-            className="hidden"
-          />
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-colors mb-2"
-          >
-            {uploading ? (
-              <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                Enviando...
-              </>
-            ) : (
-              <>
-                <Upload className="w-4 h-4" />
-                Carregar arquivo .glb
-              </>
-            )}
-          </button>
-          {value && (
-            <button
-              onClick={() => onChange('')}
-              className="ml-2 text-xs text-red-600 hover:text-red-700 underline"
-            >
-              Remover
-            </button>
-          )}
-          <p className="text-xs text-gray-500">
-            Aceita .glb/.gltf até 60MB (ideal otimizar p/ celular). Aparece no design 3D e na rota /hero3d.
-          </p>
-        </div>
-      </div>
-
-      {showInput && (
-        <input
-          type="text"
-          value={value || ''}
-          onChange={(e) => onChange(e.target.value)}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
-          placeholder="/burger.glb ou https://.../modelo.glb"
-        />
-      )}
-      <p className="text-[11px] text-gray-400 mt-1">
-        Dica: se preferir, coloque o arquivo em <code>public/burger.glb</code> no projeto e deixe este campo vazio.
-      </p>
-    </div>
-  );
-}
-
 export function MasterDashboard() {
   const { refreshConfig, updateConfigLocal } = useConfig();
   // Alterado para sessionStorage para exigir login sempre que fechar o navegador
@@ -1406,7 +1274,7 @@ export function MasterDashboard() {
               'Cards com imagens entre os produtos e o rodapé. Use PNG para transparência.',
             );
             const primeLista = config.primeBanners ?? config.bannerCards ?? [];
-            const abas: Array<[string, string]> = [['classic', 'Clássico'], ['clean', 'Clean'], ['rustic', 'Rústico'], ['threed', '3D'], ['prime', 'Prime']];
+            const abas: Array<[string, string]> = [['classic', 'Clássico'], ['clean', 'Clean'], ['rustic', 'Rústico'], ['prime', '3D Prime']];
             return (
               <div className="space-y-6 animate-in fade-in">
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
@@ -1518,37 +1386,6 @@ export function MasterDashboard() {
                       );
                     })()}
 
-                    {/* Design 3D */}
-                    {(() => {
-                      const isActive = config.designStyle === 'threed';
-                      const g = config.themeColor || '#fbbf24';
-                      return (
-                        <button
-                          onClick={() => {
-                            setConfig({ ...config, designStyle: 'threed' });
-                            updateConfigLocal({ designStyle: 'threed' });
-                            setDesignAba(null);
-                          }}
-                          className={`text-left border-2 rounded-xl overflow-hidden transition-all ${isActive ? 'border-purple-500 ring-2 ring-purple-200' : 'border-gray-200 hover:border-purple-300'}`}
-                        >
-                          {/* Miniatura 3D */}
-                          <div className="h-32 relative overflow-hidden" style={{ background: 'radial-gradient(circle at 50% 40%, #241a12, #0d0b0a 70%)' }}>
-                            {/* "modelo" 3D estilizado */}
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full" style={{ background: `radial-gradient(circle at 35% 30%, ${g}, ${g}55 60%, transparent)`, boxShadow: `0 0 24px ${g}88` }} />
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 translate-y-4 w-16 h-2 rounded-full bg-black/50 blur-sm" />
-                            <span className="absolute top-3 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-[0.3em]" style={{ color: g }}>3D</span>
-                          </div>
-                          <div className="p-3 flex items-center justify-between">
-                            <div>
-                              <span className="block font-bold text-gray-800">3D</span>
-                              <span className="text-xs text-gray-500">Hero imersivo com modelo 3D girando ao scroll (usa o .glb)</span>
-                            </div>
-                            {isActive && <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />}
-                          </div>
-                        </button>
-                      );
-                    })()}
-
                     {/* Design PRIME */}
                     {(() => {
                       const isActive = config.designStyle === 'prime';
@@ -1577,8 +1414,8 @@ export function MasterDashboard() {
                           </div>
                           <div className="p-3 flex items-center justify-between">
                             <div>
-                              <span className="block font-bold text-gray-800">Prime</span>
-                              <span className="text-xs text-gray-500">Abertura animada do lanche se montando, cardápio escuro e sacola própria</span>
+                              <span className="block font-bold text-gray-800">3D Prime</span>
+                              <span className="text-xs text-gray-500">Abertura 3D do lanche se montando, cardápio escuro e sacola própria</span>
                             </div>
                             {isActive && <CheckCircle className="w-5 h-5 text-purple-600 flex-shrink-0" />}
                           </div>
@@ -1764,66 +1601,6 @@ export function MasterDashboard() {
                         {bannersRodape}
                       </>
                     )}
-                    {aba === 'threed' && (
-                      <>
-                        <div className="p-5 bg-gray-50 rounded-xl border border-gray-200">
-                          <ModelConfig
-                            value={config.heroModelUrl}
-                            onChange={(val: string) => {
-                              setConfig({ ...config, heroModelUrl: val });
-                              updateConfigLocal({ heroModelUrl: val });
-                            }}
-                            token={token}
-                          />
-                        </div>
-                        <div className="p-5 bg-gray-50 rounded-xl border border-gray-200">
-                          <label className="block text-sm font-bold text-gray-800 mb-1">✨ Efeitos 3D do Hero</label>
-                          <p className="text-xs text-gray-500 mb-3">
-                            Efeitos extras na cena 3D, na cor do tema. Sem nenhum marcado, usa o padrão (partículas douradas).
-                          </p>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                            {[
-                              { id: 'sparkles', label: 'Partículas douradas', desc: 'Brilhos flutuando ao redor do modelo' },
-                              { id: 'ring', label: 'Anel de luz', desc: 'Anel dourado girando sob o modelo' },
-                              { id: 'orbiters', label: 'Esferas em órbita', desc: 'Pontos de luz orbitando o modelo' },
-                              { id: 'stars', label: 'Céu estrelado', desc: 'Campo de estrelas ao fundo' },
-                            ].map((fx) => {
-                              const current = config.heroEffects || [];
-                              const checked = current.includes(fx.id);
-                              return (
-                                <label
-                                  key={fx.id}
-                                  className={`flex items-start gap-3 p-3 border-2 rounded-xl cursor-pointer transition-all ${checked ? 'border-purple-500 bg-purple-50' : 'border-gray-200 hover:border-purple-300'}`}
-                                >
-                                  <input
-                                    type="checkbox"
-                                    checked={checked}
-                                    onChange={() => {
-                                      const next = checked
-                                        ? current.filter((id) => id !== fx.id)
-                                        : [...current, fx.id];
-                                      setConfig({ ...config, heroEffects: next });
-                                      updateConfigLocal({ heroEffects: next });
-                                    }}
-                                    className="mt-0.5 w-4 h-4 accent-purple-600"
-                                  />
-                                  <span>
-                                    <span className="block text-sm font-bold text-gray-800">{fx.label}</span>
-                                    <span className="block text-xs text-gray-500">{fx.desc}</span>
-                                  </span>
-                                </label>
-                              );
-                            })}
-                          </div>
-                        </div>
-                        <p className="text-xs text-gray-500">O 3D mostra o cabeçalho, os banners e as cores do Clássico por cima da cena 3D. As opções abaixo valem também para o Clássico.</p>
-                        {modoTema}
-                        {corCategoria}
-                        {efeitoCabecalho}
-                        {bannersHome}
-                        {bannersRodape}
-                      </>
-                    )}
                     {aba === 'clean' && caixa('🖼️ Foto do topo', fotosTopo('cleanHero', 'Horizontal (1920x1080+). Se vazio, usa a imagem de fundo do Clássico.'), 'Imagem grande no topo do Clean.')}
                     {aba === 'rustic' && (
                       <>
@@ -1833,7 +1610,7 @@ export function MasterDashboard() {
                     )}
                     {aba === 'prime' && (
                       <>
-                        {caixa('🔥 Capa', fotosTopo('primeHero', 'Horizontal (1920x1080+), com o lanche mais à direita.'), 'Sem capa, o Prime abre com a animação do lanche se montando. Com capa, ela entra no lugar da animação.')}
+                        {caixa('🔥 Capa', fotosTopo('primeHero', 'Horizontal (1920x1080+), com o lanche mais à direita.'), 'Sem capa, o 3D Prime abre com a animação do lanche se montando. Com capa, ela entra no lugar da animação.')}
                         {caixa('✍️ Textos da capa', (
                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {([['primeHeroTitle', 'Título', config.siteName || 'NewBurguer Lanches'], ['primeHeroTagline', 'Frase', config.siteSubtitle || 'Cada camada feita na hora.']] as const).map(([key, label, padrao]) => (

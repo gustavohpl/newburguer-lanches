@@ -5,7 +5,7 @@ import { applyTheme } from './utils/themeUtils';
 export interface SystemConfig {
   siteName: string;
   themeColor: string;
-  designStyle?: 'classic' | 'clean' | 'rustic' | 'threed' | 'prime'; // 🎨 Estilo de design do site (extensível)
+  designStyle?: 'classic' | 'clean' | 'rustic' | 'prime'; // 🎨 Estilo de design do site (extensível)
   heroModelUrl?: string; // 🍔 Modelo 3D (.glb) do Hero Awwwards
   heroEffects?: string[]; // ✨ Efeitos extras da cena 3D ('sparkles' | 'ring' | 'orbiters' | 'stars')
   // opções próprias de cada design (vazias = usam as do Clássico)

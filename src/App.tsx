@@ -23,14 +23,12 @@ import { MetaPixel } from './components/MetaPixel';
 import { ConfigProvider, useConfig } from './ConfigContext';
 import { useDesign } from './useDesign';
 import { PrimeLayout } from './components/prime/PrimeLayout';
-import './components/three-d/threed-theme.css';
 import { FranchiseProvider, useFranchise } from './FranchiseContext';
 import { FranchiseSelectionModal, TrocarCidade } from './components/FranchiseSelectionModal';
 // áreas pesadas que o cliente do cardápio não usa: baixadas só quando abertas
 const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard').then((m) => ({ default: m.AdminDashboard })));
 const MasterDashboard = lazy(() => import('./components/master/MasterDashboard').then((m) => ({ default: m.MasterDashboard })));
 const DeliverymanPage = lazy(() => import('./components/delivery/DeliverymanPage').then((m) => ({ default: m.DeliverymanPage })));
-const ThreeDBackground = lazy(() => import('./components/three-d/ThreeDBackground').then((m) => ({ default: m.ThreeDBackground })));
 const CleanLayout = lazy(() => import('./components/clean/CleanLayout').then((m) => ({ default: m.CleanLayout })));
 const RusticLayout = lazy(() => import('./components/rustic/RusticLayout').then((m) => ({ default: m.RusticLayout })));
 
@@ -93,7 +91,6 @@ function AppContent() {
   const design = useDesign();
   const isClean = design.headerLayout === 'minimal';
   const isRustic = design.id === 'rustic';
-  const isThreeD = design.id === 'threed';
   const isPrime = design.id === 'prime';
   const { unitOverrides, franchiseEnabled, selectedUnit, needsSelection } = useFranchise();
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -783,11 +780,11 @@ function AppContent() {
       ) : (
         <div 
           id="client-app" 
-          className={`min-h-screen ${isClean ? 'bg-zinc-50 text-zinc-900' : 'bg-background text-foreground'} flex flex-col transition-colors duration-300 ${isDarkMode && !isClean ? 'dark' : ''} ${isThreeD ? 'design-threed' : ''}`}
+          className={`min-h-screen ${isClean ? 'bg-zinc-50 text-zinc-900' : 'bg-background text-foreground'} flex flex-col transition-colors duration-300 ${isDarkMode && !isClean ? 'dark' : ''}`}
           style={{ position: 'relative' }}
         >
           {/* Imagem de fundo fixa com zoom suave (Ken Burns) — apenas no Clássico */}
-          {!isClean && !isRustic && !isThreeD && !isPrime && (config.contentBackgroundUrl || config.contentBackgroundMobileUrl) && (
+          {!isClean && !isRustic && !isPrime && (config.contentBackgroundUrl || config.contentBackgroundMobileUrl) && (
             <>
               {/* Preload da imagem em alta qualidade */}
               <link 
@@ -824,7 +821,6 @@ function AppContent() {
           )}
           {/* Fundo 3D fixo — substitui a imagem do Clássico no design "3D".
               O conteúdo Clássico (header/menus/footer) fica por cima, transparente. */}
-          {isThreeD && <Suspense fallback={null}><ThreeDBackground /></Suspense>}
           {showDelivery ? (
             <Suspense fallback={null}><DeliverymanPage /></Suspense>
           ) : (
