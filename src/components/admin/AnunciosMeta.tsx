@@ -441,12 +441,13 @@ function NovaCampanha({ aoFechar, aoCriar, minimoDiario = null }: { aoFechar: ()
             <label className="text-sm text-gray-600">Botão
               <select className={campo} value={cta} onChange={(e) => setCta(e.target.value)}>{CTAS.map(([v, r]) => <option key={v} value={v}>{r}</option>)}</select>
             </label>
-            <label className="text-sm text-gray-600">Cupom no link <span className="text-gray-400">(opcional)</span>
+{config.features?.coupons !== false && (
+                        <label className="text-sm text-gray-600">Cupom no link <span className="text-gray-400">(opcional)</span>
               <select className={campo} value={cupom} onChange={(e) => setCupom(e.target.value)}>
                 <option value="">Sem cupom</option>
                 {cupons.map((x) => <option key={x.code} value={x.code}>{x.code}</option>)}
               </select>
-            </label>
+            </label>)}
           </div>
           <label className="block text-sm text-gray-600">Link do anúncio
             <input className={campo} value={linkBase} onChange={(e) => setLinkBase(e.target.value.trim())} required />

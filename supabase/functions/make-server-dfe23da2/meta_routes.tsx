@@ -3,6 +3,7 @@
 // Credenciais (token do usuário do sistema, conta, página, Instagram) ficam só no servidor (KV meta_segredos).
 import { Hono } from "npm:hono";
 import * as kv from "./kv_retry.tsx";
+import { configDaUnidade } from "./franquia.tsx";
 import { success, error } from "./server_utils.tsx";
 import { requireAdmin, requireAdminLeitura, requireMaster } from "./middleware.tsx";
 
@@ -126,6 +127,7 @@ router.post("/meta/acao", async (c, next) => {
 }, async (c) => {
   const b = await c.req.json().catch(() => ({} as Record<string, unknown>));
   const acao = String(b.acao ?? "");
+  if ((await configDaUnidade()).features?.paidTraffic === false) return error(c, "Anúncios (Meta Ads) desativados nesta loja.", 403);
   try {
     const cfg = await metaConfig();
     const get = <T,>(caminho: string, p?: Params) => chamar<T>(cfg, "GET", caminho, p);

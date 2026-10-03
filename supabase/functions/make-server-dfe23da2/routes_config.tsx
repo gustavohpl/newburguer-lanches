@@ -81,6 +81,7 @@ router.post('/coupons/validate', async (c) => {
   try {
     const { code, orderTotal } = await c.req.json();
     if (!code || !code.trim()) return c.json({ success: false, valid: false, error: 'Código do cupom não fornecido' });
+    if ((await configDaUnidade()).features?.coupons === false) return c.json({ success: true, valid: false, error: 'Cupons desativados nesta loja' });
     const coupon = await acharCupom(code);
     if (!coupon) return c.json({ success: true, valid: false, error: 'Cupom não encontrado' });
     if (!coupon.isActive) return c.json({ success: true, valid: false, error: 'Cupom inativo' });
@@ -119,8 +120,7 @@ router.post('/store/status', requireAdmin, async (c) => {
 
 router.get('/config/public', async (c) => {
   const sistema: any = await kv.get('system_config') || {};
-  const config: any = { ...sistema, ...(unidadeAtual() ? await kv.get('unit_config') || {} : {}) };
-  if (unidadeAtual()) config.features = { ...sistema.features, ...config.features };
+  const config: any = await configDaUnidade();
   const categories = await kv.get('categories') || [];
   const publicConfig = {
     ...config, categories,
@@ -318,7 +318,7 @@ router.post('/payment/pix', async (c) => {
     const config: any = await configDaUnidade();
     const PAGSEGURO_TOKEN = config.pagSeguroToken || Deno.env.get('PAGSEGURO_TOKEN');
     const PAGSEGURO_ENVIRONMENT = Deno.env.get('PAGSEGURO_ENVIRONMENT') || 'sandbox';
-    const automaticPayment = config.automaticPayment !== false;
+    const automaticPayment = config.automaticPayment !== false && config.features?.automaticPaymentAllowed !== false;
     const manualPixKey = config.manualPixKey || '';
 
     if (!automaticPayment || !PAGSEGURO_TOKEN) {

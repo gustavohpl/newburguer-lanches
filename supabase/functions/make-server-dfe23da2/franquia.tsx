@@ -47,11 +47,11 @@ export async function situacaoDaCidade(cidade: any, itens: string[] = []) {
     ]);
     const produtos = itens.length ? await kv.mget(itens.map((i) => `product:${i}`)) : [];
     const semEstoque = itens.length ? (await disponibilidade()).unavailableProducts : [];
-    const consumoLocal = ((uc as any)?.features?.dineIn ?? cfg.features?.dineIn) !== false;
+    const consumoLocal = cfg.features?.dineIn !== false && (uc as any)?.features?.dineIn !== false;
     return {
       id: u.id, nome: u.name, endereco: u.address || '', telefone: u.phone || '', horario: u.openingHours || '',
       aberta: u.isOpen !== false && ((status as any)?.isOpen ?? true),
-      entrega: cfg.features?.deliverySystem !== false, retirada: true, consumoLocal,
+      retirada: true, consumoLocal,
       pagamentoAutomatico: !!((uc as any)?.automaticPayment ?? cfg.automaticPayment),
       estimativas: estimativas || { delivery: { min: 30, max: 50 }, pickup: { min: 15, max: 25 }, dineIn: { min: 20, max: 30 } }, taxa: (taxa ?? u.deliveryFee ?? 0) as number,
       ativos: (pedidos as any[]).filter((o) => EM_ANDAMENTO.includes(o?.status)).length,
@@ -62,7 +62,7 @@ export async function situacaoDaCidade(cidade: any, itens: string[] = []) {
 
 // delivery: a unidade aberta com menos pedidos em andamento que tenha todos os itens
 export async function unidadeParaEntrega(cidade: any, itens: string[] = []) {
-  const opcoes = (await situacaoDaCidade(cidade, itens)).filter((o) => o.aberta && o.entrega && o.temItens);
+  const opcoes = (await situacaoDaCidade(cidade, itens)).filter((o) => o.aberta && o.temItens);
   return opcoes.sort((a, b) => a.ativos - b.ativos)[0] || null;
 }
 
@@ -98,5 +98,5 @@ export async function configDaUnidade() {
   const sistema: any = await kv.get('system_config') || {};
   if (!unidadeAtual()) return sistema;
   const daUnidade: any = await kv.get('unit_config') || {};
-  return { ...sistema, ...daUnidade, features: { ...sistema.features, ...daUnidade.features } };
+  return { ...sistema, ...daUnidade, features: { ...sistema.features, ...daUnidade.features, dineIn: sistema.features?.dineIn !== false && daUnidade.features?.dineIn !== false } };
 }

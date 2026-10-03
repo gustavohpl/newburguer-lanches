@@ -219,7 +219,7 @@ router.post('/orders', async (c) => {
     // número reservado de forma atômica e global: dois pedidos no mesmo instante (mesma cidade ou não) nunca repetem
     while (await kv.get(`order:${orderId}`) || await kv.get(`archive:${orderId}`) || !(await kv.inserir(`order_unit:${orderId}`, unidadeAtual() || ''))) orderId = `FH-${Math.floor(100000 + Math.random() * 900000)}`;
 
-    if (body.couponCode) {
+    if (body.couponCode && (await configDaUnidade()).features?.coupons !== false) {
       const cupom = await acharCupom(body.couponCode);
       if (cupom && !(await usarCupom(cupom))) return error(c, 'O cupom selecionado acabou de esgotar. Remova o cupom e tente novamente.', 400);
     }
@@ -264,8 +264,8 @@ router.put('/orders/:id/status', requireAdminOrDriver, async (c) => {
       ...(status === 'completed' && { completedAt: new Date().toISOString() })
     };
 
-    // Descontar estoque quando preparing
-    if (status === 'preparing' && !order.stockDeducted) {
+    // Descontar estoque quando preparing (só com o controle de estoque ligado no Master)
+    if (status === 'preparing' && !order.stockDeducted && (await configDaUnidade()).features?.stockControl) {
       try {
         const orderItems = order.items || [];
         const now = getBrasiliaISOString();

@@ -118,9 +118,6 @@ export function CheckoutModal({
   const [useSavedAddress, setUseSavedAddress] = useState(false);
 
   useEffect(() => {
-    loadEstimates();
-    loadSectors(); // 🆕 Carregar setores disponíveis na montagem
-    
     // Check for auto-applied coupon from URL
     const savedCoupon = localStorage.getItem('faroeste_cupom_ativo');
     if (savedCoupon) {
@@ -186,8 +183,13 @@ export function CheckoutModal({
     }
   };
 
+  // ao abrir: a unidade (e a cidade, dona dos setores) já está escolhida
+  useEffect(() => { if (isOpen) { loadSectors(); loadEstimates(); } }, [isOpen, config.features?.deliverySystem]);
+
   // 🆕 Carregar setores disponíveis
   const loadSectors = async () => {
+    // setor é do sistema de entregadores: desligado no Master, o checkout não pergunta
+    if (config.features?.deliverySystem === false) return setAvailableSectors([]);
     try {
       const response = await api.getDeliverySectors();
       if (response.success && response.sectors) {

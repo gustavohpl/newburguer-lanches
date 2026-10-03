@@ -130,7 +130,8 @@ router.post("/payment/mp/pix", async (c) => {
   try {
     const { orderId } = await c.req.json();
     await escopoDoPedido(String(orderId || ""));
-    if ((await configDaUnidade()).automaticPayment === false) return error(c, "Pagamento online desligado nesta loja. Escolha outra forma de pagamento.", 400);
+    const cfgPagamento = await configDaUnidade();
+    if (cfgPagamento.automaticPayment === false || cfgPagamento.features?.automaticPaymentAllowed === false) return error(c, "Pagamento online desligado nesta loja. Escolha outra forma de pagamento.", 400);
     const order = await pedidoSalvo(String(orderId || ""));
     if (!order) return error(c, "Pedido não encontrado", 404);
     if (order.paymentStatus === "paid") return success(c, { status: "paid" });
@@ -177,7 +178,8 @@ router.post("/payment/mp/cartao", async (c) => {
   try {
     const { orderId } = await c.req.json();
     await escopoDoPedido(String(orderId || ""));
-    if ((await configDaUnidade()).automaticPayment === false) return error(c, "Pagamento online desligado nesta loja. Escolha outra forma de pagamento.", 400);
+    const cfgPagamento = await configDaUnidade();
+    if (cfgPagamento.automaticPayment === false || cfgPagamento.features?.automaticPaymentAllowed === false) return error(c, "Pagamento online desligado nesta loja. Escolha outra forma de pagamento.", 400);
     const order = await pedidoSalvo(String(orderId || ""));
     if (!order) return error(c, "Pedido não encontrado", 404);
     if (order.paymentStatus === "paid") return success(c, { status: "paid" });
