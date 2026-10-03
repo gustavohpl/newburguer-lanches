@@ -6,7 +6,7 @@
 import { Hono } from "npm:hono";
 import * as kv from "./kv_retry.tsx";
 import { unidadeAtual, cidadeAtual } from "./kv_retry.tsx";
-import { acharUnidade, acharCidade, entrarNaUnidade, soCidade, unidadeParaEntrega, emCadaUnidade, juntarPorId, situacaoDaCidade, disponibilidade, escopoDoPedido, configDaUnidade } from "./franquia.tsx";
+import { acharUnidade, acharCidade, unidadeParaEntrega, situacaoDaCidade, disponibilidade, escopoDoPedido, configDaUnidade } from "./franquia.tsx";
 import { cuponsDaUnidade, acharCupom, chaveDoCupom } from "./cupons.tsx";
 import { success, error, getBrasiliaISOString, getBusinessDayStart } from "./server_utils.tsx";
 import { requireAdmin, requireMaster, cleanupExpiredSessions, resetCleanupThrottle } from "./middleware.tsx";
@@ -79,9 +79,8 @@ router.delete('/coupons/all', requireAdmin, async (c) => {
 
 router.post('/coupons/validate', async (c) => {
   try {
-    const { code, orderTotal, unitId } = await c.req.json();
+    const { code, orderTotal } = await c.req.json();
     if (!code || !code.trim()) return c.json({ success: false, valid: false, error: 'Código do cupom não fornecido' });
-    if (soCidade()) await entrarNaUnidade(unitId || (await unidadeParaEntrega(await acharCidade(cidadeAtual())))?.id);
     const coupon = await acharCupom(code);
     if (!coupon) return c.json({ success: true, valid: false, error: 'Cupom não encontrado' });
     if (!coupon.isActive) return c.json({ success: true, valid: false, error: 'Cupom inativo' });
@@ -107,7 +106,6 @@ router.post('/coupons/validate', async (c) => {
 // ==========================================
 
 router.get('/store/status', async (c) => {
-  if (soCidade()) return success(c, { isOpen: (await situacaoDaCidade(await acharCidade(cidadeAtual()))).some((o) => o.aberta) });
   const status: any = await kv.get('store_status');
   const achada = await acharUnidade(unidadeAtual());
   return success(c, { isOpen: achada?.unidade.isOpen !== false && (status?.isOpen ?? true) });
@@ -123,13 +121,7 @@ router.get('/config/public', async (c) => {
   const sistema: any = await kv.get('system_config') || {};
   const config: any = { ...sistema, ...(unidadeAtual() ? await kv.get('unit_config') || {} : {}) };
   if (unidadeAtual()) config.features = { ...sistema.features, ...config.features };
-  let categories = await kv.get('categories') || [];
-  if (soCidade()) {
-    // site da cidade: categorias de todas as unidades; consumo no local se alguma unidade oferece
-    const porUnidade = await emCadaUnidade(async () => ({ cats: await kv.get('categories') || [], uc: await kv.get('unit_config') || {} }));
-    categories = juntarPorId(porUnidade.map((p: any) => p.cats));
-    config.features = { ...sistema.features, dineIn: porUnidade.some((p: any) => (p.uc.features?.dineIn ?? sistema.features?.dineIn) !== false) };
-  }
+  const categories = await kv.get('categories') || [];
   const publicConfig = {
     ...config, categories,
     pagSeguroToken: undefined, pagSeguroEmail: undefined, metaAccessToken: undefined,
@@ -293,7 +285,6 @@ router.post('/master/cleanup-sessions', async (c) => {
 
 router.get('/settings/estimates', async (c) => {
   try {
-    if (soCidade()) await entrarNaUnidade((await unidadeParaEntrega(await acharCidade(cidadeAtual())))?.id || (await acharCidade(cidadeAtual()))?.units?.[0]?.id);
     const estimates = await kv.get('time_estimates') || {
       delivery: { min: 30, max: 50 },
       pickup: { min: 15, max: 25 },
@@ -748,13 +739,6 @@ router.post('/stock/deduct', requireAdmin, async (c) => {
 router.get('/stock/availability', async (c) => {
   console.log('📦 [STOCK] GET /stock/availability');
   try {
-    // site da cidade: produto só fica indisponível se faltar estoque em todas as unidades que têm o produto
-    if (soCidade()) {
-      const porUnidade = await emCadaUnidade(async () => ({ ...(await disponibilidade()), ids: (await kv.getByPrefix('product:')).map((p: any) => p.id) }));
-      const unavailableProducts = juntarPorId(porUnidade.map((p) => p.ids.map((id: string) => ({ id })))).map((p) => p.id)
-        .filter((id) => porUnidade.every((u) => !u.ids.includes(id) || u.unavailableProducts.includes(id)));
-      return success(c, { unavailableProducts, emptyIngredients: [], lowStockIngredients: [], totalIngredients: 0 });
-    }
     return success(c, await disponibilidade());
   } catch (e) {
     console.error('❌ [STOCK] Erro ao verificar disponibilidade:', e);
@@ -762,7 +746,7 @@ router.get('/stock/availability', async (c) => {
   }
 });
 
-// site da cidade: o que cada unidade oferece agora (retirada/consumo no local: o cliente escolhe; entrega: a menos ativa)
+// unidades da cidade agora (aberta, endereço, tempos) e a mais livre, que o site do cliente abre primeiro
 router.get('/cidade/opcoes', async (c) => {
   const cidade = await acharCidade(cidadeAtual());
   if (!cidade) return error(c, 'Cidade não encontrada', 404);

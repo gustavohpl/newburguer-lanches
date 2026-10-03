@@ -6,7 +6,7 @@
 import { Hono } from "npm:hono";
 import * as kv from "./kv_retry.tsx";
 import { unidadeAtual, cidadeAtual } from "./kv_retry.tsx";
-import { franquia, acharUnidade, acharCidade, setoresDaCidade, soCidade, unidadeParaEntrega } from "./franquia.tsx";
+import { franquia, acharUnidade, acharCidade, setoresDaCidade } from "./franquia.tsx";
 import {
   success, error,
   sanitizeName, sanitizePhone,
@@ -358,9 +358,7 @@ router.delete('/delivery/sectors/:id', requireMaster, async (c) => {
 router.get('/settings/delivery-fee', async (c) => {
   try {
     const salva = await kv.get('delivery_fee');
-    const fee = soCidade()
-      ? (await unidadeParaEntrega(await acharCidade(cidadeAtual())))?.taxa ?? 0
-      : salva ?? (await acharUnidade(unidadeAtual()))?.unidade.deliveryFee ?? 0;
+    const fee = salva ?? (await acharUnidade(unidadeAtual()))?.unidade.deliveryFee ?? 0;
     return success(c, { fee });
   } catch (e) {
     return error(c, `Erro ao buscar taxa de entrega: ${e}`);

@@ -76,19 +76,11 @@ export async function escopoDoPedido(orderId: string) {
   definirEscopo(achada.unidade.id, achada.cidade.id);
 }
 
-// cliente no site da cidade (sem unidade): roda a consulta em cada unidade da cidade
-export const soCidade = () => !unidadeAtual() && !!cidadeAtual();
+// roda a consulta em cada unidade da cidade do escopo
 export async function emCadaUnidade<T>(fn: (unidade: any) => Promise<T>): Promise<T[]> {
   const cidade = await acharCidade(cidadeAtual());
   return Promise.all((cidade?.units || []).map((u: any) => comEscopo(u.id, cidade.id, () => fn(u))));
 }
-// junta listas das unidades pelo id (a primeira unidade que tem o item manda nos dados)
-export function juntarPorId(listas: any[][]): any[] {
-  const vistos = new Map<string, any>();
-  for (const lista of listas) for (const item of lista || []) if (item?.id && !vistos.has(item.id)) vistos.set(item.id, item);
-  return [...vistos.values()];
-}
-
 // produtos sem estoque na unidade do escopo (ingrediente da ficha técnica zerado)
 export async function disponibilidade() {
   const ingredientes = await kv.getByPrefix('stock_ingredient:');
@@ -104,5 +96,7 @@ export async function disponibilidade() {
 // config que vale para a unidade do escopo (a da rede com o que o Admin da unidade mudou por cima)
 export async function configDaUnidade() {
   const sistema: any = await kv.get('system_config') || {};
-  return unidadeAtual() ? { ...sistema, ...(await kv.get('unit_config') || {}) } : sistema;
+  if (!unidadeAtual()) return sistema;
+  const daUnidade: any = await kv.get('unit_config') || {};
+  return { ...sistema, ...daUnidade, features: { ...sistema.features, ...daUnidade.features } };
 }

@@ -8,7 +8,7 @@ import * as kvOriginal from "./kv_store.tsx";
 import { AsyncLocalStorage } from "node:async_hooks";
 
 // Franquia: cada unidade é uma loja isolada; chaves fora de GLOBAIS ganham o prefixo unit:<id>:
-const escopo = new AsyncLocalStorage<{ unidade: string | null; cidade: string | null }>();
+const escopo = new AsyncLocalStorage<{ unidade: string | null; cidade: string | null; config?: Promise<any> }>();
 // chaves da cidade (iguais para as unidades dela): anúncios da Meta e cupons compartilhados
 const DA_CIDADE = ['meta_segredos', 'cupom_compartilhado:'];
 const GLOBAIS = [
@@ -84,10 +84,14 @@ async function withRetry<T>(fn: () => Promise<T>, label: string): Promise<T> {
 // Re-export all kv functions with retry logic
 
 export async function get(key: string): Promise<any> {
+  // a config da rede é lida várias vezes por requisição (franquia, unidade, pagamento): uma leitura só
+  const e = escopo.getStore();
+  if (key === 'system_config' && e) return (e.config ??= withRetry(() => kvOriginal.get(key), 'get(system_config)'));
   return withRetry(() => kvOriginal.get(k(key)), `get(${key})`);
 }
 
 export async function set(key: string, value: any): Promise<void> {
+  if (key === 'system_config') { const e = escopo.getStore(); if (e) e.config = undefined; }
   return withRetry(() => kvOriginal.set(k(key), value), `set(${key})`);
 }
 

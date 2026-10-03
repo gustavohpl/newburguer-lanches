@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Building2, MapPin, ChevronRight, ArrowLeft } from 'lucide-react';
 import { useFranchise } from '../FranchiseContext';
 import { useConfig } from '../ConfigContext';
+import * as api from '../utils/api';
 
 // ============================================
 // 🏙️ MODAL DE SELEÇÃO DE CIDADE/UNIDADE
@@ -198,17 +199,57 @@ export function FranchiseSelectionModal() {
   );
 }
 
-// cliente: mostra a cidade escolhida (pelo GPS ou na mão) e deixa trocar
-export function TrocarCidade() {
-  const { franchiseEnabled, selectedCity, resetSelection, pageType } = useFranchise();
-  if (!franchiseEnabled || !selectedCity || pageType !== 'client') return null;
+// cliente: unidade em que está, em destaque no topo; troca de unidade troca cardápio e onde o pedido sai
+export function UnidadeAtual({ itensNoCarrinho = 0 }: { itensNoCarrinho?: number }) {
+  const { config } = useConfig();
+  const { franchiseEnabled, selectedCity, selectedUnit, selectUnit, resetSelection, pageType, cities } = useFranchise();
+  const [aberto, setAberto] = useState(false);
+  const [opcoes, setOpcoes] = useState<api.OpcaoUnidade[] | null>(null);
+  if (!franchiseEnabled || !selectedCity || !selectedUnit || pageType !== 'client') return null;
+  const cor = config.themeColor || '#d97706';
+  const varias = selectedCity.units.length > 1;
+  const abrir = () => { setAberto(true); setOpcoes(null); api.getCidadeOpcoes().then((r) => setOpcoes(r.unidades)); };
+  const trocar = (id: string) => {
+    if (id !== selectedUnit.id && itensNoCarrinho > 0 && !confirm('Cada unidade tem o próprio cardápio. Trocar de unidade esvazia o carrinho. Continuar?')) return;
+    selectUnit(id);
+    setAberto(false);
+  };
   return (
-    <button
-      onClick={resetSelection}
-      className="fixed top-3 right-3 z-40 flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur hover:bg-black/75"
-    >
-      <MapPin className="w-3.5 h-3.5" />
-      {selectedCity.name} · trocar
-    </button>
+    <>
+      <button onClick={abrir} className="fixed top-3 right-3 z-40 flex items-center gap-2 rounded-full py-1.5 pl-2.5 pr-3 text-left text-white shadow-lg ring-2 ring-white/30" style={{ backgroundColor: cor }}>
+        <MapPin className="h-4 w-4 shrink-0" />
+        <span className="leading-tight">
+          <span className="block text-[13px] font-bold">{selectedUnit.name}</span>
+          <span className="block text-[10px] opacity-90">{varias ? `${selectedCity.units.length} unidades em ${selectedCity.name} · trocar` : `${selectedCity.name} · trocar`}</span>
+        </span>
+      </button>
+      {aberto && (
+        <div className="fixed inset-0 z-[9999] flex items-end justify-center bg-black/60 sm:items-center" onClick={() => setAberto(false)}>
+          <div className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-4 sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+            <p className="mb-1 text-lg font-bold text-gray-900">Unidades em {selectedCity.name}</p>
+            <p className="mb-3 text-xs text-gray-500">Cada unidade tem o próprio cardápio. O pedido sai da unidade escolhida.</p>
+            {!opcoes && <p className="py-6 text-center text-sm text-gray-500">Carregando...</p>}
+            <div className="space-y-2">
+              {opcoes?.map((u) => (
+                <button key={u.id} onClick={() => trocar(u.id)}
+                  className={`w-full rounded-xl border-2 p-3 text-left transition-colors ${u.id === selectedUnit.id ? 'bg-gray-50' : 'border-gray-200 hover:border-gray-300'}`}
+                  style={u.id === selectedUnit.id ? { borderColor: cor } : undefined}>
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="font-bold text-gray-900">{u.nome}</span>
+                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${u.aberta ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}`}>{u.aberta ? 'Aberta' : 'Fechada'}</span>
+                  </span>
+                  {u.endereco && <span className="mt-0.5 block text-xs text-gray-500">{u.endereco}</span>}
+                  {u.estimativas && <span className="mt-1 block text-xs text-gray-600">🛵 Entrega ~{u.estimativas.delivery.min}-{u.estimativas.delivery.max} min · 🏪 Retirada ~{u.estimativas.pickup.min}-{u.estimativas.pickup.max} min</span>}
+                  {u.id === selectedUnit.id && <span className="mt-1 block text-xs font-semibold" style={{ color: cor }}>Você está aqui</span>}
+                </button>
+              ))}
+            </div>
+            {cities.length > 1 && (
+              <button onClick={() => { setAberto(false); resetSelection(); }} className="mt-3 w-full py-2 text-sm font-semibold text-gray-600 hover:text-gray-900">Trocar de cidade</button>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   );
 }

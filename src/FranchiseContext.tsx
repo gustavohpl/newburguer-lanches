@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useConfig, FranchiseCity, FranchiseUnit } from './ConfigContext';
-import { setActiveUnitId, setActiveCityId } from './utils/api';
+import { setActiveUnitId, setActiveCityId, getCidadeOpcoes } from './utils/api';
 
 // ============================================
 // 🏙️ FRANCHISE CONTEXT
@@ -160,20 +160,27 @@ export function FranchiseProvider({ children }: { children: ReactNode }) {
   const selectedUnit = selectedCity?.units.find(u => u.id === selectedUnitId) || null;
   const unitsForSelectedCity = selectedCity?.units || [];
 
-  // cliente fica no site da cidade (o servidor escolhe a unidade do pedido); Admin e entregador ficam numa unidade
-  const soCidade = pageType === 'client';
+  // cliente escolhe a cidade e já entra na unidade aberta mais livre (troca no topo do site); Admin e entregador escolhem a unidade
+  const soCidade = pageType === 'client' && !selectedUnit;
   // na renderização (não em efeito): os efeitos dos filhos rodam antes e já buscariam dados sem o escopo
-  setActiveUnitId(franchiseEnabled && !soCidade && selectedUnit ? selectedUnitId : null);
+  setActiveUnitId(franchiseEnabled && selectedUnit ? selectedUnitId : null);
   setActiveCityId(franchiseEnabled && soCidade && selectedCity ? selectedCityId : null);
   // categorias, textos e pixel vêm junto da config pública
-  const escopoAtivo = !franchiseEnabled ? null : soCidade ? (selectedCity ? `c:${selectedCityId}` : null) : (selectedUnit ? `u:${selectedUnitId}` : null);
+  const escopoAtivo = !franchiseEnabled ? null : selectedUnit ? `u:${selectedUnitId}` : soCidade && selectedCity ? `c:${selectedCityId}` : null;
   useEffect(() => { if (escopoAtivo) refreshConfig(); }, [escopoAtivo]);
+  useEffect(() => {
+    if (!franchiseEnabled || pageType !== 'client' || !selectedCity || selectedUnit) return;
+    getCidadeOpcoes().then(({ unidades, entregaPor }) => {
+      const id = entregaPor || unidades.find((u) => u.aberta)?.id || selectedCity.units[0]?.id;
+      if (id) selectUnit(id);
+    });
+  }, [franchiseEnabled, pageType, selectedCityId, selectedUnitId]);
 
   // Precisa mostrar modal?
   const needsSelection = franchiseEnabled 
     && initialized 
     && pageType !== 'master' 
-    && (!selectedCity || (!soCidade && !selectedUnit));
+    && (!selectedCity || (pageType !== 'client' && !selectedUnit));
 
   // Selecionar cidade
   const selectCity = useCallback((cityId: string) => {

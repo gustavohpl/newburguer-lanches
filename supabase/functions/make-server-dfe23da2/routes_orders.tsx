@@ -6,7 +6,7 @@
 import { Hono } from "npm:hono";
 import * as kv from "./kv_retry.tsx";
 import { unidadeAtual, cidadeAtual } from "./kv_retry.tsx";
-import { franquia, soCidade, acharCidade, situacaoDaCidade, entrarNaUnidade, emCadaUnidade } from "./franquia.tsx";
+import { franquia, emCadaUnidade, acharUnidade, configDaUnidade } from "./franquia.tsx";
 import { acharCupom, usarCupom } from "./cupons.tsx";
 import {
   success, error,
@@ -73,10 +73,10 @@ router.get('/orders/history', requireAdmin, async (c) => {
 });
 
 // Buscar pedidos por telefone
-// pedidos que o site do cliente enxerga: os da unidade, ou de todas as unidades da cidade
+// pedidos que o cliente enxerga pelo telefone: os de todas as unidades da cidade (ele pode ter trocado de unidade)
 const pedidosDoSite = async () => {
   const daUnidade = async () => [...await kv.getByPrefix('order:'), ...await kv.getByPrefix('archive:')];
-  return soCidade() ? (await emCadaUnidade(daUnidade)).flat() : daUnidade();
+  return cidadeAtual() ? (await emCadaUnidade(daUnidade)).flat() : daUnidade();
 };
 
 router.get('/orders/search/:phone', async (c) => {
@@ -186,22 +186,13 @@ router.post('/orders', async (c) => {
         : undefined,
     };
 
-    // site da cidade: entrega vai para a unidade aberta menos ocupada que tem os itens; retirada e consumo no local
-    // vão para a unidade que o cliente escolheu (se ela atende isso agora)
-    if (soCidade()) {
-      const tipo = body.deliveryType;
-      const itens = (body.items || []).map((i: any) => String(i.productId ?? i.id ?? '')).filter(Boolean);
-      const opcoes = await situacaoDaCidade(await acharCidade(cidadeAtual()), itens);
-      const escolhida = tipo === 'delivery'
-        ? opcoes.filter((o) => o.aberta && o.entrega && o.temItens).sort((a, b) => a.ativos - b.ativos)[0]
-        : opcoes.find((o) => o.id === body.unitId && o.aberta && o.temItens && (tipo === 'dine-in' ? o.consumoLocal : o.retirada));
-      if (!escolhida) return error(c, tipo === 'delivery' ? 'Nenhuma unidade da cidade pode entregar esse pedido agora.' : 'Essa unidade não pode atender esse pedido agora. Escolha outra.', 409);
-      await entrarNaUnidade(escolhida.id);
-      body.unitId = escolhida.id;
-      body.unitName = escolhida.nome;
-      if (tipo === 'delivery') body.deliveryFee = escolhida.taxa;
-    } else delete body.unitId;
-    if ((await franquia()) && !unidadeAtual()) return error(c, 'Escolha a cidade antes de fazer o pedido.', 400);
+    delete body.unitId;
+    if ((await franquia()) && !unidadeAtual()) return error(c, 'Escolha a unidade antes de fazer o pedido.', 400);
+    // a tela já barra, mas o servidor confere: loja (unidade) fechada e consumo no local desligado
+    const achada = await acharUnidade(unidadeAtual());
+    if (achada?.unidade.isOpen === false || (await kv.get('store_status') as any)?.isOpen === false) return error(c, 'A loja está fechada agora.', 409);
+    if (body.deliveryType === 'dine-in' && (await configDaUnidade()).features?.dineIn === false) return error(c, 'Esta loja não tem consumo no local.', 409);
+    if (achada) { body.unitId = achada.unidade.id; body.unitName = achada.unidade.name; }
 
     // 🔒 Validação e recomputação de preços no servidor (anti-adulteração de total/preço)
     const pricing = await validateAndPriceOrder(body);

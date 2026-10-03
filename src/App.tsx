@@ -24,7 +24,7 @@ import { ConfigProvider, useConfig } from './ConfigContext';
 import { useDesign } from './useDesign';
 import { PrimeLayout } from './components/prime/PrimeLayout';
 import { FranchiseProvider, useFranchise } from './FranchiseContext';
-import { FranchiseSelectionModal, TrocarCidade } from './components/FranchiseSelectionModal';
+import { FranchiseSelectionModal, UnidadeAtual } from './components/FranchiseSelectionModal';
 // áreas pesadas que o cliente do cardápio não usa: baixadas só quando abertas
 const AdminDashboard = lazy(() => import('./components/admin/AdminDashboard').then((m) => ({ default: m.AdminDashboard })));
 const MasterDashboard = lazy(() => import('./components/master/MasterDashboard').then((m) => ({ default: m.MasterDashboard })));
@@ -92,9 +92,9 @@ function AppContent() {
   const isClean = design.headerLayout === 'minimal';
   const isRustic = design.id === 'rustic';
   const isPrime = design.id === 'prime';
-  const { unitOverrides, franchiseEnabled, selectedUnit, selectedCity, needsSelection } = useFranchise();
-  // loja em uso: a unidade (Admin/entregador) ou a cidade (cliente, que vê o site da cidade)
-  const lojaEscolhida = selectedUnit?.id || selectedCity?.id || null;
+  const { unitOverrides, franchiseEnabled, selectedUnit, needsSelection } = useFranchise();
+  // com franquia, tudo (cardápio, estoque, pedido) é da unidade escolhida
+  const lojaEscolhida = selectedUnit?.id || null;
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   
   // Hook de cliente
@@ -770,7 +770,7 @@ function AppContent() {
       <Toaster richColors position="bottom-center" />
       <MetaPixel />
       {!showAdmin && <FranchiseSelectionModal />}
-      {!showAdmin && !showDelivery && <TrocarCidade />}
+      {!showAdmin && !showDelivery && <UnidadeAtual itensNoCarrinho={cartItems.length} />}
       {showAdmin ? (
         <div className="min-h-screen bg-gray-100">
           {!isAdminAuthenticated ? (
