@@ -100,3 +100,11 @@ export const atomicStockDecrement = async (key: string, amount: number, updatedA
   }
   return data;
 };
+
+// grava só se a chave não existir (a chave primária garante: dois ao mesmo tempo, só um consegue)
+export const inserir = async (key: string, value: any): Promise<boolean> => {
+  const { error } = await client().from("kv_store_dfe23da2").insert({ key, value });
+  if (!error) return true;
+  if (error.code === "23505") return false;
+  throw new Error(error.message);
+};

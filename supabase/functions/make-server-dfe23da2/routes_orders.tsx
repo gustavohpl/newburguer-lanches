@@ -206,7 +206,8 @@ router.post('/orders', async (c) => {
     const timestamp = Date.now();
     const id = `order_${timestamp}`;
     let orderId = `FH-${timestamp.toString().slice(-6)}`;
-    while (await kv.get(`order:${orderId}`) || await kv.get(`archive:${orderId}`) || await kv.get(`order_unit:${orderId}`)) orderId = `FH-${Math.floor(100000 + Math.random() * 900000)}`;
+    // número reservado de forma atômica e global: dois pedidos no mesmo instante (mesma cidade ou não) nunca repetem
+    while (await kv.get(`order:${orderId}`) || await kv.get(`archive:${orderId}`) || !(await kv.inserir(`order_unit:${orderId}`, unidadeAtual() || ''))) orderId = `FH-${Math.floor(100000 + Math.random() * 900000)}`;
 
     // Incrementar uso de cupom
     if (body.couponCode) {
@@ -234,7 +235,6 @@ router.post('/orders', async (c) => {
       createdAt: new Date().toISOString()
     };
     await kv.set(`order:${orderId}`, order);
-    if (unidadeAtual()) await kv.set(`order_unit:${orderId}`, unidadeAtual());
     console.log('✅ [BACKEND] Pedido criado com sucesso:', orderId);
     return success(c, { order });
   } catch (e) {

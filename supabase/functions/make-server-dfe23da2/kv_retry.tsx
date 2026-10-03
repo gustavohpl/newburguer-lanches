@@ -110,3 +110,6 @@ export async function getByPrefix(prefix: string): Promise<any[]> {
 export async function atomicStockDecrement(key: string, amount: number, updatedAt: string): Promise<any> {
   return withRetry(() => kvOriginal.atomicStockDecrement(k(key), amount, updatedAt), `atomicStockDecrement(${key}, ${amount})`);
 }
+export async function inserir(key: string, value: any): Promise<boolean> {
+  return withRetry(() => kvOriginal.inserir(k(key), value), `inserir(${key})`);
+}

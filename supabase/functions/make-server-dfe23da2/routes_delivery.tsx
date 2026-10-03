@@ -24,6 +24,20 @@ const router = new Hono();
 // 🛵 LOGIN ENTREGADOR
 // ==========================================
 
+// cor do entregador: reserva atômica no banco, senão dois logins juntos pegam a mesma cor
+const chaveCor = (cor: string) => `cor_entregador:${cor}`;
+async function reservarCor(cor: string, telefone: string): Promise<boolean> {
+  if (await kv.inserir(chaveCor(cor), telefone)) return true;
+  const dono = await kv.get(chaveCor(cor));
+  if (dono === telefone) return true;
+  if ((await kv.get(`driver:${dono}`))?.status === 'online') return false;
+  await kv.del(chaveCor(cor));
+  return kv.inserir(chaveCor(cor), telefone);
+}
+async function liberarCor(cor: string, telefone: string) {
+  if (cor && (await kv.get(chaveCor(cor))) === telefone) await kv.del(chaveCor(cor));
+}
+
 router.post('/delivery/login', async (c) => {
   try {
     const ip = getClientIp(c);
@@ -101,17 +115,12 @@ router.post('/delivery/login', async (c) => {
 
     let assignedColor = color || existingDriver?.color || '#F97316';
     if (activeColors.length > 0) {
-      if (existingDriver && activeColors.includes(existingDriver.color)) {
-        assignedColor = existingDriver.color;
-      } else {
-        const usedColors = onlineDrivers.map((d: any) => d.color);
-        const availableColors = activeColors.filter((clr: string) => !usedColors.includes(clr));
-        if (availableColors.length > 0) {
-          assignedColor = availableColors[0];
-        } else if (!existingDriver) {
-          return error(c, 'Todas as cores de entregadores estão ocupadas.', 403);
-        }
-      }
+      const candidatas = [color, existingDriver?.color, ...activeColors].filter((cor, i, todas) => cor && activeColors.includes(cor) && todas.indexOf(cor) === i);
+      let reservada = '';
+      for (const cor of candidatas) if (await reservarCor(cor, normalizedPhone)) { reservada = cor; break; }
+      if (!reservada) return error(c, 'Todas as cores de entregadores estão ocupadas.', 403);
+      if (existingDriver?.color && existingDriver.color !== reservada) await liberarCor(existingDriver.color, normalizedPhone);
+      assignedColor = reservada;
     }
 
     const driverData = {
@@ -180,6 +189,7 @@ router.post('/delivery/logout', async (c) => {
     if (driver) {
       const updatedDriver = { ...driver, status: 'offline', lastLogout: new Date().toISOString() };
       await kv.set(`driver:${normalizedPhone}`, updatedDriver);
+      await liberarCor(driver.color, normalizedPhone);
       console.log(`🔴 [LOGOUT] Entregador ${driver.name} (${phone}) marcado como offline`);
       return success(c, { message: 'Logout realizado com sucesso' });
     }
@@ -200,9 +210,10 @@ router.post('/admin/delivery/force-logout', async (c) => {
     if (driver) {
       const updatedDriver = { ...driver, status: 'offline', lastLogout: new Date().toISOString(), forcedLogout: true };
       await kv.set(`driver:${normalizedPhone}`, updatedDriver);
+      await liberarCor(driver.color, normalizedPhone);
       const allDriverSessions = await kv.getByPrefix('driver_session:');
       for (const s of allDriverSessions) {
-        if (s?.phone === normalizedPhone && s._key) {
+        if (s?.phone === normalizedPhone && s._key && (s.unitId || null) === unidadeAtual()) {
           await kv.del(s._key);
           console.log(`🛡️ [FORCE LOGOUT] Sessão invalidada: ${s._key.slice(0, 30)}...`);
         }
@@ -237,10 +248,7 @@ router.get('/delivery/available-colors', async (c) => {
     const deliveryConfig: any = await kv.get('delivery_config') || {};
     const activeColors = deliveryConfig.activeColors || [];
     const drivers = await kv.getByPrefix('driver:');
-    const todayStr = new Date().toISOString().split('T')[0];
-    const usedColors = drivers
-      .filter((d: any) => d.lastLogin && d.lastLogin.split('T')[0] === todayStr)
-      .map((d: any) => d.color);
+    const usedColors = drivers.filter((d: any) => d.status === 'online').map((d: any) => d.color);
     return success(c, { activeColors, usedColors });
   } catch (e) {
     return error(c, `Erro ao buscar cores: ${e}`);
