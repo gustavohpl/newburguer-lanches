@@ -52,6 +52,7 @@ export async function situacaoDaCidade(cidade: any, itens: string[] = []) {
       id: u.id, nome: u.name, endereco: u.address || '', telefone: u.phone || '', horario: u.openingHours || '',
       aberta: u.isOpen !== false && ((status as any)?.isOpen ?? true),
       entrega: cfg.features?.deliverySystem !== false, retirada: true, consumoLocal,
+      pagamentoAutomatico: !!((uc as any)?.automaticPayment ?? cfg.automaticPayment),
       estimativas: estimativas || { delivery: { min: 30, max: 50 }, pickup: { min: 15, max: 25 }, dineIn: { min: 20, max: 30 } }, taxa: (taxa ?? u.deliveryFee ?? 0) as number,
       ativos: (pedidos as any[]).filter((o) => EM_ANDAMENTO.includes(o?.status)).length,
       temItens: produtos.length === itens.length && produtos.every((p: any) => p && p.available !== false && !semEstoque.includes(p.id)),

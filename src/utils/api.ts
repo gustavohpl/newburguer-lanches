@@ -1996,7 +1996,7 @@ export async function migrateFranchiseData(token: string, targetUnitId: string):
 }
 
 // 🏙️ site da cidade: o que cada unidade atende agora e qual unidade faria a entrega
-export type OpcaoUnidade = { id: string; nome: string; endereco: string; telefone: string; horario: string; aberta: boolean; entrega: boolean; retirada: boolean; consumoLocal: boolean; estimativas: TimeEstimates | null; taxa: number; temItens: boolean };
+export type OpcaoUnidade = { id: string; nome: string; endereco: string; telefone: string; horario: string; aberta: boolean; entrega: boolean; retirada: boolean; consumoLocal: boolean; pagamentoAutomatico: boolean; estimativas: TimeEstimates | null; taxa: number; temItens: boolean };
 export async function getCidadeOpcoes(itens: string[] = []): Promise<{ unidades: OpcaoUnidade[]; entregaPor: string | null }> {
   try {
     const r = await fetchWithRetry(`${API_BASE_URL}/cidade/opcoes?itens=${encodeURIComponent(itens.join(','))}`, { headers: getHeadersWithUnit() });

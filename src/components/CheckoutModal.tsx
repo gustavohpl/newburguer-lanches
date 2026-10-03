@@ -62,13 +62,16 @@ export function CheckoutModal({
   // no Prime, avisos e perguntas no visual do app em vez das caixas nativas do navegador
   const avisar = (texto: string) => (prime ? toast.error(texto) : alert(texto));
   // automático só com o banco escolhido no Master realmente configurado no servidor
-  const pagamentoAutomatico = !!config.automaticPayment && config.features?.automaticPaymentAllowed !== false &&
-    (config.paymentGateway === 'mercadopago' ? !!config.mercadoPagoAtivo : !!config.hasPagSeguroToken);
+
   const perguntar = (texto: string) => (prime
     ? new Promise<boolean>((responder) => setPergunta({ texto, responder }))
     : Promise.resolve(window.confirm(texto)));
   const responder = (ok: boolean) => { pergunta?.responder(ok); setPergunta(null); };
   const [deliveryType, setDeliveryType] = useState<DeliveryType>('delivery');
+  // site da cidade: vale o pagamento automático da unidade que vai receber o pedido
+  const unidadeDoPedido = noSiteDaCidade ? opcoes?.unidades.find((u) => u.id === (deliveryType === 'delivery' ? opcoes.entregaPor : unidadeId)) : undefined;
+  const pagamentoAutomatico = !!(noSiteDaCidade ? unidadeDoPedido?.pagamentoAutomatico : config.automaticPayment) && config.features?.automaticPaymentAllowed !== false &&
+    (config.paymentGateway === 'mercadopago' ? !!config.mercadoPagoAtivo : !!config.hasPagSeguroToken);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('pix');
   
   // Modais de Pagamento

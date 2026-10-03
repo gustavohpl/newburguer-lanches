@@ -4,10 +4,12 @@ import * as api from '../../utils/api';
 import { usePrinter } from '../PrinterManager';
 import { CouponsManager } from './CouponsManager';
 import { useConfig } from '../../ConfigContext';
+import { useFranchise } from '../../FranchiseContext';
 import { toast } from 'sonner@2.0.3';
 
 export function Settings() {
   const { config, refreshConfig } = useConfig();
+  const { franchiseEnabled, selectedUnit } = useFranchise();
   const [isClearing, setIsClearing] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
@@ -303,6 +305,9 @@ export function Settings() {
                     ? '⚠️ Ativado: O cliente paga no site e o pedido chega como "PAGO".' 
                     : 'ℹ️ Desativado: O cliente envia o comprovante via WhatsApp.'}
                 </span>
+                {franchiseEnabled && selectedUnit && (
+                  <span className="block text-xs text-blue-700 font-medium mt-1">Vale só para esta unidade ({selectedUnit.name}).</span>
+                )}
               </p>
             </div>
             

@@ -196,7 +196,7 @@ router.post('/admin/config', async (c) => {
       const dineIn = updates.features?.dineIn;
       const novo = { ...atual, ...updates, franchise: undefined, features: dineIn === undefined ? atual.features : { ...atual.features, dineIn } };
       await kv.set('unit_config', novo);
-      return success(c, { config: { ...(await kv.get('system_config') || {}), ...novo } });
+      return success(c, { config: await configDaUnidade() });
     }
     const currentConfig: any = await kv.get('system_config') || {};
     const updatedConfig = { ...currentConfig, ...updates };
