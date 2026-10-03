@@ -19,8 +19,8 @@ import securityRoutes from "./routes_security.tsx";
 import testRoutes from "./routes_tests.tsx";
 import metaRoutes from "./meta_routes.tsx";
 import mercadoPagoRoutes from "./mercadopago.tsx";
-import { comEscopo } from "./kv_retry.tsx";
-import { unidadeExiste } from "./franquia.tsx";
+import { comEscopo, definirEscopo } from "./kv_retry.tsx";
+import { acharCidade, entrarNaUnidade, escopoDoPedido } from "./franquia.tsx";
 
 // ==========================================
 // 🔗 API — Monta todos os sub-routers
@@ -28,11 +28,16 @@ import { unidadeExiste } from "./franquia.tsx";
 
 const api = new Hono();
 
-// Franquia: a unidade pedida no cabeçalho vira o escopo do banco (rotas com sessão trocam pela unidade da sessão)
-api.use('*', async (c: any, next: any) => {
-  const pedida = c.req.header('X-Unit-Id') || null;
-  return comEscopo(pedida && await unidadeExiste(pedida) ? pedida : null, next);
-});
+// Franquia: unidade (Admin/entregador) ou cidade (cliente) do cabeçalho viram o escopo do banco;
+// rotas com sessão trocam pela unidade da sessão e rotas de um pedido usam a unidade dona dele
+api.use('*', (c: any, next: any) => comEscopo(null, null, async () => {
+  const unidade = c.req.header('X-Unit-Id'), cidade = c.req.header('X-City-Id');
+  if (unidade) await entrarNaUnidade(unidade);
+  else if (cidade && await acharCidade(cidade)) definirEscopo(null, cidade);
+  const doPedido = c.req.path.match(/\/(?:orders|payment\/mp\/status)\/([A-Za-z0-9_-]+)/)?.[1];
+  if (doPedido && doPedido !== 'search') await escopoDoPedido(doPedido);
+  return next();
+}));
 
 // Middleware: injeta header X-New-CSRF-Token quando o middleware de auth requisita rotação
 api.use('*', async (c: any, next: any) => {
@@ -69,7 +74,7 @@ const app = new Hono();
 app.use('*', cors({
   origin: '*',
   allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowHeaders: ['Content-Type', 'Authorization', 'X-Master-Token', 'X-Admin-Token', 'X-CSRF-Token', 'X-Driver-Token', 'X-Unit-Id'],
+  allowHeaders: ['Content-Type', 'Authorization', 'X-Master-Token', 'X-Admin-Token', 'X-CSRF-Token', 'X-Driver-Token', 'X-Unit-Id', 'X-City-Id'],
   exposeHeaders: ['Content-Length', 'X-Kuma-Revision', 'X-New-CSRF-Token'],
   maxAge: 600,
 }));

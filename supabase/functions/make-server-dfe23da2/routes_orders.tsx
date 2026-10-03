@@ -5,8 +5,9 @@
 
 import { Hono } from "npm:hono";
 import * as kv from "./kv_retry.tsx";
-import { unidadeAtual } from "./kv_retry.tsx";
-import { franquia } from "./franquia.tsx";
+import { unidadeAtual, cidadeAtual } from "./kv_retry.tsx";
+import { franquia, soCidade, acharCidade, situacaoDaCidade, entrarNaUnidade, emCadaUnidade } from "./franquia.tsx";
+import { acharCupom, usarCupom } from "./cupons.tsx";
 import {
   success, error,
   sanitizeName, sanitizePhone, sanitizeText, sanitizeReviews,
@@ -72,14 +73,18 @@ router.get('/orders/history', requireAdmin, async (c) => {
 });
 
 // Buscar pedidos por telefone
+// pedidos que o site do cliente enxerga: os da unidade, ou de todas as unidades da cidade
+const pedidosDoSite = async () => {
+  const daUnidade = async () => [...await kv.getByPrefix('order:'), ...await kv.getByPrefix('archive:')];
+  return soCidade() ? (await emCadaUnidade(daUnidade)).flat() : daUnidade();
+};
+
 router.get('/orders/search/:phone', async (c) => {
   const phone = c.req.param('phone');
   console.log('🔍 [BACKEND SEARCH] Buscando pedidos por telefone:', phone);
   try {
     const normalizedPhone = phone.replace(/\D/g, '');
-    const activeOrders = await kv.getByPrefix('order:');
-    const archivedOrders = await kv.getByPrefix('archive:');
-    const allOrders = [...activeOrders, ...archivedOrders];
+    const allOrders = await pedidosDoSite();
     const matchingOrders = allOrders.filter((order: any) => {
       const orderPhone = order.customerPhone?.replace(/\D/g, '') || '';
       return orderPhone === normalizedPhone;
@@ -97,9 +102,7 @@ router.get('/customers/:phone', async (c) => {
   console.log('👤 [BACKEND] Buscando dados do cliente por telefone:', phone);
   try {
     const normalizedPhone = phone.replace(/\D/g, '');
-    const activeOrders = await kv.getByPrefix('order:');
-    const archivedOrders = await kv.getByPrefix('archive:');
-    const allOrders = [...activeOrders, ...archivedOrders];
+    const allOrders = await pedidosDoSite();
     const customerOrders = allOrders.filter((order: any) => {
       const orderPhone = (order.customerPhone || '').replace(/\D/g, '');
       return orderPhone === normalizedPhone;
@@ -163,7 +166,6 @@ router.get('/orders/:id', async (c) => {
 // Criar pedido
 router.post('/orders', async (c) => {
   try {
-    if ((await franquia()) && !unidadeAtual()) return error(c, 'Escolha a cidade antes de fazer o pedido.', 400);
     const rawBody = await c.req.json();
     const body = {
       ...rawBody,
@@ -183,6 +185,23 @@ router.post('/orders', async (c) => {
         ? Object.fromEntries(['utm_source', 'utm_medium', 'utm_campaign'].filter((k) => typeof rawBody.utm[k] === 'string').map((k) => [k, sanitizeText(rawBody.utm[k], 100)]))
         : undefined,
     };
+
+    // site da cidade: entrega vai para a unidade aberta menos ocupada que tem os itens; retirada e consumo no local
+    // vão para a unidade que o cliente escolheu (se ela atende isso agora)
+    if (soCidade()) {
+      const tipo = body.deliveryType;
+      const itens = (body.items || []).map((i: any) => String(i.productId ?? i.id ?? '')).filter(Boolean);
+      const opcoes = await situacaoDaCidade(await acharCidade(cidadeAtual()), itens);
+      const escolhida = tipo === 'delivery'
+        ? opcoes.filter((o) => o.aberta && o.entrega && o.temItens).sort((a, b) => a.ativos - b.ativos)[0]
+        : opcoes.find((o) => o.id === body.unitId && o.aberta && o.temItens && (tipo === 'dine-in' ? o.consumoLocal : o.retirada));
+      if (!escolhida) return error(c, tipo === 'delivery' ? 'Nenhuma unidade da cidade pode entregar esse pedido agora.' : 'Essa unidade não pode atender esse pedido agora. Escolha outra.', 409);
+      await entrarNaUnidade(escolhida.id);
+      body.unitId = escolhida.id;
+      body.unitName = escolhida.nome;
+      if (tipo === 'delivery') body.deliveryFee = escolhida.taxa;
+    } else delete body.unitId;
+    if ((await franquia()) && !unidadeAtual()) return error(c, 'Escolha a cidade antes de fazer o pedido.', 400);
 
     // 🔒 Validação e recomputação de preços no servidor (anti-adulteração de total/preço)
     const pricing = await validateAndPriceOrder(body);
@@ -209,24 +228,9 @@ router.post('/orders', async (c) => {
     // número reservado de forma atômica e global: dois pedidos no mesmo instante (mesma cidade ou não) nunca repetem
     while (await kv.get(`order:${orderId}`) || await kv.get(`archive:${orderId}`) || !(await kv.inserir(`order_unit:${orderId}`, unidadeAtual() || ''))) orderId = `FH-${Math.floor(100000 + Math.random() * 900000)}`;
 
-    // Incrementar uso de cupom
     if (body.couponCode) {
-      console.log('🎫 [ORDER] Processando cupom:', body.couponCode);
-      const allCoupons = await kv.getByPrefix('coupon:');
-      const coupon = allCoupons.find((cp: any) => cp.code?.toUpperCase() === body.couponCode.toUpperCase());
-      if (coupon) {
-        if (coupon.maxUses !== -1 && coupon.currentUses >= coupon.maxUses) {
-          console.error('❌ [ORDER] Cupom esgotado durante processamento do pedido:', body.couponCode);
-          return error(c, 'O cupom selecionado acabou de esgotar. Remova o cupom e tente novamente.', 400);
-        }
-        const updatedCoupon = {
-          ...coupon,
-          currentUses: (coupon.currentUses || 0) + 1,
-          lastUsedAt: new Date().toISOString()
-        };
-        await kv.set(`coupon:${coupon.id}`, updatedCoupon);
-        console.log('✅ [ORDER] Cupom incrementado:', updatedCoupon.currentUses);
-      }
+      const cupom = await acharCupom(body.couponCode);
+      if (cupom && !(await usarCupom(cupom))) return error(c, 'O cupom selecionado acabou de esgotar. Remova o cupom e tente novamente.', 400);
     }
 
     const order = {
@@ -477,7 +481,7 @@ router.put('/admin/orders/:id/cancel', requireAdmin, async (c) => {
 // público: só a média por produto (sem dados de cliente)
 router.get('/reviews/top', async (c) => {
   try {
-    const pedidos = [...await kv.getByPrefix('order:'), ...await kv.getByPrefix('archive:')];
+    const pedidos = await pedidosDoSite();
     const ratings: Record<string, { total: number; count: number }> = {};
     for (const o of pedidos as any[]) {
       for (const r of Array.isArray(o?.reviews) ? o.reviews : []) {

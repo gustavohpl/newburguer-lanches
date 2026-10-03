@@ -8,6 +8,7 @@
 // ==========================================
 
 import * as kv from "./kv_retry.tsx";
+import { acharCupom } from "./cupons.tsx";
 
 const MAX_QTY = 99;
 const EPS = 0.01; // tolerância de 1 centavo para arredondamento
@@ -82,8 +83,7 @@ export async function validateAndPriceOrder(body: any): Promise<OrderPricing> {
   let discount = 0;
   const code = typeof body?.couponCode === "string" ? body.couponCode.trim() : "";
   if (code) {
-    const allCoupons = await kv.getByPrefix("coupon:");
-    const coupon: any = allCoupons.find((cp: any) => cp.code?.toUpperCase() === code.toUpperCase());
+    const coupon: any = await acharCupom(code);
     const usable =
       coupon &&
       coupon.isActive &&

@@ -5,15 +5,13 @@
 
 import type { Context, Next } from "npm:hono";
 import * as kv from "./kv_retry.tsx";
-import { definirUnidade } from "./kv_retry.tsx";
-import { franquia, unidadeExiste } from "./franquia.tsx";
+import { definirEscopo } from "./kv_retry.tsx";
+import { franquia, entrarNaUnidade } from "./franquia.tsx";
 
 // com franquia ligada, Admin e entregador ficam presos à unidade em que fizeram login (o cabeçalho não muda isso)
 async function prenderNaUnidade(session: any): Promise<boolean> {
-  if (!(await franquia())) { definirUnidade(null); return true; }
-  if (!session?.unitId || !(await unidadeExiste(session.unitId))) return false;
-  definirUnidade(session.unitId);
-  return true;
+  if (!(await franquia())) { definirEscopo(null, null); return true; }
+  return !!session?.unitId && await entrarNaUnidade(session.unitId);
 }
 const SEM_UNIDADE = 'Sessão sem unidade. Saia e entre de novo escolhendo a cidade.';
 import { error } from "./server_utils.tsx";

@@ -5,6 +5,7 @@
 
 import { Hono } from "npm:hono";
 import * as kv from "./kv_retry.tsx";
+import { soCidade, emCadaUnidade, juntarPorId } from "./franquia.tsx";
 import { success, error } from "./server_utils.tsx";
 import { requireAdmin } from "./middleware.tsx";
 import type { ServerProduct, Category } from "./types.tsx";
@@ -17,7 +18,11 @@ const router = new Hono();
 
 router.get('/products', async (c) => {
   try {
-    const products: ServerProduct[] = await kv.getByPrefix('product:');
+    const porUnidade: any[][] = soCidade() ? await emCadaUnidade(() => kv.getByPrefix('product:')) : [];
+    // site da cidade: um produto aparece se alguma unidade tem e só fica indisponível se estiver em todas
+    const products: ServerProduct[] = soCidade()
+      ? (() => { const juntos = juntarPorId(porUnidade); return juntos.map((p: any) => ({ ...p, available: porUnidade.some((l) => l.some((x: any) => x.id === p.id && x.available !== false)) })); })()
+      : await kv.getByPrefix('product:');
     
     // Ordenar produtos por createdAt (mais antigos primeiro, novos por último)
     const sorted = products.sort((a: any, b: any) => {
@@ -91,7 +96,7 @@ router.delete('/products/all', requireAdmin, async (c) => {
 
 router.get('/categories', async (c) => {
   try {
-    const categories: Category[] = (await kv.get('categories') || []) as Category[];
+    const categories: Category[] = (soCidade() ? juntarPorId(await emCadaUnidade(async () => await kv.get('categories') || [])) : await kv.get('categories') || []) as Category[];
     return success(c, { categories });
   } catch (e) {
     return error(c, `Erro ao buscar categorias: ${e}`);

@@ -5,7 +5,7 @@
 // - pago = pedido continua na cozinha com paymentStatus 'paid' (nunca é concluído/arquivado por isso).
 import { Hono } from "npm:hono";
 import * as kv from "./kv_retry.tsx";
-import { definirUnidade } from "./kv_retry.tsx";
+import { entrarNaUnidade, escopoDoPedido } from "./franquia.tsx";
 import { success, error } from "./server_utils.tsx";
 import { requireMaster } from "./middleware.tsx";
 
@@ -129,6 +129,7 @@ const router = new Hono();
 router.post("/payment/mp/pix", async (c) => {
   try {
     const { orderId } = await c.req.json();
+    await escopoDoPedido(String(orderId || ""));
     const order = await pedidoSalvo(String(orderId || ""));
     if (!order) return error(c, "Pedido não encontrado", 404);
     if (order.paymentStatus === "paid") return success(c, { status: "paid" });
@@ -174,6 +175,7 @@ router.post("/payment/mp/pix", async (c) => {
 router.post("/payment/mp/cartao", async (c) => {
   try {
     const { orderId } = await c.req.json();
+    await escopoDoPedido(String(orderId || ""));
     const order = await pedidoSalvo(String(orderId || ""));
     if (!order) return error(c, "Pedido não encontrado", 404);
     if (order.paymentStatus === "paid") return success(c, { status: "paid" });
@@ -244,7 +246,7 @@ router.post("/payment/mp/webhook", async (c) => {
   try {
     const pagamento = await chamar<PagamentoMP>(`/v1/payments/${encodeURIComponent(dataId)}`);
     // o MP não manda cabeçalho de unidade: a unidade vem do índice gravado ao criar o pedido
-    definirUnidade(await kv.get(`order_unit:${pagamento.external_reference}`) || null);
+    await entrarNaUnidade(await kv.get(`order_unit:${pagamento.external_reference}`));
     const r = await aplicarStatus(pagamento);
     console.log("💳 [MP] webhook", dataId, r);
     return c.json({ ok: true, resultado: r });

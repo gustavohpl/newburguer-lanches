@@ -8,17 +8,21 @@ import * as kvOriginal from "./kv_store.tsx";
 import { AsyncLocalStorage } from "node:async_hooks";
 
 // Franquia: cada unidade é uma loja isolada; chaves fora de GLOBAIS ganham o prefixo unit:<id>:
-const escopo = new AsyncLocalStorage<{ unidade: string | null }>();
+const escopo = new AsyncLocalStorage<{ unidade: string | null; cidade: string | null }>();
+// chaves da cidade (iguais para as unidades dela): anúncios da Meta e cupons compartilhados
+const DA_CIDADE = ['meta_segredos', 'cupom_compartilhado:'];
 const GLOBAIS = [
   'system_config', 'admin_password', 'admin_senha_unidade:', 'admin_session:', 'master_session:', 'driver_session:',
   'rate_limit:', 'ip_blacklist', 'ip_whitelist', 'ip_reputation:', 'audit_logs', 'security_alert', 'webhook_logs',
-  'webhook_configs', 'test_run_history', 'e2e_test_history', 'mp_segredos', 'order_unit:', 'unit:',
+  'webhook_configs', 'test_run_history', 'e2e_test_history', 'mp_segredos', 'order_unit:', 'unit:', 'city:',
 ];
-export const comEscopo = <T>(unidade: string | null, fn: () => Promise<T>) => escopo.run({ unidade }, fn);
-export const definirUnidade = (unidade: string | null) => { const e = escopo.getStore(); if (e) e.unidade = unidade; };
+export const comEscopo = <T>(unidade: string | null, cidade: string | null, fn: () => Promise<T>) => escopo.run({ unidade, cidade }, fn);
+export const definirEscopo = (unidade: string | null, cidade: string | null) => { const e = escopo.getStore(); if (e) { e.unidade = unidade; e.cidade = cidade; } };
 export const unidadeAtual = () => escopo.getStore()?.unidade || null;
+export const cidadeAtual = () => escopo.getStore()?.cidade || null;
 const k = (key: string) => {
-  const u = unidadeAtual();
+  const u = unidadeAtual(), c = cidadeAtual();
+  if (c && DA_CIDADE.some((d) => key.startsWith(d))) return `city:${c}:${key}`;
   return u && !GLOBAIS.some((g) => key.startsWith(g)) ? `unit:${u}:${key}` : key;
 };
 

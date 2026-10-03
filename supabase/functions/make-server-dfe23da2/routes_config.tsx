@@ -5,8 +5,9 @@
 
 import { Hono } from "npm:hono";
 import * as kv from "./kv_retry.tsx";
-import { unidadeAtual } from "./kv_retry.tsx";
-import { acharUnidade } from "./franquia.tsx";
+import { unidadeAtual, cidadeAtual } from "./kv_retry.tsx";
+import { acharUnidade, acharCidade, entrarNaUnidade, soCidade, unidadeParaEntrega, emCadaUnidade, juntarPorId, situacaoDaCidade, disponibilidade } from "./franquia.tsx";
+import { cuponsDaUnidade, acharCupom, chaveDoCupom } from "./cupons.tsx";
 import { success, error, getBrasiliaISOString, getBusinessDayStart } from "./server_utils.tsx";
 import { requireAdmin, requireMaster, cleanupExpiredSessions, resetCleanupThrottle } from "./middleware.tsx";
 import { supabase } from "./supabase_client.tsx";
@@ -21,38 +22,43 @@ const router = new Hono();
 
 router.get('/coupons', requireAdmin, async (c) => {
   try {
-    const coupons = await kv.getByPrefix('coupon:');
-    return success(c, { coupons });
+    return success(c, { coupons: await cuponsDaUnidade() });
   } catch (e) {
     return error(c, `Erro ao buscar cupons: ${e}`);
   }
 });
 
+// compartilharCom: outras unidades da mesma cidade que também aceitam o cupom (limite de usos somado)
 router.post('/coupons', requireAdmin, async (c) => {
   try {
-    const body = await c.req.json();
-    const id = body.id || `coupon_${Date.now()}`;
-    const coupon: Coupon = {
+    const { compartilharCom, ...body } = await c.req.json();
+    const achada = await acharUnidade(unidadeAtual());
+    const outras = Array.isArray(compartilharCom) ? compartilharCom.filter((id: string) => id !== achada?.unidade.id && (achada?.cidade.units || []).some((u: any) => u.id === id)) : [];
+    const id = outras.length ? `cshared_${Date.now()}` : body.id || `coupon_${Date.now()}`;
+    const coupon: any = {
       ...body, id,
+      ...(outras.length ? { unidades: [achada!.unidade.id, ...outras] } : {}),
       currentUses: body.currentUses || 0,
       createdAt: body.createdAt || new Date().toISOString()
     };
-    await kv.set(`coupon:${id}`, coupon);
+    await kv.set(chaveDoCupom(id), coupon);
     return success(c, { coupon });
   } catch (e) {
     return error(c, `Erro ao criar cupom: ${e}`);
   }
 });
 
+const cupomVisivel = async (id: string) => (await cuponsDaUnidade()).find((x: any) => x.id === id);
+
 router.put('/coupons/:id', requireAdmin, async (c) => {
   const id = c.req.param('id');
   try {
     const body = await c.req.json();
-    const existing = await kv.get(`coupon:${id}`);
+    const existing = await cupomVisivel(id);
     if (!existing) return error(c, 'Cupom não encontrado', 404);
-    const updated: Coupon = { ...existing, ...body, updatedAt: new Date().toISOString() };
-    await kv.set(`coupon:${id}`, updated);
-    return success(c, { coupon: updated });
+    const { compartilhado, compartilharCom, ...resto } = { ...existing, ...body, id, unidades: existing.unidades, updatedAt: new Date().toISOString() };
+    await kv.set(chaveDoCupom(id), resto);
+    return success(c, { coupon: resto });
   } catch (e) {
     return error(c, `Erro ao atualizar cupom: ${e}`);
   }
@@ -60,22 +66,23 @@ router.put('/coupons/:id', requireAdmin, async (c) => {
 
 router.delete('/coupons/:id', requireAdmin, async (c) => {
   const id = c.req.param('id');
-  await kv.del(`coupon:${id}`);
+  if (!(await cupomVisivel(id))) return error(c, 'Cupom não encontrado', 404);
+  await kv.del(chaveDoCupom(id));
   return success(c, { message: 'Cupom deletado' });
 });
 
 router.delete('/coupons/all', requireAdmin, async (c) => {
   const coupons = await kv.getByPrefix('coupon:');
   for (const coupon of coupons) await kv.del(`coupon:${(coupon as any).id}`);
-  return success(c, { message: `${coupons.length} cupons deletados` });
+  return success(c, { message: `${coupons.length} cupons deletados (os compartilhados ficam)` });
 });
 
 router.post('/coupons/validate', async (c) => {
   try {
-    const { code, orderTotal } = await c.req.json();
+    const { code, orderTotal, unitId } = await c.req.json();
     if (!code || !code.trim()) return c.json({ success: false, valid: false, error: 'Código do cupom não fornecido' });
-    const allCoupons = await kv.getByPrefix('coupon:');
-    const coupon = allCoupons.find((cp: any) => cp.code?.toUpperCase() === code.toUpperCase());
+    if (soCidade()) await entrarNaUnidade(unitId || (await unidadeParaEntrega(await acharCidade(cidadeAtual())))?.id);
+    const coupon = await acharCupom(code);
     if (!coupon) return c.json({ success: true, valid: false, error: 'Cupom não encontrado' });
     if (!coupon.isActive) return c.json({ success: true, valid: false, error: 'Cupom inativo' });
     if (coupon.maxUses !== -1 && coupon.currentUses >= coupon.maxUses) return c.json({ success: true, valid: false, error: 'Cupom esgotado' });
@@ -95,26 +102,12 @@ router.post('/coupons/validate', async (c) => {
   }
 });
 
-router.post('/coupons/increment-usage', async (c) => {
-  try {
-    const { code } = await c.req.json();
-    if (!code || !code.trim()) return error(c, 'Código do cupom não fornecido', 400);
-    const allCoupons = await kv.getByPrefix('coupon:');
-    const coupon = allCoupons.find((cp: any) => cp.code?.toUpperCase() === code.toUpperCase());
-    if (!coupon) return error(c, 'Cupom não encontrado', 404);
-    const updatedCoupon: Coupon = { ...coupon, currentUses: (coupon.currentUses || 0) + 1, lastUsedAt: new Date().toISOString() };
-    await kv.set(`coupon:${coupon.id}`, updatedCoupon);
-    return success(c, { message: 'Uso do cupom incrementado', coupon: updatedCoupon });
-  } catch (e) {
-    return error(c, `Erro ao incrementar uso: ${e}`, 500);
-  }
-});
-
 // ==========================================
 // 🏪 LOJA (STATUS E CONFIGURAÇÕES)
 // ==========================================
 
 router.get('/store/status', async (c) => {
+  if (soCidade()) return success(c, { isOpen: (await situacaoDaCidade(await acharCidade(cidadeAtual()))).some((o) => o.aberta) });
   const status: any = await kv.get('store_status');
   const achada = await acharUnidade(unidadeAtual());
   return success(c, { isOpen: achada?.unidade.isOpen !== false && (status?.isOpen ?? true) });
@@ -127,12 +120,20 @@ router.post('/store/status', requireAdmin, async (c) => {
 });
 
 router.get('/config/public', async (c) => {
-  const config: any = { ...(await kv.get('system_config') || {}), ...(unidadeAtual() ? await kv.get('unit_config') || {} : {}) };
-  const categories = await kv.get('categories') || [];
+  const sistema: any = await kv.get('system_config') || {};
+  const config: any = { ...sistema, ...(unidadeAtual() ? await kv.get('unit_config') || {} : {}) };
+  if (unidadeAtual()) config.features = { ...sistema.features, ...config.features };
+  let categories = await kv.get('categories') || [];
+  if (soCidade()) {
+    // site da cidade: categorias de todas as unidades; consumo no local se alguma unidade oferece
+    const porUnidade = await emCadaUnidade(async () => ({ cats: await kv.get('categories') || [], uc: await kv.get('unit_config') || {} }));
+    categories = juntarPorId(porUnidade.map((p: any) => p.cats));
+    config.features = { ...sistema.features, dineIn: porUnidade.some((p: any) => (p.uc.features?.dineIn ?? sistema.features?.dineIn) !== false) };
+  }
   const publicConfig = {
     ...config, categories,
     pagSeguroToken: undefined, pagSeguroEmail: undefined, metaAccessToken: undefined,
-    ...(unidadeAtual() ? { metaPixelId: (await kv.get('meta_segredos'))?.pixel || '' } : {}),
+    ...(cidadeAtual() ? { metaPixelId: (await kv.get('meta_segredos'))?.pixel || '' } : {}),
     hasPagSeguroToken: !!(config.pagSeguroToken || Deno.env.get('PAGSEGURO_TOKEN')),
     mercadoPagoAtivo: !!(await segredosMP()).accessToken,
     adminUsername: undefined
@@ -191,7 +192,9 @@ router.post('/admin/config', async (c) => {
     // Admin de unidade só mexe na config da própria unidade (system_config é da rede, do Master)
     if (unidadeAtual()) {
       const atual: any = await kv.get('unit_config') || {};
-      const novo = { ...atual, ...updates, franchise: undefined, features: undefined };
+      // das funcionalidades, a unidade só decide o consumo no local; o resto é do Master
+      const dineIn = updates.features?.dineIn;
+      const novo = { ...atual, ...updates, franchise: undefined, features: dineIn === undefined ? atual.features : { ...atual.features, dineIn } };
       await kv.set('unit_config', novo);
       return success(c, { config: { ...(await kv.get('system_config') || {}), ...novo } });
     }
@@ -215,12 +218,41 @@ router.post('/master/franquia/senha', async (c) => {
   return success(c, { unitId });
 });
 
+// Admin: copia produtos, categorias e/ou estoque de outra unidade da mesma cidade (sobrescreve os de mesmo id; o resto fica)
+router.post('/admin/franquia/copiar', async (c) => {
+  const { deUnidade, partes } = await c.req.json().catch(() => ({}));
+  const aqui = await acharUnidade(unidadeAtual()), origem = await acharUnidade(deUnidade);
+  if (!aqui || !origem || origem.cidade.id !== aqui.cidade.id || origem.unidade.id === aqui.unidade.id) return error(c, 'Escolha outra unidade da mesma cidade.', 400);
+  const mapa: Record<string, string[]> = { produtos: ['product:'], categorias: ['categories'], estoque: ['stock_ingredient:', 'stock_restock_schedule'] };
+  const escolhidas = (Array.isArray(partes) ? partes : Object.keys(mapa)).filter((p: string) => mapa[p]);
+  const copiados: Record<string, number> = {};
+  for (const parte of escolhidas) {
+    let n = 0;
+    for (const chave of mapa[parte]) {
+      const de = `unit:${origem.unidade.id}:${chave}`;
+      const { data, error: e } = chave.endsWith(':')
+        ? await supabase.from('kv_store_dfe23da2').select('key, value').like('key', `${de}%`)
+        : await supabase.from('kv_store_dfe23da2').select('key, value').eq('key', de);
+      if (e) return error(c, `Erro ao ler ${parte}: ${e.message}`, 500);
+      const linhas = (data || []).map((d: any) => ({ key: `unit:${aqui.unidade.id}:${d.key.slice(`unit:${origem.unidade.id}:`.length)}`, value: d.value }));
+      if (linhas.length) {
+        const { error: e2 } = await supabase.from('kv_store_dfe23da2').upsert(linhas);
+        if (e2) return error(c, `Erro ao copiar ${parte}: ${e2.message}`, 500);
+      }
+      n += chave.endsWith(':') ? linhas.length : (Array.isArray(data?.[0]?.value) ? data![0].value.length : linhas.length);
+    }
+    copiados[parte] = n;
+  }
+  return success(c, { copiados });
+});
+
 // copia os dados da loja de antes da franquia para uma unidade (os originais ficam)
 router.post('/franchise/migrate', requireMaster, async (c) => {
   const { targetUnitId } = await c.req.json().catch(() => ({}));
   if (!(await acharUnidade(targetUnitId))) return error(c, 'Unidade não encontrada', 404);
   const prefixos = ['product:', 'order:', 'archive:', 'coupon:', 'stock_ingredient:', 'stock_deduction:', 'driver:', 'pagamento:', 'pix_payment:'];
   const avulsas = ['categories', 'delivery_config', 'delivery_fee', 'store_status', 'time_estimates', 'stock_restock_schedule', 'meta_segredos'];
+  const cidadeDestino = (await acharUnidade(targetUnitId))!.cidade.id;
   const detalhes: Record<string, number> = {};
   const linhas: { key: string; value: unknown }[] = [];
   for (const prefixo of prefixos) {
@@ -232,7 +264,10 @@ router.post('/franchise/migrate', requireMaster, async (c) => {
   }
   const { data: soltas } = await supabase.from('kv_store_dfe23da2').select('key, value').in('key', avulsas);
   for (const d of soltas || []) { linhas.push(d); detalhes[d.key] = 1; }
-  const destino = linhas.map((l) => ({ key: l.key.startsWith('order_unit:') ? l.key : `unit:${targetUnitId}:${l.key}`, value: l.value }));
+  const destino = linhas.map((l) => ({
+    key: l.key.startsWith('order_unit:') ? l.key : l.key === 'meta_segredos' ? `city:${cidadeDestino}:${l.key}` : `unit:${targetUnitId}:${l.key}`,
+    value: l.value,
+  }));
   for (let i = 0; i < destino.length; i += 500) {
     const { error: e } = await supabase.from('kv_store_dfe23da2').upsert(destino.slice(i, i + 500));
     if (e) return error(c, `Erro ao copiar: ${e.message}`, 500);
@@ -258,6 +293,7 @@ router.post('/master/cleanup-sessions', async (c) => {
 
 router.get('/settings/estimates', async (c) => {
   try {
+    if (soCidade()) await entrarNaUnidade((await unidadeParaEntrega(await acharCidade(cidadeAtual())))?.id || (await acharCidade(cidadeAtual()))?.units?.[0]?.id);
     const estimates = await kv.get('time_estimates') || {
       delivery: { min: 30, max: 50 },
       pickup: { min: 15, max: 25 },
@@ -711,25 +747,28 @@ router.post('/stock/deduct', requireAdmin, async (c) => {
 router.get('/stock/availability', async (c) => {
   console.log('📦 [STOCK] GET /stock/availability');
   try {
-    const allIngredients = await kv.getByPrefix('stock_ingredient:');
-    const allProducts = await kv.getByPrefix('product:');
-    const emptyIngredients = (allIngredients || []).filter((ing: any) => (ing.currentStock || 0) <= 0).map((ing: any) => ing.id);
-    const lowStockIngredients = (allIngredients || [])
-      .filter((ing: any) => (ing.currentStock || 0) > 0 && (ing.currentStock || 0) <= (ing.minAlert || 0))
-      .map((ing: any) => ({ id: ing.id, name: ing.name, stock: ing.currentStock, min: ing.minAlert }));
-    const unavailableProducts: string[] = [];
-    for (const product of (allProducts || [])) {
-      if (product.recipe?.ingredients) {
-        for (const recipeIng of product.recipe.ingredients) {
-          if (emptyIngredients.includes(recipeIng.ingredientId)) { unavailableProducts.push(product.id); break; }
-        }
-      }
+    // site da cidade: produto só fica indisponível se faltar estoque em todas as unidades que têm o produto
+    if (soCidade()) {
+      const porUnidade = await emCadaUnidade(async () => ({ ...(await disponibilidade()), ids: (await kv.getByPrefix('product:')).map((p: any) => p.id) }));
+      const unavailableProducts = juntarPorId(porUnidade.map((p) => p.ids.map((id: string) => ({ id })))).map((p) => p.id)
+        .filter((id) => porUnidade.every((u) => !u.ids.includes(id) || u.unavailableProducts.includes(id)));
+      return success(c, { unavailableProducts, emptyIngredients: [], lowStockIngredients: [], totalIngredients: 0 });
     }
-    return success(c, { unavailableProducts, emptyIngredients, lowStockIngredients, totalIngredients: (allIngredients || []).length });
+    return success(c, await disponibilidade());
   } catch (e) {
     console.error('❌ [STOCK] Erro ao verificar disponibilidade:', e);
     return error(c, `Erro: ${e}`, 500);
   }
+});
+
+// site da cidade: o que cada unidade oferece agora (retirada/consumo no local: o cliente escolhe; entrega: a menos ativa)
+router.get('/cidade/opcoes', async (c) => {
+  const cidade = await acharCidade(cidadeAtual());
+  if (!cidade) return error(c, 'Cidade não encontrada', 404);
+  const itens = (c.req.query('itens') || '').split(',').filter(Boolean);
+  const unidades = await situacaoDaCidade(cidade, itens);
+  const entrega = (await unidadeParaEntrega(cidade, itens))?.id || null;
+  return success(c, { unidades: unidades.map(({ ativos, ...u }) => u), entregaPor: entrega });
 });
 
 export default router;
