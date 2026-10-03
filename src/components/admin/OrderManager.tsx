@@ -157,7 +157,7 @@ export function OrderManager() {
 
     switch (type) {
       case 'confirm':
-        message = `Olá *${name}*! 👋\n\nConfirmamos seu pedido *#${order.orderId}* no Faroeste Lanches. 🤠\n\nJá vamos começar a preparar tudo com muito carinho! 👨‍🍳🔥`;
+        message = `Olá *${name}*! 👋\n\nConfirmamos seu pedido *#${order.orderId}* no ${config.siteName || 'NewBurguer Lanches'}. ${config.siteEmoji || '🍔'}\n\nJá vamos começar a preparar tudo com muito carinho! 👨‍🍳🔥`;
         break;
       case 'delivery':
         message = `Olá *${name}*! 🛵\n\nSeu pedido *#${order.orderId}* acabou de sair para entrega!${sectorName ? `\n📍 Destino: ${sectorName}` : ''}\n\nFique de olho na campainha/interfone. Bom apetite! 😋`;

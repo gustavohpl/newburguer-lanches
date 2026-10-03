@@ -103,7 +103,7 @@ export function OrderSuccessModal({ isOpen, onClose, orderData }: OrderSuccessMo
           {/* Mensagem de Agradecimento */}
           <div className="text-center pt-1">
             <p className="text-gray-600 dark:text-gray-400 text-xs">
-              Obrigado por escolher o <span className="font-bold text-amber-700 dark:text-amber-500">NewBurguer Lanches</span>! 🍔
+              Obrigado por escolher o <span className="font-bold text-amber-700 dark:text-amber-500">{config.siteName || 'NewBurguer Lanches'}</span>! {config.siteEmoji || '🍔'}
             </p>
           </div>
 
