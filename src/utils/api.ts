@@ -93,7 +93,7 @@ export async function getPublicConfig() {
   } catch (error) {
     console.error('❌ [API] Erro ao buscar config:', error);
     // Fallback local se falhar
-    const local = localStorage.getItem('faroeste_system_config');
+    const local = localStorage.getItem(local('faroeste_system_config'));
     return { success: true, config: local ? JSON.parse(local) : null, offline: true };
   }
 }
@@ -183,7 +183,7 @@ export async function saveMasterConfig(token: string, config: any) {
     
     // Atualizar cache local (sem a senha)
     if (response.ok && data.success) {
-      localStorage.setItem('faroeste_system_config', JSON.stringify(configToSend));
+      localStorage.setItem(local('faroeste_system_config'), JSON.stringify(configToSend));
     }
     
     return data;
@@ -203,8 +203,9 @@ let _activeUnitId: string | null = null;
 
 export function setActiveUnitId(id: string | null) {
   _activeUnitId = id;
-  console.log(`🏙️ [API] Unit ID atualizado: ${id || '(nenhum)'}`);
 }
+// cópias locais por unidade: o mesmo aparelho em outra cidade não mostra dados da anterior
+const local = (chave: string) => (_activeUnitId ? `${chave}@${_activeUnitId}` : chave);
 
 export function getActiveUnitId(): string | null {
   return _activeUnitId;
@@ -331,7 +332,7 @@ const STORAGE_KEY = 'faroeste_products';
 
 function getLocalProducts(): any[] {
   try {
-    const data = localStorage.getItem(STORAGE_KEY);
+    const data = localStorage.getItem(local(STORAGE_KEY));
     return data ? JSON.parse(data) : [];
   } catch {
     return [];
@@ -339,7 +340,7 @@ function getLocalProducts(): any[] {
 }
 
 function saveLocalProducts(products: any[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+  localStorage.setItem(local(STORAGE_KEY), JSON.stringify(products));
 }
 
 // ===== PRODUTOS =====
@@ -499,7 +500,7 @@ const ORDERS_STORAGE_KEY = 'faroeste_orders';
 
 function getLocalOrders(): any[] {
   try {
-    const data = localStorage.getItem(ORDERS_STORAGE_KEY);
+    const data = localStorage.getItem(local(ORDERS_STORAGE_KEY));
     return data ? JSON.parse(data) : [];
   } catch {
     return [];
@@ -507,7 +508,7 @@ function getLocalOrders(): any[] {
 }
 
 function saveLocalOrders(orders: any[]) {
-  localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orders));
+  localStorage.setItem(local(ORDERS_STORAGE_KEY), JSON.stringify(orders));
 }
 
 export async function getAllOrders() {
@@ -1024,7 +1025,7 @@ export async function getStoreStatus() {
   console.log('🏪 [API] Buscando status da loja...');
   
   // Tentar carregar do localStorage primeiro
-  const localStatus = localStorage.getItem('faroeste_store_status');
+  const localStatus = localStorage.getItem(local('faroeste_store_status'));
   const defaultStatus = true; // Loja aberta por padrão
   
   const currentStatus = localStatus ? localStatus === 'true' : defaultStatus;
@@ -1035,7 +1036,7 @@ export async function getStoreStatus() {
     
     if (data.success && data.isOpen !== undefined) {
       // Atualizar localStorage
-      localStorage.setItem('faroeste_store_status', String(data.isOpen));
+      localStorage.setItem(local('faroeste_store_status'), String(data.isOpen));
       console.log('✅ [API] Status da loja:', data.isOpen ? 'ABERTA' : 'FECHADA');
       return data;
     }
@@ -1051,7 +1052,7 @@ export async function setStoreStatus(isOpen: boolean) {
   console.log('🏪 [API] Alterando status da loja:', isOpen ? 'ABERTA' : 'FECHADA');
   
   // Salvar no localStorage primeiro para funcionamento imediato
-  localStorage.setItem('faroeste_store_status', String(isOpen));
+  localStorage.setItem(local('faroeste_store_status'), String(isOpen));
   
   try {
     // 🔐 USAR adminFetch para enviar tokens de autenticação
@@ -1103,7 +1104,7 @@ function normalizeEstimates(raw: any): TimeEstimates {
 
 export async function getEstimates() {
   // Primeiro tentar carregar do localStorage
-  const localEstimates = localStorage.getItem('faroeste_estimates');
+  const localEstimates = localStorage.getItem(local('faroeste_estimates'));
   const defaultEstimates: TimeEstimates = { delivery: { min: 30, max: 50 }, pickup: { min: 15, max: 25 }, dineIn: { min: 20, max: 30 } };
   
   const currentEstimates = localEstimates ? normalizeEstimates(JSON.parse(localEstimates)) : defaultEstimates;
@@ -1117,7 +1118,7 @@ export async function getEstimates() {
       // Normalizar formato (migrar de number para {min, max} se necessário)
       const normalized = normalizeEstimates(data.estimates);
       // Atualizar localStorage com formato normalizado
-      localStorage.setItem('faroeste_estimates', JSON.stringify(normalized));
+      localStorage.setItem(local('faroeste_estimates'), JSON.stringify(normalized));
       return { ...data, estimates: normalized };
     }
     return { success: true, estimates: currentEstimates };
@@ -1131,7 +1132,7 @@ export async function saveEstimates(estimates: TimeEstimates) {
   console.log('⏱️ [API] Salvando estimativas de tempo:', estimates);
   
   // Salvar localmente primeiro
-  localStorage.setItem('faroeste_estimates', JSON.stringify(estimates));
+  localStorage.setItem(local('faroeste_estimates'), JSON.stringify(estimates));
   
   try {
     // 🔐 USAR adminFetch para enviar tokens de autenticação
@@ -1164,7 +1165,7 @@ export interface Category {
 export async function getCategories() {
   // Try local first if offline
   if (USE_OFFLINE_MODE) {
-    const local = localStorage.getItem('faroeste_categories');
+    const local = localStorage.getItem(local('faroeste_categories'));
     if (local) return { success: true, categories: JSON.parse(local) };
   }
 
@@ -1174,7 +1175,7 @@ export async function getCategories() {
     // Se o servidor retornou erro HTTP (ex: 403), usar fallback local sem disparar logout
     if (!response.ok) {
       console.warn(`⚠️ [API] GET /categories retornou ${response.status} — usando fallback local`);
-      const local = localStorage.getItem('faroeste_categories');
+      const local = localStorage.getItem(local('faroeste_categories'));
       const defaultCats = [
         { id: 'sanduiches', label: 'Sanduíches', color: 'bg-yellow-600 hover:bg-yellow-700' },
         { id: 'artesanais', label: 'Artesanais', color: 'bg-orange-600 hover:bg-orange-700' },
@@ -1186,13 +1187,13 @@ export async function getCategories() {
     const data = await response.json();
     
     if (data.success) {
-      localStorage.setItem('faroeste_categories', JSON.stringify(data.categories));
+      localStorage.setItem(local('faroeste_categories'), JSON.stringify(data.categories));
     }
     
     return data;
   } catch (error) {
     console.log('📦 [API] Erro ao buscar categorias - usando local');
-    const local = localStorage.getItem('faroeste_categories');
+    const local = localStorage.getItem(local('faroeste_categories'));
     // Default categories fallback if nothing local
     const defaultCats = [
       { id: 'sanduiches', label: 'Sanduíches', color: 'bg-yellow-600 hover:bg-yellow-700' },
@@ -1205,7 +1206,7 @@ export async function getCategories() {
 
 export async function saveCategories(categories: Category[]) {
   // Save local immediately
-  localStorage.setItem('faroeste_categories', JSON.stringify(categories));
+  localStorage.setItem(local('faroeste_categories'), JSON.stringify(categories));
   
   try {
     const response = await adminFetch('/categories', {
@@ -1222,7 +1223,7 @@ export async function saveCategories(categories: Category[]) {
 // Helper: Retorna o emoji da categoria do produto (do cache localStorage)
 export function getCategoryEmoji(categoryId: string): string {
   try {
-    const cached = localStorage.getItem('faroeste_categories');
+    const cached = localStorage.getItem(local('faroeste_categories'));
     if (cached) {
       const categories: Category[] = JSON.parse(cached);
       const cat = categories.find(c => c.id === categoryId);
@@ -1237,7 +1238,7 @@ export function getCategoryEmoji(categoryId: string): string {
 export async function getDeliveryFee() {
   // Try local first if offline
   if (USE_OFFLINE_MODE) {
-    const local = localStorage.getItem('faroeste_delivery_fee');
+    const local = localStorage.getItem(local('faroeste_delivery_fee'));
     if (local) return { success: true, fee: parseFloat(local) };
   }
 
@@ -1246,20 +1247,20 @@ export async function getDeliveryFee() {
     const data = await response.json();
     
     if (data.success) {
-      localStorage.setItem('faroeste_delivery_fee', String(data.fee));
+      localStorage.setItem(local('faroeste_delivery_fee'), String(data.fee));
     }
     
     return data;
   } catch (error) {
     console.log('📦 [API] Erro ao buscar taxa de entrega - usando local');
-    const local = localStorage.getItem('faroeste_delivery_fee');
+    const local = localStorage.getItem(local('faroeste_delivery_fee'));
     return { success: true, fee: local ? parseFloat(local) : 5.00, offline: true };
   }
 }
 
 export async function updateDeliveryFee(fee: number) {
   // Save local immediately
-  localStorage.setItem('faroeste_delivery_fee', String(fee));
+  localStorage.setItem(local('faroeste_delivery_fee'), String(fee));
   
   try {
     const response = await adminFetch('/settings/delivery-fee', {
@@ -1289,9 +1290,9 @@ export async function updateBasicSettings(settings: {
     
     // Atualizar cache local se sucesso
     if (data.success && data.config) {
-      const current = localStorage.getItem('faroeste_system_config');
+      const current = localStorage.getItem(local('faroeste_system_config'));
       const parsed = current ? JSON.parse(current) : {};
-      localStorage.setItem('faroeste_system_config', JSON.stringify({ ...parsed, ...data.config }));
+      localStorage.setItem(local('faroeste_system_config'), JSON.stringify({ ...parsed, ...data.config }));
     }
     
     return data;
@@ -1597,7 +1598,7 @@ export async function updateConfig(config: any) {
     
     // Atualizar cache local se sucesso
     if (data.success && data.config) {
-      localStorage.setItem('faroeste_system_config', JSON.stringify(data.config));
+      localStorage.setItem(local('faroeste_system_config'), JSON.stringify(data.config));
     }
     
     return data;
@@ -1630,7 +1631,7 @@ export async function getServerIP() {
 
 // Helper para headers de autenticação de driver
 function getDriverHeaders(): HeadersInit {
-  const token = localStorage.getItem('delivery_driver_token');
+  const token = localStorage.getItem(local('delivery_driver_token'));
   return {
     ...headers,
     ...(token && { 'X-Driver-Token': token }),
@@ -1651,7 +1652,7 @@ export async function driverFetch(endpoint: string, options: RequestInit = {}): 
   // Tratar sessão expirada
   if (response.status === 401) {
     console.warn('⚠️ [DRIVER AUTH] Sessão de driver expirada/inválida');
-    localStorage.removeItem('delivery_driver_token');
+    localStorage.removeItem(local('delivery_driver_token'));
     window.dispatchEvent(new CustomEvent('driver-session-expired'));
   }
 
@@ -1662,7 +1663,7 @@ export async function driverFetch(endpoint: string, options: RequestInit = {}): 
 export async function authFetch(endpoint: string, options: RequestInit = {}): Promise<Response> {
   const adminToken = sessionStorage.getItem('faroeste_admin_token');
   const csrfToken = sessionStorage.getItem('faroeste_csrf_token');
-  const driverToken = localStorage.getItem('delivery_driver_token');
+  const driverToken = localStorage.getItem(local('delivery_driver_token'));
 
   const authHeaders: Record<string, string> = { ...headers };
 
@@ -1698,7 +1699,7 @@ export async function authFetch(endpoint: string, options: RequestInit = {}): Pr
       dispatchAdminSessionExpired();
     } else if (driverToken) {
       console.warn('⚠️ [AUTH] Driver session expired via authFetch');
-      localStorage.removeItem('delivery_driver_token');
+      localStorage.removeItem(local('delivery_driver_token'));
       window.dispatchEvent(new CustomEvent('driver-session-expired'));
     }
   }
@@ -1722,7 +1723,7 @@ export async function deliveryLogin(data: { name: string; phone: string; color: 
 
         // 🛡️ Armazenar token de sessão do driver
         if (result.success && result.driverToken) {
-          localStorage.setItem('delivery_driver_token', result.driverToken);
+          localStorage.setItem(local('delivery_driver_token'), result.driverToken);
           console.log('🔑 [API] Token de driver armazenado');
         }
 
@@ -1736,7 +1737,7 @@ export async function deliveryLogin(data: { name: string; phone: string; color: 
 export async function deliveryLogout(phone: string) {
     console.log('🚪 [API] Logout de entregador:', phone);
     try {
-        const driverToken = localStorage.getItem('delivery_driver_token');
+        const driverToken = localStorage.getItem(local('delivery_driver_token'));
         const response = await fetchWithRetry(`${API_BASE_URL}/delivery/logout`, {
             method: 'POST',
             headers: {
@@ -1746,11 +1747,11 @@ export async function deliveryLogout(phone: string) {
             body: JSON.stringify({ phone })
         });
         // Limpar token local
-        localStorage.removeItem('delivery_driver_token');
+        localStorage.removeItem(local('delivery_driver_token'));
         return response.json();
     } catch (error) {
         console.error('❌ [API] Erro no logout de entregador:', error);
-        localStorage.removeItem('delivery_driver_token');
+        localStorage.removeItem(local('delivery_driver_token'));
         return { success: false, error: String(error) };
     }
 }

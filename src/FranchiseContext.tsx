@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useConfig, FranchiseCity, FranchiseUnit } from './ConfigContext';
 import { setActiveUnitId } from './utils/api';
-import { setActiveUnitId as setApiUnitId } from './utils/api';
 
 // ============================================
 // 🏙️ FRANCHISE CONTEXT
@@ -108,7 +107,7 @@ function clearStorage(pageType: string) {
 }
 
 export function FranchiseProvider({ children }: { children: ReactNode }) {
-  const { config } = useConfig();
+  const { config, refreshConfig } = useConfig();
   const [pageType] = useState<'client' | 'admin' | 'delivery' | 'master'>(getPageType);
   const [selectedCityId, setSelectedCityId] = useState<string | null>(null);
   const [selectedUnitId, setSelectedUnitId] = useState<string | null>(null);
@@ -150,21 +149,11 @@ export function FranchiseProvider({ children }: { children: ReactNode }) {
   const selectedUnit = selectedCity?.units.find(u => u.id === selectedUnitId) || null;
   const unitsForSelectedCity = selectedCity?.units || [];
 
-  // 🔑 Sincronizar unitId com a camada de API
-  // Isso faz com que TODAS as chamadas fetch incluam X-Unit-Id automaticamente
-  useEffect(() => {
-    if (franchiseEnabled && selectedUnitId) {
-      setActiveUnitId(selectedUnitId);
-      console.log(`🏙️ [FRANCHISE] API scope: unit:${selectedUnitId}`);
-    } else {
-      setActiveUnitId(null);
-    }
-  }, [franchiseEnabled, selectedUnitId]);
-
-  // 🏙️ Sincronizar unitId com o módulo de API
-  useEffect(() => {
-    setApiUnitId(selectedUnitId);
-  }, [selectedUnitId]);
+  // na renderização (não em efeito): os efeitos dos filhos rodam antes e já buscariam dados sem a unidade
+  setActiveUnitId(franchiseEnabled && selectedUnit ? selectedUnitId : null);
+  // categorias, textos e pixel da unidade vêm junto da config pública
+  const unidadeAtiva = franchiseEnabled && selectedUnit ? selectedUnitId : null;
+  useEffect(() => { if (unidadeAtiva) refreshConfig(); }, [unidadeAtiva]);
 
   // Precisa mostrar modal?
   const needsSelection = franchiseEnabled 
