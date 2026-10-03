@@ -39,11 +39,22 @@ export function CheckoutModal({
   onOrderComplete,
   onOrderCreated,
   isStoreOpen,
-  deliveryFee,
+  deliveryFee: taxaPadrao,
   allProducts = []
 }: CheckoutModalProps) {
   const { config } = useConfig();
-  const { unitOverrides } = useFranchise();
+  const { unitOverrides, franchiseEnabled, pageType, selectedCity } = useFranchise();
+  // site da cidade: entrega sai da unidade que o servidor indica; retirada e consumo no local, o cliente escolhe a unidade
+  const noSiteDaCidade = franchiseEnabled && pageType === 'client' && !!selectedCity;
+  const [opcoes, setOpcoes] = useState<{ unidades: api.OpcaoUnidade[]; entregaPor: string | null } | null>(null);
+  const [unidadeId, setUnidadeId] = useState('');
+  const idsDoCarrinho = items.map((i) => i.id).join(',');
+  useEffect(() => {
+    if (isOpen && noSiteDaCidade) api.getCidadeOpcoes(idsDoCarrinho.split(',').filter(Boolean)).then(setOpcoes);
+  }, [isOpen, noSiteDaCidade, idsDoCarrinho]);
+  const unidadeEntrega = opcoes?.unidades.find((u) => u.id === opcoes.entregaPor);
+  const deliveryFee = noSiteDaCidade && unidadeEntrega ? unidadeEntrega.taxa : taxaPadrao;
+  const atende = (u: api.OpcaoUnidade, tipo: string) => u.aberta && u.temItens && (tipo === 'dine-in' ? u.consumoLocal : u.retirada);
   const [step, setStep] = useState(1);
   const miolo = useRef<HTMLDivElement>(null);
   useEffect(() => { miolo.current?.scrollTo({ top: 0 }); }, [step]);
@@ -200,6 +211,8 @@ export function CheckoutModal({
   };
 
   const getEstimateForType = (type: DeliveryType) => {
+    const daUnidade = noSiteDaCidade ? opcoes?.unidades.find((u) => u.id === (type === 'delivery' ? opcoes.entregaPor : unidadeId))?.estimativas : null;
+    if (daUnidade) return type === 'delivery' ? daUnidade.delivery : type === 'pickup' ? daUnidade.pickup : daUnidade.dineIn;
     if (!estimates) return null;
     switch (type) {
       case 'delivery': return estimates.delivery;
@@ -252,7 +265,8 @@ export function CheckoutModal({
     );
   };
 
-  const PICKUP_ADDRESS = unitOverrides.address || config.address || 'Praça Lucio Prado - Goiatuba/GO';
+  const unidadeRetirada = noSiteDaCidade ? opcoes?.unidades.find((u) => u.id === unidadeId) : undefined;
+  const PICKUP_ADDRESS = (unidadeRetirada && `${unidadeRetirada.nome} — ${unidadeRetirada.endereco}`) || unitOverrides.address || config.address || 'Praça Lucio Prado - Goiatuba/GO';
   const WHATSAPP_NUMBER = config.whatsappNumber || '5564993392970';
   // const DELIVERY_FEE = 5.00; // Removed hardcoded fee
 
@@ -281,7 +295,7 @@ export function CheckoutModal({
     
     try {
       // Enviar apenas o subtotal dos produtos (sem taxa de entrega) para cálculo do desconto
-      const response = await api.validateCoupon(couponCode.toUpperCase().trim(), totalPrice);
+      const response = await api.validateCoupon(couponCode.toUpperCase().trim(), totalPrice, noSiteDaCidade ? (deliveryType === 'delivery' ? opcoes?.entregaPor : unidadeId) || undefined : undefined);
       
       if (response.success && response.valid && response.coupon && response.discount !== undefined) {
         setAppliedCoupon(response.coupon);
@@ -369,6 +383,15 @@ export function CheckoutModal({
       return;
     }
 
+    if (noSiteDaCidade && deliveryType !== 'delivery' && !unidadeId) {
+      avisar(deliveryType === 'dine-in' ? 'Escolha em qual unidade você vai comer.' : 'Escolha em qual unidade você vai retirar.');
+      return;
+    }
+    if (noSiteDaCidade && deliveryType === 'delivery' && opcoes && !opcoes.entregaPor) {
+      avisar('Nenhuma unidade pode entregar esse pedido agora. Tente retirada ou mais tarde.');
+      return;
+    }
+
     // 🆕 Validação de setor (obrigatório quando há setores disponíveis)
     if (deliveryType === 'delivery' && availableSectors.length > 0 && !deliverySector) {
       avisar('📍 Por favor, selecione o setor de entrega');
@@ -430,6 +453,7 @@ export function CheckoutModal({
         address: deliveryType === 'delivery' ? sanitizeAddress(address) : PICKUP_ADDRESS,
         reference: reference ? sanitizeText(reference, 300) : null,
         deliverySector: deliveryType === 'delivery' && deliverySector ? deliverySector : null,
+        ...(noSiteDaCidade && deliveryType !== 'delivery' ? { unitId: unidadeId } : {}),
         ...paymentInfo,
         items: items.map(item => ({
           id: item.id,
@@ -1208,6 +1232,26 @@ export function CheckoutModal({
                     </button>
                   )}
                 </div>
+
+                {noSiteDaCidade && deliveryType !== 'delivery' && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-bold text-zinc-700 dark:text-zinc-300">{deliveryType === 'dine-in' ? 'Em qual unidade você vai comer?' : 'Em qual unidade você vai retirar?'}</p>
+                    {!opcoes && <p className="text-sm text-zinc-500">Carregando unidades...</p>}
+                    {opcoes?.unidades.map((u) => {
+                      const pode = atende(u, deliveryType);
+                      const tempo = deliveryType === 'dine-in' ? u.estimativas?.dineIn : u.estimativas?.pickup;
+                      const motivo = !u.aberta ? 'Fechada agora' : !u.temItens ? 'Sem algum item do pedido' : deliveryType === 'dine-in' && !u.consumoLocal ? 'Não tem consumo no local' : '';
+                      return (
+                        <button key={u.id} type="button" disabled={!pode} onClick={() => setUnidadeId(u.id)}
+                          className={`w-full text-left p-4 rounded-xl border-2 transition-all ${unidadeId === u.id ? 'border-amber-600 bg-amber-50/50 dark:bg-zinc-800' : 'border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900/50'} ${pode ? 'hover:border-amber-400/50' : 'opacity-50 cursor-not-allowed'}`}>
+                          <p className="font-bold text-zinc-900 dark:text-zinc-100">{u.nome}</p>
+                          {u.endereco && <p className="text-xs text-zinc-500 flex items-center gap-1 mt-0.5"><MapPin className="w-3 h-3" />{u.endereco}</p>}
+                          <p className="text-xs mt-1 text-zinc-600 dark:text-zinc-400">{pode ? (tempo ? `🕒 ~${tempo.min}-${tempo.max} min` : 'Disponível') : motivo}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
 
                 {deliveryType === 'delivery' ? (
                   <div className="mt-8 space-y-6">

@@ -34,7 +34,7 @@ async function fetchWithRetry(url: string, options: RequestInit, retries = 2, ti
       const { signal: _ignoredSignal, ...restOptions } = options;
       
       // 🏙️ Injetar X-Unit-Id quando franchise ativo
-      const unitHeaders = _activeUnitId ? { 'X-Unit-Id': _activeUnitId } : {};
+      const unitHeaders = escopoHeaders();
       const mergedHeaders = { ...(restOptions.headers || {}), ...unitHeaders };
       
       const response = await fetch(url, { 
@@ -201,11 +201,20 @@ const headers = {
 // ===== 🏙️ FRANCHISE: Unit-aware requests =====
 let _activeUnitId: string | null = null;
 
+// cliente fica no site da cidade (X-City-Id); Admin e entregador ficam numa unidade (X-Unit-Id)
+let _activeCityId: string | null = null;
 export function setActiveUnitId(id: string | null) {
   _activeUnitId = id;
 }
-// cópias locais por unidade: o mesmo aparelho em outra cidade não mostra dados da anterior
-const local = (chave: string) => (_activeUnitId ? `${chave}@${_activeUnitId}` : chave);
+export function setActiveCityId(id: string | null) {
+  _activeCityId = id;
+}
+function escopoHeaders(): Record<string, string> {
+  if (_activeUnitId) return { 'X-Unit-Id': _activeUnitId };
+  return _activeCityId ? { 'X-City-Id': _activeCityId } : {};
+}
+// cópias locais por unidade/cidade: o mesmo aparelho em outra cidade não mostra dados da anterior
+const local = (chave: string) => (_activeUnitId ? `${chave}@${_activeUnitId}` : _activeCityId ? `${chave}@cidade:${_activeCityId}` : chave);
 
 export function getActiveUnitId(): string | null {
   return _activeUnitId;
@@ -215,7 +224,7 @@ export function getActiveUnitId(): string | null {
 function getHeadersWithUnit(extra?: Record<string, string>): Record<string, string> {
   return {
     ...headers,
-    ...(_activeUnitId ? { 'X-Unit-Id': _activeUnitId } : {}),
+    ...escopoHeaders(),
     ...(extra || {}),
   };
 }
@@ -231,7 +240,7 @@ function getAdminHeaders(): HeadersInit {
     ...headers,
     ...(token && { 'X-Admin-Token': token }),
     ...(csrfToken && { 'X-CSRF-Token': csrfToken }),
-    ...(_activeUnitId ? { 'X-Unit-Id': _activeUnitId } : {}),
+    ...escopoHeaders(),
   };
 }
 
@@ -1313,6 +1322,10 @@ export interface Coupon {
   currentUses: number;
   isActive: boolean;
   createdAt: string;
+  expiresAt?: string;
+  unidades?: string[]; // cupom compartilhado: unidades da cidade onde vale (limite somado)
+  compartilhado?: boolean;
+  compartilharCom?: string[];
 }
 
 export interface CouponValidationResponse {
@@ -1440,12 +1453,12 @@ export async function saveDeliveryConfig(config: any) {
 }
 
 // Validar cupom (cliente) - verifica se é válido e calcula desconto
-export async function validateCoupon(code: string, orderTotal: number): Promise<CouponValidationResponse> {
+export async function validateCoupon(code: string, orderTotal: number, unitId?: string): Promise<CouponValidationResponse> {
   try {
     const response = await fetchWithRetry(`${API_BASE_URL}/coupons/validate`, {
       method: 'POST',
       headers,
-      body: JSON.stringify({ code, orderTotal }),
+      body: JSON.stringify({ code, orderTotal, ...(unitId ? { unitId } : {}) }),
     });
     
     const data = await response.json();
@@ -1635,7 +1648,7 @@ function getDriverHeaders(): HeadersInit {
   return {
     ...headers,
     ...(token && { 'X-Driver-Token': token }),
-    ...(_activeUnitId ? { 'X-Unit-Id': _activeUnitId } : {}),
+    ...escopoHeaders(),
   };
 }
 
@@ -1675,7 +1688,7 @@ export async function authFetch(endpoint: string, options: RequestInit = {}): Pr
   }
 
   // 🏙️ Franchise unit header
-  if (_activeUnitId) authHeaders['X-Unit-Id'] = _activeUnitId;
+  Object.assign(authHeaders, escopoHeaders());
 
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
@@ -1983,4 +1996,22 @@ export async function migrateFranchiseData(token: string, targetUnitId: string):
     console.error('❌ [API] Erro na migração de franquia:', error);
     return { success: false, message: String(error) };
   }
+}
+
+// 🏙️ site da cidade: o que cada unidade atende agora e qual unidade faria a entrega
+export type OpcaoUnidade = { id: string; nome: string; endereco: string; telefone: string; horario: string; aberta: boolean; entrega: boolean; retirada: boolean; consumoLocal: boolean; estimativas: TimeEstimates | null; taxa: number; temItens: boolean };
+export async function getCidadeOpcoes(itens: string[] = []): Promise<{ unidades: OpcaoUnidade[]; entregaPor: string | null }> {
+  try {
+    const r = await fetchWithRetry(`${API_BASE_URL}/cidade/opcoes?itens=${encodeURIComponent(itens.join(','))}`, { headers: getHeadersWithUnit() });
+    const d = await r.json();
+    return d.success ? { unidades: d.unidades || [], entregaPor: d.entregaPor || null } : { unidades: [], entregaPor: null };
+  } catch {
+    return { unidades: [], entregaPor: null };
+  }
+}
+
+// 🏙️ Admin: copia produtos/categorias/estoque de outra unidade da mesma cidade
+export async function copiarDeUnidade(deUnidade: string, partes: string[]) {
+  const r = await adminFetch('/admin/franquia/copiar', { method: 'POST', body: JSON.stringify({ deUnidade, partes }) });
+  return r.json();
 }

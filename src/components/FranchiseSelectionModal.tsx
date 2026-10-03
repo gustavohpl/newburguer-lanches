@@ -200,15 +200,15 @@ export function FranchiseSelectionModal() {
 
 // cliente: mostra a cidade escolhida (pelo GPS ou na mão) e deixa trocar
 export function TrocarCidade() {
-  const { franchiseEnabled, selectedCity, selectedUnit, resetSelection, pageType, unitsForSelectedCity } = useFranchise();
-  if (!franchiseEnabled || !selectedCity || !selectedUnit || pageType !== 'client') return null;
+  const { franchiseEnabled, selectedCity, resetSelection, pageType } = useFranchise();
+  if (!franchiseEnabled || !selectedCity || pageType !== 'client') return null;
   return (
     <button
       onClick={resetSelection}
       className="fixed top-3 right-3 z-40 flex items-center gap-1.5 rounded-full bg-black/60 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur hover:bg-black/75"
     >
       <MapPin className="w-3.5 h-3.5" />
-      {selectedCity.name}{unitsForSelectedCity.length > 1 ? ` · ${selectedUnit.name}` : ''} · trocar
+      {selectedCity.name} · trocar
     </button>
   );
 }

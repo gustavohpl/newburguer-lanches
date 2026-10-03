@@ -5,11 +5,11 @@ import { masterFetch } from '../../utils/api';
 type Estado = { temToken: boolean; conta: string; pagina: string; instagram: string; pixel?: string; resultado?: { nome?: string; moeda?: string; pagina?: string | null } | null; erroConta?: string };
 
 // token do usuário do sistema vai direto para o servidor e nunca volta para a tela; os IDs não são segredo
-// com franquia, cada unidade tem a própria Meta (rede social da loja daquela cidade)
-export function MetaConfig({ unidades = [] }: { unidades?: { id: string; rotulo: string }[] }) {
-  const [unidade, setUnidade] = useState('');
+// com franquia, cada cidade tem a própria Meta (rede social da loja da cidade, a mesma para as unidades dela)
+export function MetaConfig({ cidades = [] }: { cidades?: { id: string; rotulo: string }[] }) {
+  const [cidade, setCidade] = useState('');
   const [pixel, setPixel] = useState('');
-  const doEscopo = unidade ? { headers: { 'X-Unit-Id': unidade } } : {};
+  const doEscopo = cidade ? { headers: { 'X-City-Id': cidade } } : {};
   const [estado, setEstado] = useState<Estado | null>(null);
   const [token, setToken] = useState('');
   const [conta, setConta] = useState('');
@@ -30,12 +30,12 @@ export function MetaConfig({ unidades = [] }: { unidades?: { id: string; rotulo:
     } else setAviso(r?.error || 'Não foi possível ler a configuração da Meta.');
     setOcupado('');
   };
-  useEffect(() => { setEstado(null); setAviso(''); if (!unidades.length || unidade) carregar(); }, [unidade]);
+  useEffect(() => { setEstado(null); setAviso(''); if (!cidades.length || cidade) carregar(); }, [cidade]);
 
   const salvar = async (apagar = false) => {
     if (apagar && !confirm('Desconectar a Meta? Os anúncios continuam na conta, mas o Admin deixa de vê-los.')) return;
     setOcupado('salvar');
-    const r = await masterFetch('/master/meta', { ...doEscopo, method: 'POST', body: JSON.stringify(apagar ? { apagar: true } : { token, conta, pagina, instagram, ...(unidade ? { pixel } : {}) }) }).then((x) => x.json()).catch(() => null);
+    const r = await masterFetch('/master/meta', { ...doEscopo, method: 'POST', body: JSON.stringify(apagar ? { apagar: true } : { token, conta, pagina, instagram, ...(cidade ? { pixel } : {}) }) }).then((x) => x.json()).catch(() => null);
     setOcupado('');
     if (!r?.success) return setAviso(r?.error || 'Não foi possível salvar.');
     setToken('');
@@ -44,15 +44,15 @@ export function MetaConfig({ unidades = [] }: { unidades?: { id: string; rotulo:
   };
 
   const campo = 'w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none font-mono text-sm';
-  const seletor = unidades.length > 0 && (
-    <label className="block text-sm font-medium text-gray-700">Unidade
-      <select value={unidade} onChange={(e) => setUnidade(e.target.value)} className={campo}>
-        <option value="">Escolha a unidade</option>
-        {unidades.map((u) => <option key={u.id} value={u.id}>{u.rotulo}</option>)}
+  const seletor = cidades.length > 0 && (
+    <label className="block text-sm font-medium text-gray-700">Cidade
+      <select value={cidade} onChange={(e) => setCidade(e.target.value)} className={campo}>
+        <option value="">Escolha a cidade</option>
+        {cidades.map((c) => <option key={c.id} value={c.id}>{c.rotulo}</option>)}
       </select>
     </label>
   );
-  if (unidades.length && !unidade) return <div className="space-y-4">{seletor}</div>;
+  if (cidades.length && !cidade) return <div className="space-y-4">{seletor}</div>;
   return (
     <div className="space-y-4">
       {seletor}
@@ -76,7 +76,7 @@ export function MetaConfig({ unidades = [] }: { unidades?: { id: string; rotulo:
         <label className="text-sm font-medium text-gray-700">Página do Facebook (ID)<input value={pagina} onChange={(e) => setPagina(e.target.value)} className={campo} placeholder="123…" /></label>
         <label className="text-sm font-medium text-gray-700">Instagram (ID da conta)<input value={instagram} onChange={(e) => setInstagram(e.target.value)} className={campo} placeholder="1784…" /></label>
       </div>
-      {unidade && <label className="block text-sm font-medium text-gray-700">Pixel ID desta unidade<input value={pixel} onChange={(e) => setPixel(e.target.value)} className={campo} placeholder="123456789012345" /></label>}
+      {cidade && <label className="block text-sm font-medium text-gray-700">Pixel ID desta cidade<input value={pixel} onChange={(e) => setPixel(e.target.value)} className={campo} placeholder="123456789012345" /></label>}
       <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg text-xs text-gray-700 space-y-1">
         <p className="font-semibold text-blue-900">Como conectar (Meta Business Suite → Configurações do negócio):</p>
         <ol className="list-decimal list-inside space-y-1">

@@ -8,6 +8,7 @@ import { Card } from '../ui/card';
 import { formatBrasiliaDate, isCouponExpired } from '../../utils/dateUtils';
 import { useConfig } from '../../ConfigContext';
 import * as api from '../../utils/api';
+import { useFranchise } from '../../FranchiseContext';
 
 export interface Coupon {
   id: string;
@@ -19,6 +20,8 @@ export interface Coupon {
   isActive: boolean;
   createdAt: string;
   expiresAt?: string | null;
+  unidades?: string[];
+  compartilhado?: boolean;
 }
 
 export function CouponsManager() {
@@ -52,6 +55,11 @@ export function CouponsManager() {
   const [isUnlimited, setIsUnlimited] = useState(true);
   const [expiresAt, setExpiresAt] = useState('');
   const [hasExpiration, setHasExpiration] = useState(false);
+  // franquia: o cupom pode valer também em outras unidades da cidade (o limite de usos é somado entre elas)
+  const { franchiseEnabled, selectedCity, selectedUnit } = useFranchise();
+  const outrasUnidades = franchiseEnabled ? (selectedCity?.units || []).filter((u) => u.id !== selectedUnit?.id) : [];
+  const nomeDaUnidade = (id: string) => selectedCity?.units.find((u) => u.id === id)?.name || id;
+  const [compartilharCom, setCompartilharCom] = useState<string[]>([]);
 
   useEffect(() => {
     loadCoupons();
@@ -86,6 +94,7 @@ export function CouponsManager() {
     setIsUnlimited(true);
     setExpiresAt('');
     setHasExpiration(false);
+    setCompartilharCom([]);
     setEditingCoupon(null);
     setShowForm(false);
   };
@@ -150,7 +159,7 @@ export function CouponsManager() {
       if (editingCoupon) {
         response = await api.updateCoupon(editingCoupon.id, couponData);
       } else {
-        response = await api.createCoupon(couponData);
+        response = await api.createCoupon({ ...couponData, ...(compartilharCom.length ? { compartilharCom } : {}) } as any);
       }
 
       if (response.success) {
@@ -442,6 +451,20 @@ export function CouponsManager() {
               </div>
             </div>
 
+            {!editingCoupon && outrasUnidades.length > 0 && (
+              <div className="space-y-2 rounded-lg border border-orange-200 bg-orange-50/50 p-3">
+                <p className="text-sm font-medium">Cupom compartilhado (opcional)</p>
+                <p className="text-xs text-gray-500">Marque as unidades onde este cupom também vale. O limite de usos é somado entre todas.</p>
+                {outrasUnidades.map((u) => (
+                  <label key={u.id} className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input type="checkbox" className="w-4 h-4 text-orange-500 rounded" checked={compartilharCom.includes(u.id)}
+                      onChange={() => setCompartilharCom(compartilharCom.includes(u.id) ? compartilharCom.filter((x) => x !== u.id) : [...compartilharCom, u.id])} />
+                    {u.name}
+                  </label>
+                ))}
+              </div>
+            )}
+
             {/* Botões */}
             <div className="flex gap-3 pt-4">
               <Button
@@ -509,6 +532,11 @@ export function CouponsManager() {
                         {coupon.code}
                       </code>
                     </div>
+                    {coupon.unidades && coupon.unidades.length > 1 && (
+                      <span className="text-xs font-semibold text-orange-700 bg-orange-100 px-2 py-0.5 rounded-full">
+                        Compartilhado: {coupon.unidades.map(nomeDaUnidade).join(', ')}
+                      </span>
+                    )}
                     <button
                       onClick={() => copyToClipboard(coupon.code)}
                       className="p-1 hover:bg-gray-100 rounded transition-colors"

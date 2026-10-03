@@ -1,5 +1,6 @@
 import React, { Fragment, useCallback, useEffect, useState, type FormEvent } from 'react';
 import { authFetch, getAllProducts, getCoupons } from '../../utils/api';
+import { useFranchise } from '../../FranchiseContext';
 import { useConfig } from '../../ConfigContext';
 
 // Anúncios reais na Meta (Facebook/Instagram) — porte da tela do Engaja Aí. Toda campanha nasce pausada.
@@ -289,8 +290,23 @@ function NovaCampanha({ aoFechar, aoCriar, minimoDiario = null }: { aoFechar: ()
     getCoupons().then((r: any) => setCupons((r?.coupons || []).filter((x: any) => x.isActive !== false && x.active !== false))).catch(() => {});
   }, []);
 
-  const link = cupom ? `${linkBase}${linkBase.includes('?') ? '&' : '?'}cupom=${encodeURIComponent(cupom)}` : linkBase;
-  const textoFinal = cupom && !texto.includes(cupom) ? `${texto}\n\n🎟️ Use o cupom ${cupom}` : texto;
+  // franquia: o link abre a cidade certa e o texto diz em quais unidades o cupom vale
+  const { franchiseEnabled, selectedCity, selectedUnit } = useFranchise();
+  const unidadesDaCidade = franchiseEnabled ? selectedCity?.units || [] : [];
+  const [validoEm, setValidoEm] = useState<string[]>([]);
+  useEffect(() => {
+    const escolhido: any = cupons.find((x: any) => x.code === cupom);
+    setValidoEm(escolhido?.unidades?.length ? escolhido.unidades : selectedUnit ? [selectedUnit.id] : []);
+  }, [cupom, cupons]);
+  const ondeVale = (() => {
+    if (!cupom || unidadesDaCidade.length < 2 || !validoEm.length) return '';
+    if (validoEm.length === unidadesDaCidade.length) return ` — válido ${validoEm.length === 2 ? 'nas duas' : 'em todas as'} unidades de ${selectedCity!.name}`;
+    const nomes = validoEm.map((id) => unidadesDaCidade.find((u) => u.id === id)?.name || id);
+    return ` — válido ${nomes.length === 1 ? 'na unidade' : 'nas unidades'} ${nomes.join(' e ')}`;
+  })();
+  const params = [franchiseEnabled && selectedCity ? `cidade=${encodeURIComponent(selectedCity.id)}` : '', cupom ? `cupom=${encodeURIComponent(cupom)}` : ''].filter(Boolean).join('&');
+  const link = params ? `${linkBase}${linkBase.includes('?') ? '&' : '?'}${params}` : linkBase;
+  const textoFinal = cupom && !texto.includes(cupom) ? `${texto}\n\n🎟️ Use o cupom ${cupom}${ondeVale}` : texto;
   const publico = () => ({
     idade_min: Number(idadeMin), idade_max: Number(idadeMax), generos,
     locais: locais.map((l) => ({ key: l.key, tipo: l.tipo, ...(l.tipo === 'city' ? { raio: Number(raio) || undefined } : {}) })),
@@ -434,8 +450,22 @@ function NovaCampanha({ aoFechar, aoCriar, minimoDiario = null }: { aoFechar: ()
           </div>
           <label className="block text-sm text-gray-600">Link do anúncio
             <input className={campo} value={linkBase} onChange={(e) => setLinkBase(e.target.value.trim())} required />
-            {cupom && <span className="break-all text-xs text-gray-400">com o cupom: {link}</span>}
+            {params && <span className="break-all text-xs text-gray-400">o anúncio abre: {link}</span>}
           </label>
+          {cupom && unidadesDaCidade.length > 1 && (
+            <div className="rounded-lg border border-gray-200 p-3 text-sm text-gray-600">
+              <p className="mb-2">O cupom vale nas unidades <span className="text-gray-400">(entra na descrição do anúncio)</span></p>
+              <div className="flex flex-wrap gap-3">
+                {unidadesDaCidade.map((u) => (
+                  <label key={u.id} className="flex items-center gap-2">
+                    <input type="checkbox" className="h-4 w-4 accent-blue-600" checked={validoEm.includes(u.id)}
+                      onChange={() => setValidoEm(validoEm.includes(u.id) ? validoEm.filter((x) => x !== u.id) : [...validoEm, u.id])} />
+                    {u.name}
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
 
           <fieldset className="space-y-4 rounded-xl border border-gray-200 p-4">
             <legend className="px-2 text-sm font-semibold text-gray-700">Público</legend>

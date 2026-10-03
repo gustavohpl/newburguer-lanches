@@ -326,7 +326,7 @@ export function MasterDashboard() {
     const response = await api.getMasterConfig(token);
     
     if (response.success) {
-      setConfig(response.config);
+      setConfig(semUnidadesRepetidas(response.config));
       setHasAdminPassword(response.config.hasAdminPassword);
     } else {
       // Token inválido ou expirado
@@ -1859,7 +1859,7 @@ export function MasterDashboard() {
                     />
                   </div>}
                   <div className="border-t border-gray-100 pt-4">
-                    <MetaConfig unidades={config.franchise?.enabled ? (config.franchise.cities || []).flatMap((ci) => ci.units.map((u) => ({ id: u.id, rotulo: `${ci.name} → ${u.name}` }))) : []} />
+                    <MetaConfig cidades={config.franchise?.enabled ? (config.franchise.cities || []).map((ci: any) => ({ id: ci.id, rotulo: ci.name })) : []} />
                   </div>
                 </div>
               </div>
@@ -2426,6 +2426,8 @@ export function MasterDashboard() {
 
                               <LocalCidade cidade={city} aoMudar={(coords) => setConfig((prev) => ({ ...prev, franchise: { ...prev.franchise!, cities: (prev.franchise?.cities || []).map((c) => (c.id === city.id ? { ...c, ...coords } : c)) } }))} />
 
+                              <SetoresDaCidade cidade={city} aoMudar={(sectors) => setConfig((prev: any) => ({ ...prev, franchise: { ...prev.franchise!, cities: (prev.franchise?.cities || []).map((c: any) => (c.id === city.id ? { ...c, sectors } : c)) } }))} />
+
                               {/* Unidades desta cidade */}
                               <div className="pt-3 border-t border-gray-200">
                                 <div className="flex items-center justify-between mb-4">
@@ -2457,7 +2459,7 @@ export function MasterDashboard() {
                                             <div>
                                               <p className="font-bold text-gray-800 text-sm">{unit.name}</p>
                                               <p className="text-xs text-gray-400">
-                                                {unit.address || 'Sem endereço'} • {unit.sectors?.length || 0} setor(es) • {unit.isOpen !== false ? '🟢' : '🔴'}
+                                                {unit.address || 'Sem endereço'} • {unit.isOpen !== false ? '🟢' : '🔴'}
                                               </p>
                                             </div>
                                           </div>
@@ -2587,79 +2589,6 @@ export function MasterDashboard() {
 
                                             <SenhaUnidade unitId={unit.id} definida={(config as any).unidadesComSenha?.includes(unit.id)} />
 
-                                            {/* Setores desta unidade */}
-                                            <div className="mt-3 pt-3 border-t border-gray-200">
-                                              <h5 className="font-bold text-gray-600 mb-2 text-xs flex items-center gap-1.5">
-                                                <Truck className="w-3.5 h-3.5 text-orange-500" />
-                                                Setores de Entrega ({unit.sectors?.length || 0})
-                                              </h5>
-                                              <div className="space-y-1.5 mb-2">
-                                                {(unit.sectors || []).map((sector, sectorIndex) => (
-                                                  <div key={sector.id} className="flex items-center gap-2 p-2 bg-white rounded border border-gray-100">
-                                                    <div className="w-6 h-6 rounded flex items-center justify-center text-white font-bold text-xs" style={{ backgroundColor: sector.color }}>
-                                                      {sector.name.charAt(0)}
-                                                    </div>
-                                                    <span className="flex-1 text-xs font-medium text-gray-700">{sector.name}</span>
-                                                    <button
-                                                      onClick={() => {
-                                                        const cities = [...(config.franchise?.cities || [])];
-                                                        const newUnits = [...city.units];
-                                                        const newSectors = [...(unit.sectors || [])];
-                                                        newSectors.splice(sectorIndex, 1);
-                                                        newUnits[unitIndex] = { ...unit, sectors: newSectors };
-                                                        cities[cityIndex] = { ...city, units: newUnits };
-                                                        setConfig({ ...config, franchise: { ...config.franchise!, cities } });
-                                                      }}
-                                                      className="p-1 rounded bg-red-50 hover:bg-red-100 text-red-400"
-                                                    >
-                                                      <Trash2 className="w-3 h-3" />
-                                                    </button>
-                                                  </div>
-                                                ))}
-                                              </div>
-                                              <div className="flex gap-2">
-                                                <input
-                                                  type="text"
-                                                  placeholder="Nome do setor..."
-                                                  className="flex-1 p-1.5 border border-gray-300 rounded text-xs focus:ring-2 focus:ring-orange-400 outline-none"
-                                                  id={`new-sector-${unit.id}`}
-                                                  onKeyDown={(e) => {
-                                                    if (e.key === 'Enter') {
-                                                      const input = e.target as HTMLInputElement;
-                                                      if (!input.value.trim()) return;
-                                                      const sId = input.value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-                                                      const colors = ['#EF4444','#3B82F6','#10B981','#F59E0B','#8B5CF6','#EC4899','#F97316','#14B8A6','#6366F1','#84CC16'];
-                                                      const color = colors[(unit.sectors?.length || 0) % colors.length];
-                                                      const cities = [...(config.franchise?.cities || [])];
-                                                      const newUnits = [...city.units];
-                                                      newUnits[unitIndex] = { ...unit, sectors: [...(unit.sectors || []), { id: sId, name: input.value.trim(), color }] };
-                                                      cities[cityIndex] = { ...city, units: newUnits };
-                                                      setConfig({ ...config, franchise: { ...config.franchise!, cities } });
-                                                      input.value = '';
-                                                    }
-                                                  }}
-                                                />
-                                                <button
-                                                  onClick={() => {
-                                                    const input = document.getElementById(`new-sector-${unit.id}`) as HTMLInputElement;
-                                                    if (!input?.value.trim()) return;
-                                                    const sId = input.value.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-                                                    const colors = ['#EF4444','#3B82F6','#10B981','#F59E0B','#8B5CF6','#EC4899','#F97316','#14B8A6','#6366F1','#84CC16'];
-                                                    const color = colors[(unit.sectors?.length || 0) % colors.length];
-                                                    const cities = [...(config.franchise?.cities || [])];
-                                                    const newUnits = [...city.units];
-                                                    newUnits[unitIndex] = { ...unit, sectors: [...(unit.sectors || []), { id: sId, name: input.value.trim(), color }] };
-                                                    cities[cityIndex] = { ...city, units: newUnits };
-                                                    setConfig({ ...config, franchise: { ...config.franchise!, cities } });
-                                                    input.value = '';
-                                                  }}
-                                                  className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1.5 rounded text-xs font-bold flex items-center gap-1"
-                                                >
-                                                  <Plus className="w-3 h-3" />
-                                                  Setor
-                                                </button>
-                                              </div>
-                                            </div>
                                           </div>
                                         )}
                                       </div>
@@ -2678,7 +2607,7 @@ export function MasterDashboard() {
                                       if (e.key === 'Enter') {
                                         const input = e.target as HTMLInputElement;
                                         if (!input.value.trim()) return;
-                                        const uSlug = (input.value.trim() + '-' + city.id).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                                        const uSlug = idUnicoDeUnidade(input.value.trim() + '-' + city.id, config.franchise?.cities || []);
                                         const newUnit = { id: uSlug, name: input.value.trim(), phone: config.phone || '', address: '', isOpen: true, sectors: [] };
                                         const cities = [...(config.franchise?.cities || [])];
                                         cities[cityIndex] = { ...city, units: [...city.units, newUnit] };
@@ -2692,7 +2621,7 @@ export function MasterDashboard() {
                                     onClick={() => {
                                       const input = document.getElementById(`new-unit-${city.id}`) as HTMLInputElement;
                                       if (!input?.value.trim()) { alert('Digite o nome da unidade'); return; }
-                                      const uSlug = (input.value.trim() + '-' + city.id).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+                                      const uSlug = idUnicoDeUnidade(input.value.trim() + '-' + city.id, config.franchise?.cities || []);
                                       const newUnit = { id: uSlug, name: input.value.trim(), phone: config.phone || '', address: '', isOpen: true, sectors: [] };
                                       const cities = [...(config.franchise?.cities || [])];
                                       cities[cityIndex] = { ...city, units: [...city.units, newUnit] };
@@ -2965,6 +2894,64 @@ export function MasterDashboard() {
       </main>
 
 
+    </div>
+  );
+}
+
+// config antiga com duas unidades de mesmo id: a repetida ganha id novo (vale ao salvar)
+function semUnidadesRepetidas(config: any) {
+  if (!config?.franchise?.cities) return config;
+  const vistos = new Set<string>();
+  const cities = config.franchise.cities.map((c: any) => ({ ...c, units: (c.units || []).map((u: any) => {
+    let id = u.id, n = 2;
+    while (vistos.has(id)) id = `${u.id}-${n++}`;
+    vistos.add(id);
+    return id === u.id ? u : { ...u, id };
+  }) }));
+  return { ...config, franchise: { ...config.franchise, cities } };
+}
+
+// id de unidade nunca repete (duas unidades com o mesmo id misturariam pedidos e cardápio)
+function idUnicoDeUnidade(base: string, cidades: any[]) {
+  const slug = base.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+  const usados = new Set(cidades.flatMap((c: any) => (c.units || []).map((u: any) => u.id)));
+  let id = slug, n = 2;
+  while (usados.has(id)) id = `${slug}-${n++}`;
+  return id;
+}
+
+// setores de entrega da cidade: todas as unidades dela entregam nos mesmos setores
+function SetoresDaCidade({ cidade, aoMudar }: { cidade: any; aoMudar: (setores: any[]) => void }) {
+  const herdados = (cidade.units || []).flatMap((u: any) => u.sectors || []).filter((s: any, i: number, todos: any[]) => todos.findIndex((x) => x.id === s.id) === i);
+  const setores: any[] = cidade.sectors ?? herdados;
+  const [nome, setNome] = useState('');
+  const cores = ['#EF4444', '#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899', '#F97316', '#14B8A6', '#6366F1', '#84CC16'];
+  const adicionar = () => {
+    const limpo = nome.trim();
+    if (!limpo) return;
+    const id = limpo.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    if (setores.some((s) => s.id === id)) return alert('Já existe um setor com esse nome.');
+    aoMudar([...setores, { id, name: limpo, color: cores[setores.length % cores.length] }]);
+    setNome('');
+  };
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-1 flex items-center gap-1.5"><Truck className="w-4 h-4 text-orange-500" />Setores de entrega da cidade ({setores.length})</label>
+      <p className="text-xs text-gray-500 mb-2">Valem para todas as unidades desta cidade.</p>
+      <div className="space-y-1.5 mb-2 max-w-md">
+        {setores.map((s, i) => (
+          <div key={s.id} className="flex items-center gap-2 p-2 bg-white rounded border border-gray-100">
+            <div className="w-6 h-6 rounded flex items-center justify-center text-white font-bold text-xs" style={{ backgroundColor: s.color }}>{s.name.charAt(0)}</div>
+            <span className="flex-1 text-sm text-gray-700">{s.name}</span>
+            <button onClick={() => aoMudar(setores.filter((_, j) => j !== i))} className="p-1 rounded bg-red-50 hover:bg-red-100 text-red-400"><Trash2 className="w-3 h-3" /></button>
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-2 max-w-md">
+        <input value={nome} onChange={(e) => setNome(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && adicionar()} placeholder="Nome do setor..."
+          className="flex-1 p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-400 outline-none" />
+        <button onClick={adicionar} className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded-lg text-sm font-bold flex items-center gap-1"><Plus className="w-3 h-3" />Setor</button>
+      </div>
     </div>
   );
 }

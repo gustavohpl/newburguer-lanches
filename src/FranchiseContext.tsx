@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { useConfig, FranchiseCity, FranchiseUnit } from './ConfigContext';
-import { setActiveUnitId } from './utils/api';
+import { setActiveUnitId, setActiveCityId } from './utils/api';
 
 // ============================================
 // 🏙️ FRANCHISE CONTEXT
@@ -131,6 +131,9 @@ export function FranchiseProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // link de anúncio com ?cidade=<id> abre direto a cidade
+    const daUrl = pageType === 'client' ? new URLSearchParams(window.location.search).get('cidade') : null;
+    if (daUrl && cities.some(c => c.id === daUrl)) writeStorage(pageType, STORAGE_KEY_CITY, daUrl);
     const savedCity = readStorage(pageType, STORAGE_KEY_CITY);
     const savedUnit = readStorage(pageType, STORAGE_KEY_UNIT);
 
@@ -157,17 +160,20 @@ export function FranchiseProvider({ children }: { children: ReactNode }) {
   const selectedUnit = selectedCity?.units.find(u => u.id === selectedUnitId) || null;
   const unitsForSelectedCity = selectedCity?.units || [];
 
-  // na renderização (não em efeito): os efeitos dos filhos rodam antes e já buscariam dados sem a unidade
-  setActiveUnitId(franchiseEnabled && selectedUnit ? selectedUnitId : null);
-  // categorias, textos e pixel da unidade vêm junto da config pública
-  const unidadeAtiva = franchiseEnabled && selectedUnit ? selectedUnitId : null;
-  useEffect(() => { if (unidadeAtiva) refreshConfig(); }, [unidadeAtiva]);
+  // cliente fica no site da cidade (o servidor escolhe a unidade do pedido); Admin e entregador ficam numa unidade
+  const soCidade = pageType === 'client';
+  // na renderização (não em efeito): os efeitos dos filhos rodam antes e já buscariam dados sem o escopo
+  setActiveUnitId(franchiseEnabled && !soCidade && selectedUnit ? selectedUnitId : null);
+  setActiveCityId(franchiseEnabled && soCidade && selectedCity ? selectedCityId : null);
+  // categorias, textos e pixel vêm junto da config pública
+  const escopoAtivo = !franchiseEnabled ? null : soCidade ? (selectedCity ? `c:${selectedCityId}` : null) : (selectedUnit ? `u:${selectedUnitId}` : null);
+  useEffect(() => { if (escopoAtivo) refreshConfig(); }, [escopoAtivo]);
 
   // Precisa mostrar modal?
   const needsSelection = franchiseEnabled 
     && initialized 
     && pageType !== 'master' 
-    && (!selectedCity || !selectedUnit);
+    && (!selectedCity || (!soCidade && !selectedUnit));
 
   // Selecionar cidade
   const selectCity = useCallback((cityId: string) => {
@@ -199,7 +205,7 @@ export function FranchiseProvider({ children }: { children: ReactNode }) {
       const perto = comCoord.map((c: any) => ({ c, km: distanciaKm(coords.latitude, coords.longitude, c.lat, c.lng) })).sort((a, b) => a.km - b.km)[0];
       if (perto.km <= 60) {
         selectCity(perto.c.id);
-        if (perto.c.units.length === 1) selectUnit(perto.c.units[0].id);
+        if (pageType === 'delivery' && perto.c.units.length === 1) selectUnit(perto.c.units[0].id);
       }
       setLocalizando(false);
     }, () => setLocalizando(false), { timeout: 8000, maximumAge: 600000 });
@@ -213,7 +219,7 @@ export function FranchiseProvider({ children }: { children: ReactNode }) {
   }, [pageType]);
 
   // Valores efetivos: quando tem unidade selecionada, usa os dados dela
-  const unitOverrides = franchiseEnabled && selectedUnit ? {
+  const unitOverrides = franchiseEnabled && !soCidade && selectedUnit ? {
     phone: selectedUnit.phone || undefined,
     address: selectedUnit.address || undefined,
     googleMapsUrl: selectedUnit.googleMapsUrl || undefined,

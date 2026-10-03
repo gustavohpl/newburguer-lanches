@@ -5,6 +5,7 @@ import { Plus, Edit, Trash2, Image as ImageIcon, X, Save, Loader, Settings, Trop
 import * as api from '../../utils/api';
 import type { Product } from '../../App';
 import { CategoryManager } from './CategoryManager';
+import { CopiarDeUnidade } from './CopiarDeUnidade';
 import { TopRatedManager } from './TopRatedManager';
 import { PromotionsManager } from './PromotionsManager';
 import { useConfig } from '../../ConfigContext';
@@ -437,6 +438,8 @@ export function ProductsManagement({ onProductsChange }: ProductsManagementProps
             Categorias
           </button>
           
+          <CopiarDeUnidade onCopiado={() => { loadData(); onProductsChange?.(); }} />
+
           <button
             onClick={handleClearAll}
             className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors flex items-center gap-2"
